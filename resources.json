@@ -1,0 +1,43 @@
+{
+  "Wood": {
+    "name": "Wood",
+    "emoji": "<:Wood:1199611548512030770>",
+    "description": "Used for buildings, troops, and ships."
+  },
+  "Leather": {
+    "name": "Leather",
+    "emoji": "<:Leather:1233851202375122986>",
+    "description": "Used for troops, ships, and cloth.",
+    "roleCode": "1331408367867920426"
+  },
+  "Horse": {
+    "name": "Horse",
+    "emoji": "<:Horse:1234567890123456789>",
+    "description": "Used for troops and buildings."
+  },
+  "Stone": {
+    "name": "Stone",
+    "emoji": "<:Stone:1234567890123456789>",
+    "description": "Used for buildings."
+  },
+  "Iron": {
+    "name": "Iron",
+    "emoji": "<:Iron:1234567890123456789>",
+    "description": "Used for troops, buildings, and ships."
+  },
+  "Lead": {
+    "name": "Lead",
+    "emoji": "<:Lead:1234567890123456789>",
+    "description": "Used for buildings and ships."
+  },
+  "Salt": {
+    "name": "Salt",
+    "emoji": "<:Salt:1234567890123456789>",
+    "description": "Used for troops and ships."
+  },
+  "Wool": {
+    "name": "Wool",
+    "emoji": "<:Wool:1234567890123456789>",
+    "description": "Used for troops and cloth."
+  }
+}
