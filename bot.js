@@ -1,4 +1,5 @@
-const {clientId, guildId, token} = require('./config.json');
+const { CLIENT_ID, GUILD_ID, TOKEN } = process.env;
+const creds = CLIENT_ID && GUILD_ID && TOKEN ? { clientId: CLIENT_ID, guildId: GUILD_ID, token: TOKEN } : require('./config.json');
 const Discord = require('discord.js');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -125,14 +126,14 @@ function botMidnightLoop() {
 }
 botMidnightLoop();
 
-client.login(token);
+client.login(creds.token);
 
 function getClient() {
 	return client;
 }
 
 function getGuildID() {
-	return guildId;
+        return creds.guildId;
 }
 
 module.exports = { getClient, getGuildID };

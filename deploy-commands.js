@@ -1,5 +1,6 @@
 const { REST, Routes, SlashCommandBuilder } = require('discord.js');
-const { clientId, guildId, token } = require('./config.json');
+const { CLIENT_ID, GUILD_ID, TOKEN } = process.env;
+const creds = CLIENT_ID && GUILD_ID && TOKEN ? { clientId: CLIENT_ID, guildId: GUILD_ID, token: TOKEN } : require('./config.json');
 const fs = require('node:fs');
 const path = require('node:path');
 const dbm = require('./database-manager');
@@ -50,18 +51,18 @@ async function loadCommands() {
 	// fs.writeFileSync('commandList.json', JSON.stringify(commandList, null, 2));
 
 	// Construct and prepare an instance of the REST module
-	const rest = new REST().setToken(token);
+        const rest = new REST().setToken(creds.token);
 
 	// and deploy your commands!
 	(async () => {
 		
 			console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
-			console.log(clientId, guildId);
+                        console.log(creds.clientId, creds.guildId);
 
 			// The put method is used to fully refresh all commands in the guild with the current set
 			const data = await rest.put(
-				Routes.applicationGuildCommands(clientId, guildId),
+                                Routes.applicationGuildCommands(creds.clientId, creds.guildId),
 				{ body: commands },
 			);
 
