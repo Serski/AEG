@@ -8,3 +8,6 @@ marketplace.json
 firebaseKey.json
 commandList.json
 node_modules/
+
+.env
+*.pem
