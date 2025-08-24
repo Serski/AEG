@@ -50,7 +50,7 @@ function fromFile() {
 
 const config = { ...fromFile(), ...fromEnv() };
 
-const required = ['token', 'clientId', 'guildId', 'databaseUrl', 'gptToken'];
+const required = ['token', 'clientId', 'guildId', 'databaseUrl'];
 const missing = required.filter((key) => !config[key]);
 
 if (missing.length > 0) {
