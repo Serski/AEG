@@ -9,11 +9,11 @@ module.exports = {
 	async execute(interaction) {
 		await interaction.deferReply();
         try {
-            await dbm.backupJsonToFirestore();
-            await interaction.editReply("Successfully backed up JSON files.");
+            await dbm.logData();
+            await interaction.editReply("Successfully backed up data.");
         } catch (error) {
-            console.error("Failed to backup JSON files", error);
+            console.error("Failed to backup data", error);
             await interaction.editReply({ content: "An error was caught. Contact Alex.", ephemeral: true });
         }
-	},
+        },
 };

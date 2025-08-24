@@ -942,7 +942,7 @@ When selected grants the:
   }
 
   static async commandHelp(commandName) {
-    //Send an embed with the title, description, options and "help" field of the command. Options should be horizontally aligned. Read from keys/commandList in firebase.
+    //Send an embed with the title, description, options and "help" field of the command. Options should be horizontally aligned. Read from keys/commandList in the database.
     let commandList = await dbm.loadFile("keys", "commandList");
     let command = commandList[commandName];
     if (command == undefined) {

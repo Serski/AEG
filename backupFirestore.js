@@ -1,3 +1,4 @@
 const dbm = require('./database-manager');
 
-dbm.backupFirestoreToJson();
+dbm.logData();
+
