@@ -3,7 +3,6 @@ const shop = require('./shop');
 const clientManager = require('./clientManager');
 const axios = require('axios');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, createWebhook } = require('discord.js');
-const { clientId, guildId } = require('./config.json');
 
 class char {
   static async warn(playerID) {

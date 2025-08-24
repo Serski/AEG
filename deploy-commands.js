@@ -1,4 +1,4 @@
-const { REST, Routes, SlashCommandBuilder } = require('discord.js');
+const { REST, Routes } = require('discord.js');
 const { token, clientId, guildId } = require('./config');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -57,13 +57,11 @@ async function loadCommands() {
 		
 			console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
-                        console.log(clientId, guildId);
-
-			// The put method is used to fully refresh all commands in the guild with the current set
-			const data = await rest.put(
+                        // The put method is used to fully refresh all commands in the guild with the current set
+                        const data = await rest.put(
                                 Routes.applicationGuildCommands(clientId, guildId),
-				{ body: commands },
-			);
+                                { body: commands },
+                        );
 
 			console.log(`Successfully reloaded ${data.length} application (/) commands.`);
 		
