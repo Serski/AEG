@@ -1,325 +1,196 @@
-const admin = require('firebase-admin');
-
-// Replace 'path/to/serviceAccountKey.json' with the path to the JSON file you downloaded
-const serviceAccount = require('./firebaseKey.json');
 const fs = require('fs');
 const path = require('path');
+const config = require('./config');
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+let pgClient = null;
+let usingPg = false;
+let pgReady = Promise.resolve();
 
-const db = admin.firestore();
-
-let data = {}
-
-const storageDir = path.join(__dirname, 'jsonStorage');
-
-// // Ensure the storage directory exists
-// if (!fs.existsSync(storageDir)) {
-//   fs.mkdirSync(storageDir);
-// }
-
-// Save Function - save(UserName, DataToBeSaved)
-// async function saveCollection(collectionName, data) {
-//   const filePath = path.join(storageDir, `${collectionName}.json`);
-//   return new Promise((resolve, reject) => {
-//     fs.writeFile(filePath, JSON.stringify(data, null, 2), (err) => {
-//       if (err) {
-//         console.error('Error saving collection:', err);
-//         reject(err);
-//       } else {
-//         console.log('Collection saved successfully');
-//         resolve();
-//       }
-//     });
-//   });
-// }
-
-// // Load Function - creates a map of doc names to doc data
-// async function loadCollection(collectionName) {
-//   const filePath = path.join(storageDir, `${collectionName}.json`);
-//   return new Promise((resolve, reject) => {
-//     fs.readFile(filePath, 'utf8', (err, data) => {
-//       if (err) {
-//         if (err.code === 'ENOENT') {
-//           console.log('No such collection!');
-//           resolve({});
-//         } else {
-//           console.error('Error loading collection:', err);
-//           reject(err);
-//         }
-//       } else {
-//         resolve(JSON.parse(data));
-//       }
-//     });
-//   });
-// }
-
-// async function saveFile(collectionName, docId, data) {
-//   let collectionData;
-//   try {
-//     collectionData = await loadCollection(collectionName);
-//   } catch (error) {
-//     collectionData = {};
-//   }
-//   collectionData[docId] = data;
-//   return saveCollection(collectionName, collectionData);
-// }
-
-// async function loadFile(collectionName, docId) {
-//   try {
-//     const collectionData = await loadCollection(collectionName);
-//     if (collectionData.hasOwnProperty(docId)) {
-//       return collectionData[docId];
-//     } else {
-//       console.log('No such document!');
-//       return undefined;
-//     }
-//   } catch (error) {
-//     console.error('Error loading document:', error);
-//     return {};
-//   }
-// }
-
-// async function docDelete(collectionName, docName) {
-//   try {
-//     const collectionData = await loadCollection(collectionName);
-//     if (collectionData.hasOwnProperty(docName)) {
-//       delete collectionData[docName];
-//       await saveCollection(collectionName, collectionData);
-//       console.log('Document deleted');
-//     } else {
-//       console.log('No such document to delete!');
-//     }
-//   } catch (error) {
-//     console.error('Error deleting document:', error);
-//     throw error;
-//   }
-// }
-
-// async function fieldDelete(collectionName, docName, deleteField) {
-//   try {
-//     const collectionData = await loadCollection(collectionName);
-//     if (collectionData.hasOwnProperty(docName) && collectionData[docName].hasOwnProperty(deleteField)) {
-//       delete collectionData[docName][deleteField];
-//       await saveCollection(collectionName, collectionData);
-//       console.log('Field deleted');
-//     } else {
-//       console.log('No such document or field to delete!');
-//     }
-//   } catch (error) {
-//     console.error('Error deleting field:', error);
-//     throw error;
-//   }
-// }
-
-// async function logData() {
-//   try {
-//     //Find all collections in the storage directory
-//     const files = fs.readdirSync(storageDir);
-//     const collections = files.map(file => file.split('.')[0]);
-//     //Remove the logs collection from the list
-//     const logsIndex = collections.indexOf('logs');
-//     if (logsIndex > -1) {
-//       collections.splice(logsIndex, 1);
-//     }
-//     let logData = {};
-//     for (const collectionName of collections) {
-//       const collectionData = await loadCollection(collectionName);
-//       logData[collectionName] = collectionData;
-//     }
-//     const date = new Date();
-//     const dateString = date.toISOString().split('T')[0];
-//     await saveFile('logs', dateString, logData);
-//     console.log(`Log data for ${dateString} saved successfully.`);
-//   } catch (error) {
-//     console.error('Error logging data:', error);
-//   }
-// }
-
-// async function backupJsonToFirestore() {
-//   console.log("Backing up JSON data to Firestore.");
-//   try {
-//     const files = fs.readdirSync(storageDir);
-//     const date = new Date();
-//     const timestamp = date.toISOString().replace(/[-:.]/g, '_');
-//     const backupCollectionName = `backup_${timestamp}`;
-
-//     const batch = db.batch();
-
-//     //remove the logs collection from the list
-//     const logsIndex = files.indexOf('logs.json');
-//     if (logsIndex > -1) {
-//       files.splice(logsIndex, 1);
-//     }
-
-//     for (const file of files) {
-//       const collectionName = path.basename(file, '.json'); // Get the collection name without extension
-//       const filePath = path.join(storageDir, file);
-//       const collectionData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-
-//       const docRef = db.collection(backupCollectionName).doc(collectionName);
-
-//       batch.set(docRef, collectionData);
-//     }
-
-//     await batch.commit();
-//     console.log(`All collections backed up successfully under ${backupCollectionName}.`);
-//   } catch (error) {
-//     console.error('Error backing up JSON data to Firestore:', error);
-//   }
-// }
-
-// async function backupFirestoreToJson() {
-//   try {
-//     const collections = await db.listCollections();
-
-//     //remove the logs collection from the list
-//     const logsIndex = collections.indexOf('logs');
-//     if (logsIndex > -1) {
-//       collections.splice(logsIndex, 1);
-//     }
-
-//     for (const collection of collections) {
-//       const snapshot = await collection.get();
-//       let collectionData = {};
-//       snapshot.forEach(doc => {
-//         collectionData[doc.id] = doc.data();
-//       });
-//       await saveCollection(collection.id, collectionData);
-//       console.log(`Collection ${collection.id} backed up successfully.`);
-//     }
-//   } catch (error) {
-//     console.error('Error backing up Firestore data:', error);
-//   }
-// }
-
-async function saveCollection(collectionName, data) {
-  const batch = db.batch();
-
-  Object.keys(data).forEach(docId => {
-    const docRef = db.collection(collectionName).doc(docId);
-    batch.set(docRef, data[docId]);
-  });
-
-  return batch.commit()
-    .then(() => console.log('Collection saved successfully'))
-    .catch(error => console.error('Error saving collection:', error));
+try {
+  const { Client } = require('pg');
+  if (config.databaseUrl) {
+    pgClient = new Client({ connectionString: config.databaseUrl });
+    pgReady = pgClient
+      .connect()
+      .then(() => {
+        usingPg = true;
+      })
+      .catch((err) => {
+        console.error('PostgreSQL connection error, falling back to JSON storage:', err);
+        usingPg = false;
+      });
+  }
+} catch (err) {
+  console.error('pg module not installed, falling back to JSON storage:', err);
 }
 
-// Load Function - creates a map of doc names to doc data
+const storageDir = path.join(__dirname, 'jsonStorage');
+if (!fs.existsSync(storageDir)) {
+  fs.mkdirSync(storageDir);
+}
+
+function formatTable(name) {
+  return name.replace(/[^a-zA-Z0-9_]/g, '');
+}
+
+async function ensureTable(table) {
+  await pgReady;
+  if (!usingPg) return;
+  await pgClient.query(`CREATE TABLE IF NOT EXISTS ${table} (id TEXT PRIMARY KEY, data JSONB)`);
+}
+
+async function saveCollection(collectionName, data) {
+  if (usingPg) {
+    await pgReady;
+    const table = formatTable(collectionName);
+    await ensureTable(table);
+    await pgClient.query('BEGIN');
+    await pgClient.query(`DELETE FROM ${table}`);
+    for (const [id, value] of Object.entries(data)) {
+      await pgClient.query(`INSERT INTO ${table} (id, data) VALUES ($1, $2)`, [id, value]);
+    }
+    await pgClient.query('COMMIT');
+  } else {
+    const filePath = path.join(storageDir, `${collectionName}.json`);
+    await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
+  }
+}
+
 async function loadCollection(collectionName) {
-  try {
-    const collection = await db.collection(collectionName).get();
+  if (usingPg) {
+    await pgReady;
+    const table = formatTable(collectionName);
+    await ensureTable(table);
+    const res = await pgClient.query(`SELECT id, data FROM ${table}`);
     const data = {};
-    collection.forEach(doc => data[doc.id] = doc.data());
+    for (const row of res.rows) {
+      data[row.id] = row.data;
+    }
     return data;
-  } catch (error) {
-    console.error('Error loading collection:', error);
-    return {};
+  } else {
+    const filePath = path.join(storageDir, `${collectionName}.json`);
+    try {
+      const content = await fs.promises.readFile(filePath, 'utf8');
+      return JSON.parse(content);
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        return {};
+      }
+      throw err;
+    }
   }
 }
 
 async function loadCollectionFileNames(collectionName) {
-  try {
-    const docRefs = await db.collection(collectionName).listDocuments();
-    const data = {}
-    for (const docRef of docRefs) {
-      data[docRef.id] = docRef.id;
-    }
-    return data;
+  const data = await loadCollection(collectionName);
+  const names = {};
+  for (const id of Object.keys(data)) {
+    names[id] = id;
   }
-  catch (error) {
-    console.error('Error loading collection:', error);
-    return {};
-  }
+  return names;
 }
 
 async function saveFile(collectionName, docId, data) {
-  return db.collection(collectionName).doc(docId).set(data)
-    .then(() => console.log('Document saved successfully'))
-    .catch(error => {
-        console.error('Error saving document:', error);
-        throw error; // Re-throw the error to ensure it can be caught by the calling function
-    });
+  if (usingPg) {
+    await pgReady;
+    const table = formatTable(collectionName);
+    await ensureTable(table);
+    await pgClient.query(
+      `INSERT INTO ${table} (id, data) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`,
+      [docId, data]
+    );
+  } else {
+    const collectionData = await loadCollection(collectionName);
+    collectionData[docId] = data;
+    await saveCollection(collectionName, collectionData);
+  }
 }
 
 async function loadFile(collectionName, docId) {
-  try {
-    const doc = await db.collection(collectionName).doc(docId).get();
-    if (doc.exists) {
-      return doc.data();
-    } else {
-      console.log('No such document!');
-      return undefined;
-    }
-  } catch (error) {
-    console.error('Error loading document:', error);
-    return {};
+  if (usingPg) {
+    await pgReady;
+    const table = formatTable(collectionName);
+    await ensureTable(table);
+    const res = await pgClient.query(`SELECT data FROM ${table} WHERE id = $1`, [docId]);
+    return res.rows[0] ? res.rows[0].data : undefined;
+  } else {
+    const collectionData = await loadCollection(collectionName);
+    return collectionData.hasOwnProperty(docId) ? collectionData[docId] : undefined;
   }
 }
 
 async function docDelete(collectionName, docName) {
-  return db.collection(collectionName).doc(docName).delete()
-    .then(() => console.log('Document deleted'))
-    .catch(error => {
-        console.error('Error deleting document:', error);
-        throw error; // Re-throw the error to ensure it can be caught by the calling function
-    });
+  if (usingPg) {
+    await pgReady;
+    const table = formatTable(collectionName);
+    await ensureTable(table);
+    await pgClient.query(`DELETE FROM ${table} WHERE id = $1`, [docName]);
+  } else {
+    const collectionData = await loadCollection(collectionName);
+    if (collectionData.hasOwnProperty(docName)) {
+      delete collectionData[docName];
+      await saveCollection(collectionName, collectionData);
+    }
+  }
 }
 
 async function fieldDelete(collectionName, docName, deleteField) {
-  return db.collection(collectionName).doc(docName).update({
-    [deleteField]: admin.firestore.FieldValue.delete()
-  })
-    .then(() => console.log('Field deleted'))
-    .catch(error => {
-        console.error('Error deleting field:', error);
-        throw error; // Re-throw the error to ensure it can be caught by the calling function
-    });
+  if (usingPg) {
+    await pgReady;
+    const table = formatTable(collectionName);
+    await ensureTable(table);
+    await pgClient.query(`UPDATE ${table} SET data = data - $2 WHERE id = $1`, [docName, deleteField]);
+  } else {
+    const collectionData = await loadCollection(collectionName);
+    if (
+      collectionData.hasOwnProperty(docName) &&
+      collectionData[docName].hasOwnProperty(deleteField)
+    ) {
+      delete collectionData[docName][deleteField];
+      await saveCollection(collectionName, collectionData);
+    }
+  }
 }
 
 async function logData() {
-  try {
-    const collections = await db.listCollections();
-    let logData = {};
-    for (const collection of collections) {
-      if (collection.id === 'logs') {
-        continue;
-      }
-      const snapshot = await collection.get();
-      logData[collection.id] = {};
-      snapshot.forEach(doc => {
-        logData[collection.id][doc.id] = doc.data();
-      });
+  if (usingPg) {
+    await pgReady;
+    const res = await pgClient.query(
+      `SELECT tablename FROM pg_tables WHERE schemaname='public'`
+    );
+    const tables = res.rows
+      .map((r) => r.tablename)
+      .filter((name) => name !== 'logs');
+    const logData = {};
+    for (const table of tables) {
+      logData[table] = await loadCollection(table);
     }
-    const date = new Date();
-    const dateString = date.toISOString().split('T')[0];
-
+    const dateString = new Date().toISOString().split('T')[0];
     await saveFile('logs', dateString, logData);
-    console.log(`Log data for ${dateString} saved successfully in Firestore.`);
-  } catch (error) {
-    console.error('Error logging data:', error);
-  }
-}
-
-async function moveJsonToFirestore() {
-  try {
-    const files = fs.readdirSync(storageDir);
-    for (const file of files) {
-      const collectionName = path.basename(file, '.json'); // Get the collection name without extension
-      const filePath = path.join(storageDir, file);
-      const collectionData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-
-      await saveCollection(collectionName, collectionData);
-      console.log(`Collection ${collectionName} moved successfully.`);
+    console.log(`Log data for ${dateString} saved successfully.`);
+  } else {
+    const files = await fs.promises.readdir(storageDir);
+    const collections = files
+      .filter((file) => file.endsWith('.json') && file !== 'logs.json')
+      .map((file) => path.basename(file, '.json'));
+    const logDataObj = {};
+    for (const collectionName of collections) {
+      logDataObj[collectionName] = await loadCollection(collectionName);
     }
-  } catch (error) {
-    console.error('Error moving JSON data to Firestore:', error);
+    const dateString = new Date().toISOString().split('T')[0];
+    await saveFile('logs', dateString, logDataObj);
+    console.log(`Log data for ${dateString} saved successfully.`);
   }
-
 }
 
+module.exports = {
+  saveCollection,
+  loadCollection,
+  loadCollectionFileNames,
+  saveFile,
+  loadFile,
+  docDelete,
+  fieldDelete,
+  logData,
+};
 
-module.exports = { saveCollection, loadCollection, loadCollectionFileNames, saveFile, loadFile, docDelete, fieldDelete, logData };
