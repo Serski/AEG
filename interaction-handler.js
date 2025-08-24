@@ -2,8 +2,6 @@ const shop = require('./shop');
 const char = require('./char');
 const marketplace = require('./marketplace');
 const admin = require('./admin');
-//Import guildID from config.json
-const { guildID } = require('./config.json');
 
 // MODALS
 addItem = async (interaction) => {

@@ -1,13 +1,13 @@
 const OpenAI = require ('openai');
 const dbm = require('./database-manager');
 
-//Api key is in config.json, fourth element named gpt token. Grab it as constant
-const apiKey = require('./config.json').gptToken;
+// Load the API key from the shared configuration module
+const { gptToken: apiKey } = require('./config');
 //Format to work as gpt key
 //const apiToken = "Bearer " + apiKey;
 
 
-const openai = new OpenAI({apiKey: apiKey});
+const openai = new OpenAI({ apiKey });
 const Model3_5Turbo = "gpt-3.5-turbo";
 const Model4o = "gpt-4o";
 
