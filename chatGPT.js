@@ -7,7 +7,7 @@ const { gptToken: apiKey } = require('./config');
 //const apiToken = "Bearer " + apiKey;
 
 
-const openai = new OpenAI({ apiKey });
+const openai = apiKey ? new OpenAI({ apiKey }) : null;
 const Model3_5Turbo = "gpt-3.5-turbo";
 const Model4o = "gpt-4o";
 
@@ -15,6 +15,9 @@ const modelChoice = 4.01; //Options are 3.51, 4.01
 
 class chatGPT {
     static async pope(message, playerID) {
+        if (!openai) {
+            return 'GPT functionality is disabled.';
+        }
         //Get prevMessages from database
         let prevMessagesExist = true;
         let popeInfo = await dbm.loadFile("gptMessages", "pope");
@@ -140,6 +143,9 @@ class chatGPT {
     }
 
     static async demetrios(message, playerID, channelId) {
+        if (!openai) {
+            return 'GPT functionality is disabled.';
+        }
         //Get prevMessages from database
         let charInfo = await dbm.loadFile("characters", playerID);
         let charName = charInfo.name;
@@ -246,6 +252,9 @@ class chatGPT {
     }
 
     static async getContextString(message, prevMessages) {
+        if (!openai) {
+            return 'GPT functionality is disabled.';
+        }
         try {
             // Load the information blocks
             let info = await dbm.loadFile("gptMessages", "info");
