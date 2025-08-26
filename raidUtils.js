@@ -1,5 +1,7 @@
 const shipUtils = require('./shipUtils');
 const dbm = require('./database-manager');
+const fs = require('fs');
+const path = require('path');
 
 // Default tuning constants
 const DEFAULT_WEIGHTS = {
@@ -15,7 +17,15 @@ function randomRange(min, max) {
 }
 
 async function loadRaidTargets() {
-  return await dbm.loadCollection('raidTargets');
+  let targets = await dbm.loadCollection('raidTargets');
+  if (Object.keys(targets).length === 0) {
+    const filePath = path.join(__dirname, 'jsonStorage', 'raidTargets.json');
+    const raw = await fs.promises.readFile(filePath, 'utf8');
+    const data = JSON.parse(raw);
+    await dbm.saveCollection('raidTargets', data);
+    targets = data;
+  }
+  return targets;
 }
 
 async function loadShipCatalog() {

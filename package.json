@@ -2,7 +2,11 @@
   "name": "Merlin-Serski",
   "version": "1.0.0",
   "main": "bot.js",
-  "scripts": { "start": "node bot.js" },
+  "scripts": {
+    "prestart": "node seeds/seedOnBoot.js",
+    "start": "node bot.js",
+    "init:raids": "node initRaidTargets.js"
+  },
   "dependencies": {
     "axios": "^1.5.1",
     "discord.js": "^14.13.0",
@@ -10,5 +14,7 @@
     "openai": "^4.25.0",
     "pg": "^8.11.3"
   },
-  "engines": { "node": "18.16.0" }
+  "engines": {
+    "node": "18.16.0"
+  }
 }
