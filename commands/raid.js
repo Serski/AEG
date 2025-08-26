@@ -44,9 +44,11 @@ module.exports = {
     const targetKey = targetInteraction.values[0];
     clientManager.setRaidSession(userId, { selectedTarget: targetKey });
     const fleet = charData.fleet || {};
+    const catalog = await raidUtils.loadShipCatalog();
     const shipOptions = Object.entries(fleet)
-      .filter(([ship, count]) => count > 0)
-      .map(([ship, count]) => ({ label: `${ship} (${count})`, value: ship }));
+      .filter(([name, count]) => catalog[name] && count > 0)
+      .slice(0, 25)
+      .map(([name, count]) => ({ label: `${name} (${count})`, value: name }));
     if (shipOptions.length === 0) {
       await targetInteraction.update({ content: 'You have no ships to deploy.', components: [] });
       clientManager.clearRaidSession(userId);
@@ -57,8 +59,10 @@ module.exports = {
       .setCustomId('raidShips')
       .setPlaceholder('Select ships to send')
       .setMinValues(1)
-      .setMaxValues(shipOptions.length)
-      .addOptions(shipOptions);
+      .setMaxValues(Math.min(shipOptions.length, 25));
+    if (shipOptions.length > 0) {
+      shipMenu.addOptions(shipOptions);
+    }
     await targetInteraction.update({ content: `Target **${targetKey}** selected. Choose ships to deploy.`, components: [new ActionRowBuilder().addComponents(shipMenu)] });
 
     let shipInteraction;
