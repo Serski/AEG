@@ -1,9 +1,10 @@
 const { REST, Routes } = require('discord.js');
-const { token, clientId, guildId } = require('./config');
 const fs = require('node:fs');
 const path = require('node:path');
-const dbm = require('./database-manager');
-const { map } = require('./admin');
+
+const token = process.env.TOKEN || process.env.DISCORD_TOKEN;
+const clientId = process.env.CLIENT_ID || process.env.DISCORD_CLIENT_ID;
+const guildId = process.env.GUILD_ID || process.env.DISCORD_GUILD_ID;
 
 
 async function loadCommands() {
@@ -35,16 +36,8 @@ async function loadCommands() {
                 }
         }
 
-	// dbm.saveFile('keys', 'commandList', commandList, (err, result) => {
-	//     if (err) {
-	//         console.error('Failed to save command list:', err);
-	//     } else {
-	//         console.log('Command list saved successfully:', result);
-	//     }
-	// });
-
-	//Also save commandList to a local json
-	// fs.writeFileSync('commandList.json', JSON.stringify(commandList, null, 2));
+        //Also save commandList to a local json
+        // fs.writeFileSync('commandList.json', JSON.stringify(commandList, null, 2));
 
 	// Construct and prepare an instance of the REST module
         const rest = new REST().setToken(token);
