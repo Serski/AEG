@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "bot.js",
   "scripts": {
-    "prestart": "node seeds/seedOnBoot.js",
+    "prestart": "node seeds/seedOnBoot.js && node -e \"if(process.env.DEPLOY_COMMANDS!=='false'){require('./deploy-commands.js')}\"",
     "start": "node bot.js",
     "init:raids": "node initRaidTargets.js"
   },
