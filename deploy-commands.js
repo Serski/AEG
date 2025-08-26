@@ -7,36 +7,33 @@ const { map } = require('./admin');
 
 
 async function loadCommands() {
-	const commands = [];
-	// Grab all the command folders from the commands directory you created earlier
-	const foldersPath = path.join(__dirname, 'commands');
-	const commandFolders = fs.readdirSync(foldersPath);
+        const commands = [];
+        const foldersPath = path.join(__dirname, 'commands');
+        const entries = fs.readdirSync(foldersPath, { withFileTypes: true });
 
-	let commandList = {};
-
-
-	for (const folder of commandFolders) {
-		// Grab all the command files from the commands directory you created earlier
-		const commandsPath = path.join(foldersPath, folder);
-		const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-
-		//Count command files, print, and than break
-		let count = 0;
-		for (const file of commandFiles) {
-			count++;
-		}
-		// Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
-		for (const file of commandFiles) {
-			//Add this command to the list of commands with fields "name", "description" and "help"
-			const filePath = path.join(commandsPath, file);
-			const command = require(filePath);
-			if ('data' in command && 'execute' in command) {
-				commands.push(command.data.toJSON());
-			} else {
-				console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
-			}
-		}
-	}
+        for (const entry of entries) {
+                if (entry.isDirectory()) {
+                        const commandsPath = path.join(foldersPath, entry.name);
+                        const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+                        for (const file of commandFiles) {
+                                const filePath = path.join(commandsPath, file);
+                                const command = require(filePath);
+                                if ('data' in command && 'execute' in command) {
+                                        commands.push(command.data.toJSON());
+                                } else {
+                                        console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+                                }
+                        }
+                } else if (entry.isFile() && entry.name.endsWith('.js')) {
+                        const filePath = path.join(foldersPath, entry.name);
+                        const command = require(filePath);
+                        if ('data' in command && 'execute' in command) {
+                                commands.push(command.data.toJSON());
+                        } else {
+                                console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+                        }
+                }
+        }
 
 	// dbm.saveFile('keys', 'commandList', commandList, (err, result) => {
 	//     if (err) {

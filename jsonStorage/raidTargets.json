@@ -1,0 +1,6 @@
+{
+  "easy":    { "enemyPower": 100, "loot": { "credits": [10, 50], "alloys": [2, 5] }, "lossFactor": 0.5 },
+  "medium":  { "enemyPower": 200, "loot": { "credits": [50, 100], "alloys": [5, 10] }, "lossFactor": 0.7 },
+  "hard":    { "enemyPower": 300, "loot": { "credits": [100, 200], "alloys": [10, 20] }, "lossFactor": 0.9 },
+  "extreme": { "enemyPower": 500, "loot": { "credits": [200, 400], "alloys": [20, 40] }, "lossFactor": 1.2 }
+}
