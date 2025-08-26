@@ -18,6 +18,10 @@ async function loadRaidTargets() {
   return await dbm.loadCollection('raidTargets');
 }
 
+async function loadShipCatalog() {
+  return await shipUtils.loadShipCatalog();
+}
+
 function rollPower(basePower, variancePercent = 0) {
   const variance = variancePercent;
   const delta = randomRange(-variance, variance);
@@ -98,6 +102,7 @@ async function simulateBattle(fleet, target, weights = DEFAULT_WEIGHTS, variance
 }
 
 module.exports = {
+  loadShipCatalog,
   loadRaidTargets,
   rollPower,
   calculateFleetPowerWeighted,
