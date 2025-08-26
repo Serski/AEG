@@ -44,7 +44,10 @@ module.exports = {
     const targetKey = targetInteraction.values[0];
     clientManager.setRaidSession(userId, { selectedTarget: targetKey });
     const fleet = charData.fleet || {};
+    // Load the ship catalog so we know which fleet entries are valid ships
     const catalog = await raidUtils.loadShipCatalog();
+    // Build an array of options: only include valid ship types from the catalog,
+    // ignore non-ship items, and cap to 25 entries for Discord’s API
     const shipOptions = Object.entries(fleet)
       .filter(([name, count]) => catalog[name] && count > 0)
       .slice(0, 25)
@@ -59,10 +62,8 @@ module.exports = {
       .setCustomId('raidShips')
       .setPlaceholder('Select ships to send')
       .setMinValues(1)
-      .setMaxValues(Math.min(shipOptions.length, 25));
-    if (shipOptions.length > 0) {
-      shipMenu.addOptions(shipOptions);
-    }
+      .setMaxValues(Math.min(shipOptions.length, 25))
+      .addOptions(shipOptions);
     await targetInteraction.update({ content: `Target **${targetKey}** selected. Choose ships to deploy.`, components: [new ActionRowBuilder().addComponents(shipMenu)] });
 
     let shipInteraction;
