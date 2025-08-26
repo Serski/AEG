@@ -1,4 +1,24 @@
 class clientManager {
+    // simple in-memory raid session store
+    static raidSessions = new Map();
+
+    static getRaidSession(userID) {
+        const session = this.raidSessions.get(userID);
+        if (session && session.expiresAt > Date.now()) {
+            return session;
+        }
+        this.raidSessions.delete(userID);
+        return null;
+    }
+
+    static setRaidSession(userID, data) {
+        const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
+        this.raidSessions.set(userID, { ...data, expiresAt });
+    }
+
+    static clearRaidSession(userID) {
+        this.raidSessions.delete(userID);
+    }
     static getEmoji(emojiName) {
         const bot = require('./bot');
 
