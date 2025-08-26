@@ -3,12 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 async function run() {
-  async function seedCollectionOnce(collectionName, jsonRelPath) {
-    const existing = await dbm.loadCollection(collectionName);
-    if (Object.keys(existing).length > 0) {
-      console.log(`[seed] ${collectionName}: already present, skipping.`);
-      return;
-    }
+  async function seedCollection(collectionName, jsonRelPath) {
     const filePath = path.join(__dirname, '..', 'jsonStorage', jsonRelPath);
     const raw = await fs.promises.readFile(filePath, 'utf8');
     const data = JSON.parse(raw);
@@ -22,8 +17,8 @@ async function run() {
     return;
   }
 
-  await seedCollectionOnce('shipCatalog', 'shipCatalog.json');
-  await seedCollectionOnce('raidTargets', 'raidTargets.json');
+  await seedCollection('shipCatalog', 'shipCatalog.json');
+  await seedCollection('raidTargets', 'raidTargets.json');
 }
 
 run().catch(err => {
