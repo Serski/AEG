@@ -3,6 +3,7 @@ const shop = require('./shop');
 const clientManager = require('./clientManager');
 const axios = require('axios');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, createWebhook } = require('discord.js');
+const shipUtils = require('./shipUtils');
 
 class char {
   static async warn(playerID) {
@@ -55,6 +56,7 @@ class char {
         inventory: {
           "Adventure Token": 1
         },
+        fleet: {},
         incomeList: {},
         incomeAvailable: true,
         stats: {
@@ -215,6 +217,24 @@ class char {
     } else {
       return "You haven't made a character! Use /newchar first";
     }
+  }
+
+  static async fleetPower(userID) {
+    const collectionName = 'characters';
+    const charData = await dbm.loadFile(collectionName, userID);
+    if (!charData) {
+      return "You haven't made a character! Use /newchar first";
+    }
+    const totals = await shipUtils.calculateFleetPower(charData.fleet || {});
+    return totals;
+  }
+
+  static async shipStats(shipName) {
+    const stats = await shipUtils.getShipStats(shipName);
+    if (!stats) {
+      return 'Ship not found';
+    }
+    return stats;
   }
 
   static async char(userID) {

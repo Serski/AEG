@@ -1,0 +1,6 @@
+{
+  "Corvette": { "tier": 1, "attack": 45, "defense": 25, "speed": 90, "hp": 300 },
+  "Destroyer": { "tier": 2, "attack": 70, "defense": 55, "speed": 65, "hp": 550 },
+  "Heavy Frigate": { "tier": 3, "attack": 90, "defense": 75, "speed": 45, "hp": 800 },
+  "Cruiser": { "tier": 4, "attack": 130, "defense": 90, "speed": 35, "hp": 1200 }
+}
