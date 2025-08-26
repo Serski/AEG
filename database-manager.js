@@ -40,8 +40,8 @@ async function ensureTable(table) {
 }
 
 async function saveCollection(collectionName, data) {
+  await pgReady;
   if (usingPg) {
-    await pgReady;
     const table = formatTable(collectionName);
     await ensureTable(table);
     await pgClient.query('BEGIN');
@@ -57,8 +57,8 @@ async function saveCollection(collectionName, data) {
 }
 
 async function loadCollection(collectionName) {
+  await pgReady;
   if (usingPg) {
-    await pgReady;
     const table = formatTable(collectionName);
     await ensureTable(table);
     const res = await pgClient.query(`SELECT id, data FROM ${table}`);
