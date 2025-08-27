@@ -43,7 +43,7 @@ async function saveCollection(collectionName, data) {
   await pgReady;
   if (usingPg) {
     const table = formatTable(collectionName);
-    await ensureTable(table);
+    await ensureTable(table); // ensure table exists before transaction
     await pgClient.query('BEGIN');
     await pgClient.query(`DELETE FROM ${table}`);
     for (const [id, value] of Object.entries(data)) {
