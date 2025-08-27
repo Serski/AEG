@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "main": "bot.js",
   "scripts": {
-    "prestart": "node seeds/seedOnBoot.js && node deploy-commands.js || true",
+    "prestart": "node seeds/seedOnBoot.js",
     "start": "node bot.js",
-    "init:raids": "node initRaidTargets.js"
+    "deploy:commands": "node deploy-commands.js"
   },
   "dependencies": {
     "axios": "^1.5.1",
