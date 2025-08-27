@@ -18,8 +18,8 @@ async function loadRaidTargets() {
   return await dbm.loadCollection('raidTargets');
 }
 
-async function loadShipCatalog() {
-  return await shipUtils.loadShipCatalog();
+function loadShipCatalog() {
+  return shipUtils.loadShipCatalog();
 }
 
 function rollPower(basePower, variancePercent = 0) {

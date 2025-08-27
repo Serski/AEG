@@ -1,7 +1,7 @@
 const dbm = require('./database-manager');
 
-async function loadShipCatalog() {
-  return await dbm.loadCollection('shipCatalog');
+function loadShipCatalog() {
+  return dbm.loadCollection('shipCatalog');
 }
 
 async function getShipStats(shipName) {
