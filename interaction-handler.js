@@ -205,7 +205,7 @@ helpSwitch = async (interaction) => {
 }
 
 exports.handle = async (interaction) => {
-  // Ignore raid select menus; let commands/raid.js handle them
+  // Ignore raid-related select menu interactions so the raid command can handle them.
   if (interaction.customId && interaction.customId.startsWith('raid')) {
     return;
   }
@@ -251,7 +251,7 @@ exports.handle = async (interaction) => {
     } else if (interaction.customId.substring(0, 11) === 'partySelect') {
       await admin.selectParty(interaction);
     }
-  } else if (interaction.isSelectMenu()) {
+  } else if (interaction.isStringSelectMenu()) {
     if (interaction.customId === 'shireSelect') {
       await admin.selectShire(interaction);
     }
