@@ -18,7 +18,7 @@ module.exports = {
     }
 
     const now = Date.now();
-    const COOLDOWN = 60 * 60 * 1000; // 1 hour
+    const COOLDOWN = 3 * 60 * 1000; // 1 hour
     if (charData.lastRaidAt && now - charData.lastRaidAt < COOLDOWN) {
       const mins = Math.ceil((COOLDOWN - (now - charData.lastRaidAt)) / 60000);
       await interaction.reply({ content: `You must wait ${mins} more minutes before raiding again.`, ephemeral: true });
