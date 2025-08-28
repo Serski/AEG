@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "main": "bot.js",
   "scripts": {
-    "prestart": "node seeds/seedOnBoot.js",
     "start": "node bot.js",
-    "deploy:commands": "node deploy-commands.js"
+    "deploy:commands": "node deploy-commands.js",
+    "seed:once": "node seeds/seedOnBoot.js"
   },
   "dependencies": {
     "axios": "^1.5.1",
