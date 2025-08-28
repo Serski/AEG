@@ -63,7 +63,7 @@ module.exports = {
       .slice(0, 25)
       .map(([name, count]) => ({ label: `${name} (${count})`, value: name }));
     if (shipOptions.length === 0) {
-      await replyMessage.edit({ content: 'You have no ships to deploy.', components: [] });
+      await interaction.editReply({ content: 'You have no ships to deploy.', components: [] });
       clientManager.clearRaidSession(userId);
       return;
     }
@@ -74,7 +74,7 @@ module.exports = {
       .setMinValues(1)
       .setMaxValues(Math.min(shipOptions.length, 25))
       .addOptions(shipOptions);
-    await replyMessage.edit({
+    await interaction.editReply({
       content: `Target **${targetKey}** selected. Choose ships to deploy.`,
       components: [new ActionRowBuilder().addComponents(shipMenu)]
     });
@@ -93,7 +93,7 @@ module.exports = {
     }
 
     const selectedShips = shipInteraction.values;
-    await replyMessage.edit({
+    await interaction.editReply({
       content: 'Enter quantities for each ship in the format "Ship:Amount" separated by commas.',
       components: []
     });
