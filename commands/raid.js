@@ -53,9 +53,20 @@ module.exports = {
 
     const targetKey = targetInteraction.values[0];
     clientManager.setRaidSession(userId, { selectedTarget: targetKey });
-    const fleet = charData.fleet || {};
-    // Load the ship catalog so we know which fleet entries are valid ships
+
+    // Load the ship catalog so we know which entries are valid ships
     const catalog = await raidUtils.loadShipCatalog();
+
+    // Build a temporary fleet combining owned ships with ship items in inventory
+    const fleet = { ...(charData.fleet || {}) };
+    if (charData.inventory) {
+      for (const [itemName, qty] of Object.entries(charData.inventory)) {
+        if (catalog[itemName]) {
+          fleet[itemName] = (fleet[itemName] || 0) + qty;
+        }
+      }
+    }
+
     // Build an array of options: only include valid ship types from the catalog,
     // ignore non-ship items, and cap to 25 entries for Discord’s API
     const shipOptions = Object.entries(fleet)
@@ -127,11 +138,22 @@ module.exports = {
     const variance = 0.1;
     const sim = await raidUtils.simulateBattle(fleetSelection, targets[targetKey], weights, variance);
 
+    // Remove casualties from fleet and inventory separately without merging them
     for (const [ship, lost] of Object.entries(sim.casualties)) {
-      fleet[ship] -= lost;
-      if (fleet[ship] <= 0) delete fleet[ship];
+      let remaining = lost;
+      if (charData.fleet && charData.fleet[ship]) {
+        const fromFleet = Math.min(remaining, charData.fleet[ship]);
+        charData.fleet[ship] -= fromFleet;
+        if (charData.fleet[ship] <= 0) delete charData.fleet[ship];
+        remaining -= fromFleet;
+      }
+      if (remaining > 0 && charData.inventory && charData.inventory[ship]) {
+        const fromInventory = Math.min(remaining, charData.inventory[ship]);
+        charData.inventory[ship] -= fromInventory;
+        if (charData.inventory[ship] <= 0) delete charData.inventory[ship];
+        remaining -= fromInventory;
+      }
     }
-    charData.fleet = fleet;
 
     if (sim.result !== 'loss') {
       for (const [res, amt] of Object.entries(sim.loot)) {
