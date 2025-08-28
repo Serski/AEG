@@ -37,6 +37,7 @@ module.exports = {
     let targetInteraction;
     try {
       targetInteraction = await interaction.awaitMessageComponent({ filter, componentType: ComponentType.StringSelect, time: 60000 });
+      await targetInteraction.deferUpdate();
     } catch (err) {
       return;
     }
@@ -69,6 +70,7 @@ module.exports = {
     let shipInteraction;
     try {
       shipInteraction = await interaction.awaitMessageComponent({ filter, componentType: ComponentType.StringSelect, time: 60000 });
+      await shipInteraction.deferUpdate();
     } catch (err) {
       clientManager.clearRaidSession(userId);
       return;
