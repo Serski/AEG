@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, ComponentType, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, ComponentType, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const raidUtils = require('../raidUtils');
 const dbm = require('../database-manager');
 const clientManager = require('../clientManager');
@@ -46,7 +46,6 @@ module.exports = {
         componentType: ComponentType.StringSelect,
         time: 60000
       });
-      await targetInteraction.deferUpdate();
     } catch (err) {
       return;
     }
@@ -67,62 +66,52 @@ module.exports = {
       }
     }
 
-    // Build an array of options: only include valid ship types from the catalog,
-    // ignore non-ship items, and cap to 25 entries for Discord’s API
-    const shipOptions = Object.entries(fleet)
+    const shipEntries = Object.entries(fleet)
       .filter(([name, count]) => catalog[name] && count > 0)
-      .slice(0, 25)
-      .map(([name, count]) => ({ label: `${name} (${count})`, value: name }));
-    if (shipOptions.length === 0) {
+      .slice(0, 5);
+    if (shipEntries.length === 0) {
       await interaction.editReply({ content: 'You have no ships to deploy.', components: [] });
       clientManager.clearRaidSession(userId);
       return;
     }
 
-    const shipMenu = new StringSelectMenuBuilder()
-      .setCustomId('raidShips')
-      .setPlaceholder('Select ships to send')
-      .setMinValues(1)
-      .setMaxValues(Math.min(shipOptions.length, 25))
-      .addOptions(shipOptions);
     await interaction.editReply({
-      content: `Target **${targetKey}** selected. Choose ships to deploy.`,
-      components: [new ActionRowBuilder().addComponents(shipMenu)]
+      content: `Target **${targetKey}** selected. Enter quantities in the modal.`,
+      components: []
     });
 
-    let shipInteraction;
+    const modal = new ModalBuilder().setCustomId('raidShipQuantities').setTitle('Ship Quantities');
+    for (const [name, count] of shipEntries) {
+      const input = new TextInputBuilder()
+        .setCustomId(`qty_${name}`)
+        .setLabel(`${name} (max ${count})`)
+        .setStyle(TextInputStyle.Short)
+        .setRequired(false);
+      modal.addComponents(new ActionRowBuilder().addComponents(input));
+    }
+
+    await targetInteraction.showModal(modal);
+
+    let modalInteraction;
     try {
-      shipInteraction = await replyMessage.awaitMessageComponent({
-        filter,
-        componentType: ComponentType.StringSelect,
+      modalInteraction = await targetInteraction.awaitModalSubmit({
+        filter: i => i.customId === 'raidShipQuantities' && i.user.id === userId,
         time: 60000
       });
-      await shipInteraction.deferUpdate();
+      await modalInteraction.deferUpdate();
     } catch (err) {
       clientManager.clearRaidSession(userId);
       return;
     }
 
-    const selectedShips = shipInteraction.values;
-    await interaction.editReply({
-      content: 'Enter quantities for each ship in the format "Ship:Amount" separated by commas.',
-      components: []
-    });
-
-    const msgFilter = m => m.author.id === userId;
-    const collected = await interaction.channel.awaitMessages({ filter: msgFilter, max: 1, time: 60000 });
-    if (collected.size === 0) {
-      clientManager.clearRaidSession(userId);
-      return;
-    }
-
-    const response = collected.first().content;
     const fleetSelection = {};
-    response.split(',').forEach(part => {
-      const [name, qty] = part.split(':').map(t => t.trim());
-      const n = parseInt(qty, 10);
-      if (name && !isNaN(n)) fleetSelection[name] = n;
-    });
+    for (const [name] of shipEntries) {
+      const value = modalInteraction.fields.getTextInputValue(`qty_${name}`);
+      const n = parseInt(value, 10);
+      if (!isNaN(n) && n > 0) {
+        fleetSelection[name] = n;
+      }
+    }
 
     clientManager.setRaidSession(userId, { selectedTarget: targetKey, fleetSelection });
 
