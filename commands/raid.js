@@ -31,12 +31,13 @@ module.exports = {
       .setCustomId('raidTarget')
       .setPlaceholder('Select a target')
       .addOptions(targetOptions);
-    await interaction.reply({ content: 'Choose a raid target', components: [new ActionRowBuilder().addComponents(targetMenu)], ephemeral: true });
+    await interaction.reply({ content: 'Choose a raid target', components: [new ActionRowBuilder().addComponents(targetMenu)], flags: 64 });
 
     const filter = i => i.user.id === userId;
     let targetInteraction;
     try {
       targetInteraction = await interaction.awaitMessageComponent({ filter, componentType: ComponentType.StringSelect, time: 60000 });
+      await targetInteraction.deferUpdate();
     } catch (err) {
       return;
     }
@@ -53,7 +54,7 @@ module.exports = {
       .slice(0, 25)
       .map(([name, count]) => ({ label: `${name} (${count})`, value: name }));
     if (shipOptions.length === 0) {
-      await targetInteraction.update({ content: 'You have no ships to deploy.', components: [] });
+      await interaction.editReply({ content: 'You have no ships to deploy.', components: [] });
       clientManager.clearRaidSession(userId);
       return;
     }
@@ -64,18 +65,19 @@ module.exports = {
       .setMinValues(1)
       .setMaxValues(Math.min(shipOptions.length, 25))
       .addOptions(shipOptions);
-    await targetInteraction.update({ content: `Target **${targetKey}** selected. Choose ships to deploy.`, components: [new ActionRowBuilder().addComponents(shipMenu)] });
+    await interaction.editReply({ content: `Target **${targetKey}** selected. Choose ships to deploy.`, components: [new ActionRowBuilder().addComponents(shipMenu)] });
 
     let shipInteraction;
     try {
       shipInteraction = await interaction.awaitMessageComponent({ filter, componentType: ComponentType.StringSelect, time: 60000 });
+      await shipInteraction.deferUpdate();
     } catch (err) {
       clientManager.clearRaidSession(userId);
       return;
     }
 
     const selectedShips = shipInteraction.values;
-    await shipInteraction.update({ content: `Enter quantities for each ship in the format "Ship:Amount" separated by commas.`, components: [] });
+    await interaction.editReply({ content: `Enter quantities for each ship in the format "Ship:Amount" separated by commas.`, components: [] });
 
     const msgFilter = m => m.author.id === userId;
     const collected = await interaction.channel.awaitMessages({ filter: msgFilter, max: 1, time: 60000 });
