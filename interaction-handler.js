@@ -205,6 +205,10 @@ helpSwitch = async (interaction) => {
 }
 
 exports.handle = async (interaction) => {
+  // Ignore raid select menus; let commands/raid.js handle them
+  if (interaction.customId && interaction.customId.startsWith('raid')) {
+    return;
+  }
   console.log(interaction.customId);
   if (interaction.isModalSubmit()) {
     if (interaction.customId === 'additemmodal') {
