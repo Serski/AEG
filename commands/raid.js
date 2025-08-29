@@ -4,6 +4,14 @@ const raidUtils = require('../raidUtils');
 const dbm = require('../database-manager');
 const clientManager = require('../clientManager');
 
+// Custom display names for each difficulty
+const DIFFICULTY_NAMES = {
+  easy: 'Graven Belt',
+  medium: 'Dyne Rift',
+  hard: 'Razathaar Sector',
+  extreme: 'Dominion Frontier'
+};
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('raid')
@@ -27,7 +35,10 @@ module.exports = {
     }
 
     const targets = await raidUtils.loadRaidTargets();
-    const targetOptions = Object.keys(targets).map(key => ({ label: key, value: key }));
+    const targetOptions = Object.keys(targets).map(key => ({
+      label: DIFFICULTY_NAMES[key] ?? key,
+      value: key
+    }));
     const targetMenu = new StringSelectMenuBuilder()
       .setCustomId('raidTarget')
       .setPlaceholder('Select a target')
@@ -88,8 +99,9 @@ module.exports = {
       return;
     }
 
+    const difficultyLabel = DIFFICULTY_NAMES[targetKey] ?? targetKey;
     await interaction.editReply({
-      content: `Target **${targetKey}** selected. Enter quantities in the modal.`,
+      content: `Target **${difficultyLabel}** selected. Choose ships to deploy.`,
       components: []
     });
 
