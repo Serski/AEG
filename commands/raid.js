@@ -1,4 +1,5 @@
-const { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, ComponentType, EmbedBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, ComponentType, EmbedBuilder, AttachmentBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const path = require('path');
 const raidUtils = require('../raidUtils');
 const dbm = require('../database-manager');
 const clientManager = require('../clientManager');
@@ -31,9 +32,21 @@ module.exports = {
       .setCustomId('raidTarget')
       .setPlaceholder('Select a target')
       .addOptions(targetOptions);
+
+    const raidEmbed = new EmbedBuilder()
+      .setTitle('Choose a raid target')
+      .setDescription('Select a difficulty from the dropdown below.')
+      .setImage('attachment://raidPanel.png');
+
+    const raidImage = new AttachmentBuilder(
+      path.join(__dirname, '../assets/raidPanel.png'),
+      { name: 'raidPanel.png' }
+    );
+
     const replyMessage = await interaction.reply({
-      content: 'Choose a raid target',
-      components: [new ActionRowBuilder().addComponents(targetMenu)],
+      embeds: [raidEmbed],
+      components: [ new ActionRowBuilder().addComponents(targetMenu) ],
+      files: [ raidImage ],
       flags: 64,
       fetchReply: true
     });
