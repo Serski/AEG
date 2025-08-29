@@ -195,17 +195,18 @@ module.exports = {
     });
 
     const victoryImage = new AttachmentBuilder(
-      path.join(__dirname, '../assets/VICTORY.png'),
-      { name: 'VICTORY.png' }
+      path.join(__dirname, '../assets/VICTORY.PNG'),
+      { name: 'VICTORY.PNG' }
     );
     const defeatImage = new AttachmentBuilder(
-      path.join(__dirname, '../assets/FAILURE copy.png'),
-      { name: 'FAILURE copy.png' }
+      path.join(__dirname, '../assets/FAILURE.PNG'),
+      { name: 'FAILURE.PNG' }
     );
 
+    const result = sim.result;
     const resultEmbed = new EmbedBuilder()
-      .setTitle(`Raid ${sim.result.toUpperCase()}`)
-      .setColor(sim.result === 'win' ? 0x00ff00 : sim.result === 'pyrrhic' ? 0xffa500 : 0xff0000)
+      .setTitle(`Raid ${result.toUpperCase()}`)
+      .setColor(result === 'win' ? 0x00ff00 : result === 'pyrrhic' ? 0xffa500 : 0xff0000)
       .addFields(
         { name: 'Enemy Roll', value: sim.rolls.enemy.toFixed(2), inline: true },
         { name: 'Your Roll', value: sim.rolls.player.toFixed(2), inline: true },
@@ -213,15 +214,19 @@ module.exports = {
       .addFields({ name: 'Loot', value: Object.entries(sim.loot).map(([k, v]) => `${k}: ${v}`).join('\n') || 'None' })
       .addFields({ name: 'Casualties', value: Object.entries(sim.casualties).map(([k, v]) => `${k}: ${v}`).join('\n') || 'None' });
 
-    if (sim.result === 'win' || sim.result === 'pyrrhic') {
-      resultEmbed.setImage('attachment://VICTORY.png');
-    } else if (sim.result === 'loss') {
-      resultEmbed.setImage('attachment://FAILURE copy.png');
+    if (result === 'loss') {
+      resultEmbed.setImage('attachment://FAILURE.PNG');
+    } else if (result === 'win' || result === 'pyrrhic') {
+      resultEmbed.setImage('attachment://VICTORY.PNG');
     }
 
-    const files = sim.result === 'loss' ? [defeatImage] : [victoryImage];
-
-    await interaction.followUp({ embeds: [resultEmbed], files, ephemeral: true });
+    if (result === 'loss') {
+      await interaction.editReply({ embeds: [resultEmbed], files: [defeatImage], components: [] });
+    } else if (result === 'win' || result === 'pyrrhic') {
+      await interaction.editReply({ embeds: [resultEmbed], files: [victoryImage], components: [] });
+    } else {
+      await interaction.editReply({ embeds: [resultEmbed], components: [] });
+    }
     clientManager.clearRaidSession(userId);
   },
 };
