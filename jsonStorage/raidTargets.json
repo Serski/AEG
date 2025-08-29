@@ -1,6 +1,7 @@
 {
   "easy": {
     "loot": {
+      "credits": [200, 400],
       "AFM": [5, 10],
       "PCC": [2, 5]
     },
@@ -9,25 +10,28 @@
   },
   "medium": {
     "loot": {
+      "credits": [500, 800],
       "AFM": [10, 20],
       "PCC": [5, 10],
       "OOP": [1, 3]
     },
-    "enemyPower": 300,
+    "enemyPower": 400,
     "lossFactor": 0.7
   },
   "hard": {
     "loot": {
+      "credits": [1000, 1500],
       "AFM": [20, 40],
       "PCC": [10, 20],
       "OOP": [5, 8],
       "GGP": [2, 4]
     },
-    "enemyPower": 800,
+    "enemyPower": 1000,
     "lossFactor": 0.9
   },
   "extreme": {
     "loot": {
+      "credits": [2000, 3000],
       "AFM": [40, 60],
       "PCC": [20, 40],
       "OOP": [10, 15],
@@ -35,8 +39,7 @@
       "QFR": [1, 2],
       "NCM": [1, 1]
     },
-    "enemyPower": 1500,
+    "enemyPower": 2500,
     "lossFactor": 1.0
   }
 }
-
