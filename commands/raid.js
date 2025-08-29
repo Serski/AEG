@@ -45,8 +45,8 @@ module.exports = {
       .addOptions(targetOptions);
 
     const raidEmbed = new EmbedBuilder()
-      .setTitle('Choose a raid target')
-      .setDescription('Select a difficulty from the dropdown below.')
+      .setTitle('Which ship bleeds for you tonight?')
+      .setDescription('Select your prey from the dropdown menu')
       .setImage('attachment://raidPanel.png');
 
     const raidImage = new AttachmentBuilder(
