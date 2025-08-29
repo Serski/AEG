@@ -194,7 +194,16 @@ module.exports = {
       timestamp: new Date(now).toISOString(),
     });
 
-    const embed = new EmbedBuilder()
+    const victoryImage = new AttachmentBuilder(
+      path.join(__dirname, '../assets/VICTORY.png'),
+      { name: 'VICTORY.png' }
+    );
+    const defeatImage = new AttachmentBuilder(
+      path.join(__dirname, '../assets/FAILURE copy.png'),
+      { name: 'FAILURE copy.png' }
+    );
+
+    const resultEmbed = new EmbedBuilder()
       .setTitle(`Raid ${sim.result.toUpperCase()}`)
       .setColor(sim.result === 'win' ? 0x00ff00 : sim.result === 'pyrrhic' ? 0xffa500 : 0xff0000)
       .addFields(
@@ -204,7 +213,15 @@ module.exports = {
       .addFields({ name: 'Loot', value: Object.entries(sim.loot).map(([k, v]) => `${k}: ${v}`).join('\n') || 'None' })
       .addFields({ name: 'Casualties', value: Object.entries(sim.casualties).map(([k, v]) => `${k}: ${v}`).join('\n') || 'None' });
 
-    await interaction.followUp({ embeds: [embed], ephemeral: true });
+    if (sim.result === 'win' || sim.result === 'pyrrhic') {
+      resultEmbed.setImage('attachment://VICTORY.png');
+    } else if (sim.result === 'loss') {
+      resultEmbed.setImage('attachment://FAILURE copy.png');
+    }
+
+    const files = sim.result === 'loss' ? [defeatImage] : [victoryImage];
+
+    await interaction.followUp({ embeds: [resultEmbed], files, ephemeral: true });
     clientManager.clearRaidSession(userId);
   },
 };
