@@ -12,6 +12,14 @@ const DIFFICULTY_NAMES = {
   extreme: 'Dominion Frontier'
 };
 
+// News-feed messages per difficulty (used on defeat)
+const NEWS_MESSAGES = {
+  easy: `Graven Belt\n\nCorvettes dove in hungry for ore. Asteroids turned them into pinballs. Zero ore, zero dignity.\n#RockWins #GravenGrave`,
+  medium: `Dyne Rift\nFleet went hunting along the Rift. Lost half their hulls to “unmapped gravity burps.” Space laughed hardest.\n#RiftRookies #OopsAllMass`,
+  hard: `Razathaar Orbit\nRaiders thought they’d camp the spice freighters. Forgot Razathaar’s winds launch debris into orbit. Scrap confetti now.\n#DesertOrbit #TrashFireFleet`,
+  extreme: `Dominion Frontier\nStrike wing crossed the line blasting music. Dominion Battleship choir answered louder. Guess whose logs we’re reading?\n#HereticHumbled #ChoirOfBoom`
+};
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('raid')
@@ -211,6 +219,19 @@ module.exports = {
     );
 
     const result = sim.result;
+
+    if (result === 'loss') {
+      const newsMessage = NEWS_MESSAGES[targetKey];
+      const newsChannel = interaction.guild?.channels.cache
+        .find(ch => ch.name === 'news-feed' && ch.isTextBased());
+      if (newsChannel && newsMessage) {
+        try {
+          newsChannel.send(newsMessage);
+        } catch (err) {
+          console.error('[raid] Failed to send news-feed message:', err);
+        }
+      }
+    }
     const resultEmbed = new EmbedBuilder()
       .setTitle(`Raid ${result.toUpperCase()}`)
       .setColor(result === 'win' ? 0x00ff00 : result === 'pyrrhic' ? 0xffa500 : 0xff0000)
