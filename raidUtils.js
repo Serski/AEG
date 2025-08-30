@@ -64,7 +64,14 @@ async function calculateFleetPowerWeighted(fleet = {}, weights = DEFAULT_WEIGHTS
   return power;
 }
 
-async function simulateBattle(fleet, target, weights = DEFAULT_WEIGHTS, variance = 0.1) {
+async function simulateBattle(
+  fleet,
+  target,
+  tier,
+  charData,
+  weights = DEFAULT_WEIGHTS,
+  variance = 0.1
+) {
   const basePlayerPower = await calculateFleetPowerWeighted(fleet, weights);
   const playerRoll = rollPower(basePlayerPower, variance);
   const enemyRoll = rollPower(target.enemyPower, variance);
@@ -119,6 +126,16 @@ async function simulateBattle(fleet, target, weights = DEFAULT_WEIGHTS, variance
       const base = Math.floor(randomRange(min, max + 1));
       // Apply combined multiplier from battle outcome and fleet composition
       loot[resource] = Math.max(0, Math.round(base * totalMult));
+    }
+
+    if ((result === 'win' || result === 'pyrrhic') && RARE_DROP_SHIP[tier]) {
+      const chance = RARE_DROP_CHANCE[tier] ?? 0;
+      if (Math.random() < chance) {
+        const rareShip = RARE_DROP_SHIP[tier];
+        if (!charData.inventory) charData.inventory = {};
+        charData.inventory[rareShip] = (charData.inventory[rareShip] || 0) + 1;
+        loot[rareShip] = (loot[rareShip] || 0) + 1;
+      }
     }
   }
 
