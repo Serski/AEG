@@ -97,6 +97,12 @@ async function simulateBattle(fleet, target, weights = DEFAULT_WEIGHTS, variance
   const survivorMult = 0.6 + 0.4 * survivorHP;
   const finalMult = survivorMult * overkillMult;
 
+  // Bonus multiplier for having a diverse fleet composition. Each additional
+  // ship type beyond the first adds 5% to rewards, up to a maximum bonus of 20%.
+  const distinctTypes = Object.keys(fleet).filter(type => fleet[type] > 0).length;
+  const compositionMult = 1 + Math.min(0.20, 0.05 * (distinctTypes - 1));
+  const totalMult = finalMult * compositionMult; // final reward multiplier
+
   const casualties = {};
   for (const [name, count] of Object.entries(fleet)) {
     const stats = catalog[name];
@@ -111,7 +117,8 @@ async function simulateBattle(fleet, target, weights = DEFAULT_WEIGHTS, variance
     for (const [resource, range] of Object.entries(target.loot || {})) {
       const [min, max] = range;
       const base = Math.floor(randomRange(min, max + 1));
-      loot[resource] = Math.max(0, Math.round(base * finalMult));
+      // Apply combined multiplier from battle outcome and fleet composition
+      loot[resource] = Math.max(0, Math.round(base * totalMult));
     }
   }
 
