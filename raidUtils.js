@@ -67,10 +67,10 @@ async function calculateFleetPowerWeighted(fleet = {}, weights = DEFAULT_WEIGHTS
 async function simulateBattle(
   fleet,
   target,
-  tier,
-  charData,
   weights = DEFAULT_WEIGHTS,
-  variance = 0.1
+  variance = 0.1,
+  tier,
+  charData
 ) {
   const basePlayerPower = await calculateFleetPowerWeighted(fleet, weights);
   const playerRoll = rollPower(basePlayerPower, variance);
