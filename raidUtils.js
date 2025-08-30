@@ -10,6 +10,20 @@ const DEFAULT_WEIGHTS = {
   tier: 5,
 };
 
+// Chance (0–1) to drop a rare ship on a win/pyrrhic win
+const RARE_DROP_CHANCE = {
+  medium: 0.05,
+  hard: 0.05,
+  extreme: 0.05,
+};
+
+// Mapping from tier to the ship type awarded on a rare drop
+const RARE_DROP_SHIP = {
+  medium: 'Corvette',
+  hard: 'Destroyer',
+  extreme: 'Cruiser',
+};
+
 function randomRange(min, max) {
   return Math.random() * (max - min) + min;
 }
@@ -111,4 +125,6 @@ module.exports = {
   calculateFleetPowerWeighted,
   simulateBattle,
   DEFAULT_WEIGHTS,
+  RARE_DROP_CHANCE,
+  RARE_DROP_SHIP,
 };
