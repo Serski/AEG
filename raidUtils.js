@@ -55,9 +55,9 @@ async function simulateBattle(fleet, target, weights = DEFAULT_WEIGHTS, variance
   const playerRoll = rollPower(basePlayerPower, variance);
   const enemyRoll = rollPower(target.enemyPower, variance);
   const rolls = { player: playerRoll, enemy: enemyRoll };
-
-  const pressure = enemyRoll / Math.max(playerRoll, 1);
-  const margin = (playerRoll - enemyRoll) / enemyRoll;
+  const powerRatio = enemyRoll / Math.max(playerRoll, 1);
+  const overkillMult = Math.min(1, Math.max(0.6, powerRatio));
+  const pressure = powerRatio;
 
   let result = 'loss';
   if (playerRoll >= enemyRoll) {
@@ -79,6 +79,10 @@ async function simulateBattle(fleet, target, weights = DEFAULT_WEIGHTS, variance
     casualtyRate = pressure * (target.lossFactor || 1);
   }
 
+  const survivorHP = Math.max(0, 1 - casualtyRate);
+  const survivorMult = 0.6 + 0.4 * survivorHP;
+  const finalMult = survivorMult * overkillMult;
+
   const casualties = {};
   for (const [name, count] of Object.entries(fleet)) {
     const stats = catalog[name];
@@ -93,8 +97,7 @@ async function simulateBattle(fleet, target, weights = DEFAULT_WEIGHTS, variance
     for (const [resource, range] of Object.entries(target.loot || {})) {
       const [min, max] = range;
       const base = Math.floor(randomRange(min, max + 1));
-      const scaled = Math.max(0, Math.round(base * (1 + Math.max(0, margin))));
-      loot[resource] = scaled;
+      loot[resource] = Math.max(0, Math.round(base * finalMult));
     }
   }
 
