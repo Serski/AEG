@@ -153,10 +153,10 @@ module.exports = {
     const sim = await raidUtils.simulateBattle(
       fleetSelection,
       targets[targetKey],
-      targetKey,
-      charData,
       weights,
-      variance
+      variance,
+      targetKey,
+      charData
     );
 
     // Remove casualties from fleet and inventory separately without merging them
@@ -180,12 +180,8 @@ module.exports = {
       for (const [res, amt] of Object.entries(sim.loot)) {
         if (res === 'credits' || res === 'gold') {
           charData.balance = (charData.balance || 0) + amt;
-        } else {
+        } else if (!catalog[res]) {
           if (!charData.inventory) charData.inventory = {};
-          if (res === raidUtils.RARE_DROP_SHIP[targetKey]) {
-            // Rare ship already added in simulateBattle
-            continue;
-          }
           charData.inventory[res] = (charData.inventory[res] || 0) + amt;
         }
       }
