@@ -1012,11 +1012,11 @@ When selected grants the:
 
   static async allIncomes(page = 1) {
     let maxLength = 10;
-    let incomeList = await dbm.loadFile("keys", "incomeList");
-    let shopData = await dbm.loadCollection("shop");
-    if (Object.keys(incomeList).length == 0) {
+    let incomeList = await dbm.loadFile("keys", "incomeList") || {};
+    if (Object.keys(incomeList).length === 0) {
       return "No incomes found";
     }
+    let shopData = await dbm.loadCollection("shop");
 
     let goldList = [];
     let itemList = [];
@@ -1045,12 +1045,9 @@ When selected grants the:
     //Combine all lists into one list
     for (const income of sortedIncomes) {
       let incomeValue = incomeList[income];
-      let emoji = incomeValue.emoji;
-      let delay = incomeValue.delay;
-      if (delay == undefined || delay == "") {
-        delay = "1D";
-      }
-      let roles = incomeValue.roles;
+      let emoji = incomeValue.emoji || "";
+      let delay = incomeValue.delay || "1D";
+      let roles = Array.isArray(incomeValue.roles) ? incomeValue.roles : [];
       let rolesString = "";
 
       let justGold = false;
