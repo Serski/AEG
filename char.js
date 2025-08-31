@@ -1218,9 +1218,11 @@ class char {
             return "This item does not have a countdown. Likely an error in setup, ping Alex or Serski";
           }
 
-          const PrestigeEmoji = '<:Prestige:1165722839228354610>';
-          const MartialEmoji = '<:Martial:1165722873248354425>';
-          const IntrigueEmoji = '<:Intrigue:1165722896522563715>';
+          const hpEmoji = clientManager.getEmoji("HP");
+          const strEmoji = clientManager.getEmoji("STR");
+          const dexEmoji = clientManager.getEmoji("DEX");
+          const intEmoji = clientManager.getEmoji("INT");
+          const chaEmoji = clientManager.getEmoji("CHA");
 
           if (shopData[itemName].usageCase.gives) {
             let takeString = "";
@@ -1238,14 +1240,20 @@ class char {
                 let val = shopData[itemName].usageCase.takes[key];
                 let icon;
                 switch (key) {
-                  case "Prestige":
-                    icon = PrestigeEmoji;
+                  case "HP":
+                    icon = hpEmoji;
                     break;
-                  case "Martial":
-                    icon = MartialEmoji;
+                  case "STR":
+                    icon = strEmoji;
                     break;
-                  case "Intrigue":
-                    icon = IntrigueEmoji;
+                  case "DEX":
+                    icon = dexEmoji;
+                    break;
+                  case "INT":
+                    icon = intEmoji;
+                    break;
+                  case "CHA":
+                    icon = chaEmoji;
                     break;
                   default:
                     return "This use case includes an invalid stat name. Likely an error in setup, contact Alex or Serski";
@@ -1262,14 +1270,20 @@ class char {
               let val = shopData[itemName].usageCase.gives[key];
               let icon;
               switch (key) {
-                case "Prestige":
-                  icon = PrestigeEmoji;
+                case "HP":
+                  icon = hpEmoji;
                   break;
-                case "Martial":
-                  icon = MartialEmoji;
+                case "STR":
+                  icon = strEmoji;
                   break;
-                case "Intrigue":
-                  icon = IntrigueEmoji;
+                case "DEX":
+                  icon = dexEmoji;
+                  break;
+                case "INT":
+                  icon = intEmoji;
+                  break;
+                case "CHA":
+                  icon = chaEmoji;
                   break;
                 default:
                   return "This use case includes an invalid stat name. Likely an error in setup, contact Alex or Serski";
