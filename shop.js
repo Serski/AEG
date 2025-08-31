@@ -13,7 +13,7 @@ class shop {
       'Show Image', 'Show Message', 'Give/Take Money (#)', 'Cooldown in Hours (#)',
       'Give Item', 'Give Item 2', 'Give Item 3', 'Give Item 4', 'Give Item 5',
       'Take Item', 'Take Item 2', 'Take Item 3', 'Take Item 4', 'Take Item 5',
-      'Change Legitimacy (#)', 'Change Prestige (#)', 'Change Martial (#)', 'Change Intrigue (#)', 'Change Devotion (#)', 'Revive (Y/N)', 'Durability (#)'
+      'Change HP (#)', 'Change STR (#)', 'Change DEX (#)', 'Change INT (#)', 'Change CHA (#)', 'Revive (Y/N)', 'Durability (#)'
     ];
   static recipeOptions = [
       'Name', 'Icon', 'Show Image', 'Show Message',
@@ -766,7 +766,7 @@ class shop {
       if (itemData.usageOptions["Is Usable (Y/N)"] == "Yes") {
         aboutString += "\n**On Usage:**\nGives:";
         //Iterate through usageOptions to find any key that starts with "Give Item". If any exist, add them to the aboutString. The value will be a string "Number Name" that will have to be split (Name may contain spaces, such as Iron Spear)
-        //Also search for anything starting with Change, which will be a change in prestige, Martial, or intrigue. If they're positive, add this. This value will just be an integer in string form
+        //Also search for anything starting with Change, which will be a change in HP, STR, DEX, INT, or CHA. If they're positive, add this. This value will just be an integer in string form
         for (let key in itemData.usageOptions) {
           //Check if value is blank
           if (itemData.usageOptions[key] == "") {
@@ -960,7 +960,7 @@ class shop {
     Info Options: Name, Icon, Category, Image, Description
     Shop Options: Price, Need Role, Give Role, Take Role
     Page 2: Usage Options
-    Usage Options: Is Usable, Removed on Use, Need Role, Give Role, Take Role, Show an Image, Show a Message, Give/Take Money, Cooldown, Give Item, Give Item 2, Give Item 3, Take Item, Take Item 2, Take Item 3, Give Item, Give Item 2, Give Item 3, Change Prestige, Change Martial, Change Intrigue
+    Usage Options: Is Usable, Removed on Use, Need Role, Give Role, Take Role, Show an Image, Show a Message, Give/Take Money, Cooldown, Give Item, Give Item 2, Give Item 3, Take Item, Take Item 2, Take Item 3, Give Item, Give Item 2, Give Item 3, Change HP, Change STR, Change DEX, Change INT, Change CHA
     */
   static async editItemMenu(itemName, pageNumber, tag) {
     pageNumber = Number(pageNumber);
