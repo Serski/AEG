@@ -1410,13 +1410,13 @@ class char {
       return "Error: Player not found";
     }
 
-    stat = stat.charAt(0).toUpperCase() + stat.slice(1).toLowerCase();
+    stat = stat.toUpperCase();
     switch (stat) {
-      case "Prestige":
-      case "Martial":
-      case "Intrigue":
-      case "Devotion":
-      case "Legitimacy":
+      case "HP":
+      case "STR":
+      case "DEX":
+      case "INT":
+      case "CHA":
         break;
       default:
         return "Invalid stat";
