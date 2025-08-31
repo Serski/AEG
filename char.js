@@ -59,13 +59,7 @@ class char {
         fleet: {},
         incomeList: {},
         incomeAvailable: true,
-        stats: {
-          Martial: 0,
-          Intrigue: 0,
-          Prestige: 0,
-          Devotion: 0,
-          Legitimacy: 0
-        },
+        stats: { HP: 100, STR: 0, DEX: 0, INT: 0, CHA: 0 },
         cooldowns: {
           craftSlots: {},
           usageCooldowns: {}
