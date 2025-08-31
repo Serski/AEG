@@ -4,9 +4,15 @@ const char = require('../../char'); // Importing the database manager
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('changeplayerstats')
-        .setDescription('Change stats of a player')
+        .setDescription('Change HP, STR, DEX, INT, or CHA of a player')
         .addUserOption(option => option.setName('player').setDescription('The player to set the gold of').setRequired(true))
-        .addStringOption(option => option.setName('stat').setDescription('The stat to change').setRequired(true))
+        .addStringOption(option => option.setName('stat').setDescription('Which stat to change (HP, STR, DEX, INT, CHA)').setRequired(true)
+            .addChoices(
+                {name: 'HP', value: 'HP'},
+                {name: 'STR', value: 'STR'},
+                {name: 'DEX', value: 'DEX'},
+                {name: 'INT', value: 'INT'},
+                {name: 'CHA', value: 'CHA'}))
         .addIntegerOption(option => option.setName('value').setDescription('The value to change stat by').setRequired(true))
         .setDefaultMemberPermissions(0),
     async execute(interaction) {
