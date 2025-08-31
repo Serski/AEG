@@ -259,58 +259,58 @@ class char {
   }
 
   static async getStatsBlock(charData, userID) {
-    const PrestigeEmoji = clientManager.getEmoji("Prestige");
-    const MartialEmoji = clientManager.getEmoji("Martial");
-    const IntrigueEmoji = clientManager.getEmoji("Intrigue");
-    const DevotionEmoji = clientManager.getEmoji("Devotion");
-    console.log(DevotionEmoji);
-    const LegitimacyEmoji = clientManager.getEmoji("Legitimacy");
+    const strEmoji = clientManager.getEmoji("STR");
+    const dexEmoji = clientManager.getEmoji("DEX");
+    const intEmoji = clientManager.getEmoji("INT");
+    const chaEmoji = clientManager.getEmoji("CHA");
+    console.log(chaEmoji);
+    const hpEmoji = clientManager.getEmoji("HP");
 
-    let prestige = charData.stats.Prestige;
-    let martial = charData.stats.Martial;
-    let intrigue = charData.stats.Intrigue;
-    let devotion = charData.stats.Devotion;
-    let legitimacy = charData.stats.Legitimacy;
+    let str = charData.stats.STR;
+    let dex = charData.stats.DEX;
+    let int = charData.stats.INT;
+    let cha = charData.stats.CHA;
+    let hp = charData.stats.HP;
 
     //If any are > 100, set them to 100
     let valChanged = false;
-    if (prestige > 100) {
-      prestige = 100;
+    if (str > 100) {
+      str = 100;
       valChanged = true;
     }
-    if (martial > 100) {
-      martial = 100;
+    if (dex > 100) {
+      dex = 100;
       valChanged = true;
     }
-    if (intrigue > 100) {
-      intrigue = 100;
+    if (int > 100) {
+      int = 100;
       valChanged = true;
     }
-    if (devotion > 100) {
-      devotion = 100;
+    if (cha > 100) {
+      cha = 100;
       valChanged = true;
     }
-    if (legitimacy > 100) {
-      legitimacy = 100;
+    if (hp > 100) {
+      hp = 100;
       valChanged = true;
     }
 
     if (valChanged) {
-      charData.stats.Prestige = prestige;
-      charData.stats.Martial = martial;
-      charData.stats.Intrigue = intrigue;
-      charData.stats.Devotion = devotion;
-      charData.stats.Legitimacy = legitimacy;
+      charData.stats.STR = str;
+      charData.stats.DEX = dex;
+      charData.stats.INT = int;
+      charData.stats.CHA = cha;
+      charData.stats.HP = hp;
       console.log(userID);
       await dbm.saveFile('characters', userID, charData);
     }
 
-    return "**`━━━━━━━Stats━━━━━━━`**\n"+ 
-            "**" + LegitimacyEmoji + " Legitimacy: " + legitimacy + "**/100\n" +
-            "**" + PrestigeEmoji + " Prestige: " + prestige + "**/100\n" +
-            "**" + MartialEmoji + " Martial: " + martial + "**/100\n" +
-            "**" + IntrigueEmoji + " Intrigue: " + intrigue + "**/100\n" +
-            "**" + DevotionEmoji + " Devotion: " + devotion + "**/100\n" +
+    return "**`━━━━━━━Stats━━━━━━━`**\n"+
+            "**" + hpEmoji + " HP: " + hp + "**/100\n" +
+            "**" + strEmoji + " STR: " + str + "**/100\n" +
+            "**" + dexEmoji + " DEX: " + dex + "**/100\n" +
+            "**" + intEmoji + " INT: " + int + "**/100\n" +
+            "**" + chaEmoji + " CHA: " + cha + "**/100\n" +
             "**`━━━━━━━━━━━━━━━━━━━`**";
   }
 
