@@ -972,11 +972,14 @@ class shop {
 
     //Load user data, check if user has attribute "Item Edited" and if so change the value to the item name. If not, create the attribute
     let userData = await dbm.loadCollection('characters');
+    if (!userData[tag]) {
+      userData[tag] = {};
+    }
     if (!userData[tag].editingFields) {
       userData[tag].editingFields = {};
     }
     userData[tag].editingFields["Item Edited"] = itemName;
-    await dbm.saveCollection('characters', userData);
+    await dbm.saveFile('characters', tag, userData[tag]);
 
     //Loatd item data
     let itemData = shopData[itemName];
