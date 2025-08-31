@@ -123,7 +123,7 @@ class char {
         color: 0x36393e,
         author: {
           name: charData.name,
-          icon_url: charData.icon ? charData.icon : 'https://cdn.discordapp.com/attachments/890351376004157440/1332678517888126986/NEW_LOGO_CLEAN_smallish.png?ex=6798c416&is=67977296&hm=ada5afdd0bcb677d3a0a1ca6aabe55f554810e3044048ac4e5cd85d0d73e7f0d&',
+          icon_url: charData.icon ? charData.icon : 'https://cdn.discordapp.com/attachments/1393917452731289680/1411714755042869268/AEGIR_SMALL_copy.png?ex=68b5a951&is=68b457d1&hm=36aea50e9270da5b5b7d65cf9364ce946e1a05ebc2aa0ed44bf76e80470673f2',
         },
         description: clientManager.getEmoji("Gold") + " **" + charData.balance + "**",
       };
@@ -147,7 +147,7 @@ class char {
         color: 0x36393e,
         author: {
           name: charData.name,
-          icon_url: charData.icon ? charData.icon : 'https://cdn.discordapp.com/attachments/890351376004157440/1332678517888126986/NEW_LOGO_CLEAN_smallish.png?ex=6798c416&is=67977296&hm=ada5afdd0bcb677d3a0a1ca6aabe55f554810e3044048ac4e5cd85d0d73e7f0d&',
+          icon_url: charData.icon ? charData.icon : 'https://cdn.discordapp.com/attachments/1393917452731289680/1411714755042869268/AEGIR_SMALL_copy.png?ex=68b5a951&is=68b457d1&hm=36aea50e9270da5b5b7d65cf9364ce946e1a05ebc2aa0ed44bf76e80470673f2',
         },
         description: await this.getStatsBlock(charData, userID),
       };
@@ -210,9 +210,9 @@ class char {
 
       const charEmbed = new EmbedBuilder()
         .setColor(0x36393e)
-        .setAuthor({ name: charData.name, iconURL: charData.icon ? charData.icon : 'https://cdn.discordapp.com/attachments/890351376004157440/1332678517888126986/NEW_LOGO_CLEAN_smallish.png?ex=6798c416&is=67977296&hm=ada5afdd0bcb677d3a0a1ca6aabe55f554810e3044048ac4e5cd85d0d73e7f0d&' })
+        .setAuthor({ name: charData.name, iconURL: charData.icon ? charData.icon : 'https://cdn.discordapp.com/attachments/1393917452731289680/1411714755042869268/AEGIR_SMALL_copy.png?ex=68b5a951&is=68b457d1&hm=36aea50e9270da5b5b7d65cf9364ce946e1a05ebc2aa0ed44bf76e80470673f2' })
         .setDescription(bioString)
-        .setImage(charData.icon ? charData.icon : 'https://cdn.discordapp.com/attachments/890351376004157440/1332678517888126986/NEW_LOGO_CLEAN_smallish.png?ex=6798c416&is=67977296&hm=ada5afdd0bcb677d3a0a1ca6aabe55f554810e3044048ac4e5cd85d0d73e7f0d&');
+        .setImage(charData.icon ? charData.icon : 'https://cdn.discordapp.com/attachments/1393917452731289680/1411714755042869268/AEGIR_SMALL_copy.png?ex=68b5a951&is=68b457d1&hm=36aea50e9270da5b5b7d65cf9364ce946e1a05ebc2aa0ed44bf76e80470673f2');
       return charEmbed;
     } else {
       return "You haven't made a character! Use /newchar first";
@@ -243,7 +243,7 @@ class char {
     if (charData) {
       let bioString = charData.bio;
 
-      let iconUrl = charData.icon ? charData.icon : 'https://cdn.discordapp.com/attachments/890351376004157440/1332678517888126986/NEW_LOGO_CLEAN_smallish.png?ex=6798c416&is=67977296&hm=ada5afdd0bcb677d3a0a1ca6aabe55f554810e3044048ac4e5cd85d0d73e7f0d&'
+      let iconUrl = charData.icon ? charData.icon : 'https://cdn.discordapp.com/attachments/1393917452731289680/1411714755042869268/AEGIR_SMALL_copy.png?ex=68b5a951&is=68b457d1&hm=36aea50e9270da5b5b7d65cf9364ce946e1a05ebc2aa0ed44bf76e80470673f2'
       const charEmbed = {
         color: 0x36393e,
         author: {
@@ -325,7 +325,7 @@ class char {
     if (charData) {
       let webhookName = charData.name;
       //if charData.icon is undefined, set it to the default avatar
-      let webhookAvatar = charData.icon ? charData.icon : 'https://cdn.discordapp.com/attachments/890351376004157440/1332678517888126986/NEW_LOGO_CLEAN_smallish.png?ex=6798c416&is=67977296&hm=ada5afdd0bcb677d3a0a1ca6aabe55f554810e3044048ac4e5cd85d0d73e7f0d&';
+      let webhookAvatar = charData.icon ? charData.icon : 'https://cdn.discordapp.com/attachments/1393917452731289680/1411714755042869268/AEGIR_SMALL_copy.png?ex=68b5a951&is=68b457d1&hm=36aea50e9270da5b5b7d65cf9364ce946e1a05ebc2aa0ed44bf76e80470673f2';
       let webhookMessage = message;
 
       (async () => {
@@ -1651,7 +1651,7 @@ class char {
         color: 0x36393e,
         author: {
           name: charData.name,
-          icon_url: charData.icon ? charData.icon : 'https://cdn.discordapp.com/attachments/890351376004157440/1332678517888126986/NEW_LOGO_CLEAN_smallish.png?ex=6798c416&is=67977296&hm=ada5afdd0bcb677d3a0a1ca6aabe55f554810e3044048ac4e5cd85d0d73e7f0d&',
+          icon_url: charData.icon ? charData.icon : 'https://cdn.discordapp.com/attachments/1393917452731289680/1411714755042869268/AEGIR_SMALL_copy.png?ex=68b5a951&is=68b457d1&hm=36aea50e9270da5b5b7d65cf9364ce946e1a05ebc2aa0ed44bf76e80470673f2',
         },
         description: clientManager.getEmoji("Gold") + " **" + charData.bank + "**",
       };
