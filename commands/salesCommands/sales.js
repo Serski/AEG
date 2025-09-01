@@ -6,7 +6,9 @@ module.exports = {
         .setName('sales')
         .setDescription('List sales'),
     async execute(interaction) {
-        let [embed, rows] = await marketplace.createSalesEmbed(1, interaction);
-        await interaction.reply({ embeds: [embed], components: rows});
+        await interaction.deferReply({ ephemeral: true });
+        const [embed, rows] = await marketplace.createSalesEmbed(1, interaction);
+        await interaction.editReply({ embeds: [embed], components: rows });
     },
 };
+
