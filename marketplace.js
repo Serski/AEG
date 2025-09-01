@@ -238,7 +238,7 @@ class marketplace {
     if (!sale) {
       return "That sale doesn't exist!";
     }
-    console.log(charData);
+    if (process.env.DEBUG) console.log(charData);
     // If the buyer is the seller, merely give them back their items, no need to check their money- this functionality will exist for accidental sales
     if (sale.sellerID == userID) {
       // Give the buyer the items
@@ -280,7 +280,7 @@ class marketplace {
     // Save the marketplace.json file
     await dbm.saveCollection('marketplace', marketData);
 
-    console.log(charData);
+    if (process.env.DEBUG) console.log(charData);
     // Create an embed to return on success. Will just say @user bought **numberItems :itemIcon: itemName** from @seller for <:Gold:1232097113089904710>**price**.
     let embed = new EmbedBuilder();
     embed.setDescription(`<@${userID}> bought **${sale.number} ${await shop.getItemIcon(foundItemName, shopData)} ${foundItemName}** from <@${sale.sellerID}> for ${clientManager.getEmoji("Gold")}**${sale.price}**.`);

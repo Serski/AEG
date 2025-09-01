@@ -27,9 +27,9 @@ class Admin {
     //Each shire should have a name and a roleCode. If the roleCode is not found, it should be created.
     for (const shire in shires) {
       let role = channel.guild.roles.cache.find(role => role.name === shires[shire].name);
-      console.log("Role: " + role);
+      if (process.env.DEBUG) console.log("Role: " + role);
       if (role == undefined) {
-        console.log("New Role");
+        if (process.env.DEBUG) console.log("New Role");
         role = await channel.guild.roles.create({
           name: shires[shire].name,
           color: '#FFFFFF',
@@ -258,7 +258,7 @@ When selected grants the:
   }
 
   static async addShire(shireName, resource, guild) {
-    console.log("Adding shire " + shireName + " with resource " + resource);
+    if (process.env.DEBUG) console.log("Adding shire " + shireName + " with resource " + resource);
     let shires = await dbm.loadFile("keys", "shires");
     let shopData = await dbm.loadCollection("shop");
     resource = await shop.findItemName(resource, shopData);
@@ -279,7 +279,7 @@ When selected grants the:
         color: '#FFFFFF',
         reason: 'Added role for shire from addshire command',
       }).then(role => {
-        console.log("Role created");
+        if (process.env.DEBUG) console.log("Role created");
         roleID = role.id;  // This will log the newly created role's ID
       }).catch(console.error);
     }
@@ -406,7 +406,7 @@ When selected grants the:
       interaction.reply("Map not found!");
       return;
     }
-    console.log(interaction)
+    if (process.env.DEBUG) console.log(interaction)
     let about = interaction.fields.getTextInputValue('mapabout');
 
     maps[mapName].mapOptions.About = about;
@@ -502,7 +502,7 @@ When selected grants the:
     let mapNames = Object.keys(lores).map(key => lores[key].mapOptions.Emoji + " **" + key + "**").join("\n");
     //Iterate over each value, log emoji + " " + key
     for (const key in lores) {
-      console.log(lores[key]);
+      if (process.env.DEBUG) console.log(lores[key]);
     }
     let embed = new EmbedBuilder()
       .setTitle("All Lores")
@@ -595,7 +595,7 @@ When selected grants the:
     let playerKingdoms = await dbm.loadFile("keys", "playerKingdoms");
     playerKingdoms = playerKingdoms.list;
 
-    console.log(playerKingdoms);
+    if (process.env.DEBUG) console.log(playerKingdoms);
 
     //playerKingdoms is an array of role IDs
     for (const role of user.roles.cache) {
@@ -794,7 +794,7 @@ When selected grants the:
 
     let role = guild.roles.cache.find(role => role.name.toLowerCase() === party.name.toLowerCase());
     if (role == undefined) {
-      console.log("ERROR! THIS IS A PROBLEM!")
+      if (process.env.DEBUG) console.log("ERROR! THIS IS A PROBLEM!")
     }
 
     await user.roles.add(role);

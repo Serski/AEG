@@ -5,8 +5,6 @@ class dataGetters {
         let collectionName = 'characters';
         let data = await dbm.loadCollection(collectionName);
         for (let [charID, charData] of Object.entries(data)) {
-            //console.log(charData.numericID);
-            //console.log(parseInt(numericID));
             if (parseInt(charData.numericID) === parseInt(numericID)) {
                 return charID;
             }

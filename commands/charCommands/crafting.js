@@ -11,7 +11,7 @@ module.exports = {
             var replyEmbed = await char.craftingCooldowns(userID);
             await interaction.reply(({ embeds: [replyEmbed] }));
         } catch (error) {
-            console.log(error);
+            if (process.env.DEBUG) console.log(error);
             if (replyEmbed) {
                 await interaction.reply(replyEmbed);
             }

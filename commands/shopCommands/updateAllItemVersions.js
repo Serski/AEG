@@ -11,7 +11,7 @@ module.exports = {
 			try {
 				await interaction.deferReply();
 				let response = await shop.updateAllItemVersions();
-				console.log(response);  // Log the response for debugging
+                                if (process.env.DEBUG) console.log(response);  // Log the response for debugging
 				await interaction.editReply({ content: response });
 			} catch (error) {
 				console.error('Failed to update item versions:', error);

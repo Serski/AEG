@@ -166,7 +166,7 @@ shopLayout = async (interaction) => {
 //BUTTONS
 shopSwitch = async (interaction) => {
   let [edittedEmbed, rows] = await shop.createShopEmbed(interaction.customId.slice(11), interaction);
-  console.log(interaction);
+  if (process.env.DEBUG) console.log(interaction);
   await interaction.update({ embeds: [edittedEmbed], components: rows});
 }
 incomeSwitch = async (interaction) => {
@@ -209,7 +209,7 @@ exports.handle = async (interaction) => {
   if (interaction.customId && interaction.customId.startsWith('raid')) {
     return;
   }
-  console.log(interaction.customId);
+  if (process.env.DEBUG) console.log(interaction.customId);
   if (interaction.isModalSubmit()) {
     if (interaction.customId === 'additemmodal') {
       addItem(interaction);

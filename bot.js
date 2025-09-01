@@ -31,7 +31,7 @@ for (const entry of entries) {
                         if ('data' in command && 'execute' in command) {
                                 client.commands.set(command.data.name, command);
                         } else {
-                                console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+                                if (process.env.DEBUG) console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
                         }
                 }
         } else if (entry.isFile() && entry.name.endsWith('.js')) {
@@ -40,13 +40,13 @@ for (const entry of entries) {
                 if ('data' in command && 'execute' in command) {
                         client.commands.set(command.data.name, command);
                 } else {
-                        console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+                        if (process.env.DEBUG) console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
                 }
         }
 }
 
 client.on('ready', () => {
-    console.log(`Logged in as ${client.user.tag}!`);
+    if (process.env.DEBUG) console.log(`Logged in as ${client.user.tag}!`);
 	//client.user.setAvatar('https://cdn.discordapp.com/attachments/890351376004157440/1332678517888126986/NEW_LOGO_CLEAN_smallish.png?ex=6798c416&is=67977296&hm=ada5afdd0bcb677d3a0a1ca6aabe55f554810e3044048ac4e5cd85d0d73e7f0d&');
 });
 
@@ -66,6 +66,7 @@ client.on('ready', () => {
 // 		message.delete();
 //     }
 // });
+
 
 //interaction handler
 client.on(Events.InteractionCreate, async interaction => {
@@ -101,7 +102,7 @@ client.on('guildMemberAdd', member => {
 
 client.on('guildMemberRemove', member => {
 	let memberID = member.id;
-	console.log("Member ID: " + memberID);
+        if (process.env.DEBUG) console.log("Member ID: " + memberID);
 });
 
 client.on('userUpdate', (oldMember, newMember) => {
@@ -119,7 +120,7 @@ client.on('userUpdate', (oldMember, newMember) => {
 //For commands that need to be run daily, and daily logging of infos and such
 function botMidnightLoop() {
 	var now = new Date();
-	console.log(now);
+        if (process.env.DEBUG) console.log(now);
 
 	var msToMidnight = (24 * 60 * 60 * 1000) 
 		- ((now.getUTCHours()) * 60 * 60 * 1000) 
@@ -131,7 +132,7 @@ function botMidnightLoop() {
 		dbm.logData();
 		botMidnightLoop();
 	}, msToMidnight);
-	console.log(msToMidnight);
+        if (process.env.DEBUG) console.log(msToMidnight);
 }
 botMidnightLoop();
 
@@ -147,13 +148,3 @@ function getGuildID() {
 
 module.exports = { getClient, getGuildID };
 
-// process.on('uncaughtException', function (err){ 
-// 	const channelID = "1249834768326197379";
-// 	console.log('Caught exception: ' + err);
-// 	try {
-// 		console.log("Major error!")
-// 	} catch (error) {
-// 		//Log full error to console
-// 		console.error(error);
-// 	}
-// });

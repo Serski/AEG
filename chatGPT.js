@@ -72,14 +72,14 @@ class chatGPT {
         }
         messages.push({ role: "user", content: message });
 
-        console.log(messages);
+        if (process.env.DEBUG) console.log(messages);
 
         const completion = await openai.chat.completions.create({
             messages: messages,
             model: model,
             max_tokens: 350,});
         
-        console.log(completion);
+        if (process.env.DEBUG) console.log(completion);
         //Save message, prevMessages, and completion to database under player id
 
         //Initialize example completion
@@ -176,7 +176,7 @@ class chatGPT {
 
         let contextString = await chatGPT.getContextString(message, prevMessages);
 
-        console.log(contextString);
+        if (process.env.DEBUG) console.log(contextString);
         
         //Set passed messages to pass to gpt
         //First message is a system message to "Players are speaking to you in a discord game. Respond as if you are the pope. Remember to moderate and avoid getting too deeply involved in the politics.
@@ -203,7 +203,7 @@ class chatGPT {
             model: model,
             max_tokens: 500,});
         
-        console.log(completion);
+        if (process.env.DEBUG) console.log(completion);
 
         const dataText = completion.choices[0].message;
         const completionTokens = completion.usage.completion_tokens;
@@ -239,11 +239,11 @@ class chatGPT {
         tokens.promptTokens += promptTokens;
         tokens.inputCost += modelInputCost * promptTokens / 1000;
         tokens.outputCost += modelOutputCost * completionTokens / 1000;
-        console.log(modelInputCost * promptTokens / 1000);
-        console.log(modelOutputCost * completionTokens / 1000);
-        console.log(tokens.totalCost);
+        if (process.env.DEBUG) console.log(modelInputCost * promptTokens / 1000);
+        if (process.env.DEBUG) console.log(modelOutputCost * completionTokens / 1000);
+        if (process.env.DEBUG) console.log(tokens.totalCost);
         tokens.totalCost += (modelInputCost * promptTokens + modelOutputCost * completionTokens) / 1000;
-        console.log(tokens.totalCost);
+        if (process.env.DEBUG) console.log(tokens.totalCost);
         await dbm.saveFile("gptMessages", "tokens", tokens);
         
         const returnString = dataText.content;
@@ -312,16 +312,16 @@ class chatGPT {
     
             const blocks = responseArray.blocks;
 
-            console.log(blocks);
+            if (process.env.DEBUG) console.log(blocks);
             let contextString = "";
             for (let i = 0; i < blocks.length; i++) {
-                console.log(info);
-                console.log(blocks[i]);
-                console.log(info.infoBlocks[blocks[i] - 1]);
+                if (process.env.DEBUG) console.log(info);
+                if (process.env.DEBUG) console.log(blocks[i]);
+                if (process.env.DEBUG) console.log(info.infoBlocks[blocks[i] - 1]);
                 contextString += info.infoBlocks[blocks[i] - 1] + "\n\n";
             }
 
-            console.log(contextString);
+            if (process.env.DEBUG) console.log(contextString);
 
             return contextString;
     

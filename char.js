@@ -8,7 +8,7 @@ const shipUtils = require('./shipUtils');
 class char {
   static incomeListCache = null;
   static async warn(playerID) {
-    console.log(playerID);
+    if (process.env.DEBUG) console.log(playerID);
     let collectionName = 'characters';
     let charData = await dbm.loadFile(collectionName, playerID);
     if (charData) {
@@ -264,7 +264,7 @@ class char {
     const dexEmoji = clientManager.getEmoji("DEX");
     const intEmoji = clientManager.getEmoji("INT");
     const chaEmoji = clientManager.getEmoji("CHA");
-    console.log(chaEmoji);
+    if (process.env.DEBUG) console.log(chaEmoji);
     const hpEmoji = clientManager.getEmoji("HP");
 
     let str = charData.stats.STR;
@@ -302,7 +302,7 @@ class char {
       charData.stats.INT = int;
       charData.stats.CHA = cha;
       charData.stats.HP = hp;
-      console.log(userID);
+      if (process.env.DEBUG) console.log(userID);
       await dbm.saveFile('characters', userID, charData);
     }
 
@@ -393,7 +393,7 @@ class char {
     let resourceMap = {}
     let incomesCollectedArray = [];
     for (let [key, value] of Object.entries(charIncomeData)) {
-      console.log(value);
+      if (process.env.DEBUG) console.log(value);
 
       //Each value will include an emoji, goldGiven, itemGiven, and itemAmount field
       //Should add goldGiven to total, and if itemGiven is not "" and itemAmount is not 0, add itemAmount to the resourceMap. 
@@ -401,12 +401,12 @@ class char {
       let delay = value.data.delay || "1D";
       let incomeAvailableKey = delay === "1D" ? "incomeAvailable" : `incomeAvailable${delay}`;
 
-      console.log(incomeAvailableKey);
+      if (process.env.DEBUG) console.log(incomeAvailableKey);
 
       let goldGiven = value.data.goldGiven;
       let itemGiven = value.data.itemGiven;
       let itemAmount = value.data.itemAmount;
-      console.log(goldGiven);
+      if (process.env.DEBUG) console.log(goldGiven);
       let emoji = value.data.emoji;
       let tempString = "";
       tempString += emoji + " **__" + value.income + "__**\n"; 
@@ -422,7 +422,7 @@ class char {
         afterString += tempString;
         afterString += "\n";
         total += goldGiven;
-        console.log(total);
+        if (process.env.DEBUG) console.log(total);
         if (itemGiven != "" && itemAmount != 0) {
           if (resourceMap[itemGiven]) {
             resourceMap[itemGiven] += itemAmount;
@@ -546,16 +546,16 @@ class char {
                 }
             }
 
-            console.log(nextCycleTime);
-            console.log(nextResetTimes.get(delay));
-            console.log("Next Cycle Day" + nextCycleTime.getUTCDate() + " Next Cycle Month" + nextCycleTime.getUTCMonth() + " Next Cycle Year" + nextCycleTime.getUTCFullYear());
-            console.log("Now Day" + now.getUTCDate() + " Now Month" + now.getUTCMonth() + " Now Year" + now.getUTCFullYear());
+            if (process.env.DEBUG) console.log(nextCycleTime);
+            if (process.env.DEBUG) console.log(nextResetTimes.get(delay));
+            if (process.env.DEBUG) console.log("Next Cycle Day" + nextCycleTime.getUTCDate() + " Next Cycle Month" + nextCycleTime.getUTCMonth() + " Next Cycle Year" + nextCycleTime.getUTCFullYear());
+            if (process.env.DEBUG) console.log("Now Day" + now.getUTCDate() + " Now Month" + now.getUTCMonth() + " Now Year" + now.getUTCFullYear());
 
             nextResetTimes.set(delay, nextCycleTime.getUTCDate() === now.getUTCDate() &&
                                       nextCycleTime.getUTCMonth() === now.getUTCMonth() &&
                                       nextCycleTime.getUTCFullYear() === now.getUTCFullYear());
 
-            console.log(nextResetTimes.get(delay));
+            if (process.env.DEBUG) console.log(nextResetTimes.get(delay));
           }
           if (nextResetTimes.get(delay)) {
             charData[key] = true;
@@ -624,7 +624,7 @@ class char {
       roles = roles.filter(role => role.length > 0);
       let hasRole = false;
 
-      console.log(roles);
+      if (process.env.DEBUG) console.log(roles);
       for (let i = 0; i < roles.length; i++) {
         if (user.roles.cache.some(role => role.id === roles[i])) {
           hasRole = true;
@@ -852,19 +852,19 @@ class char {
       }
     }
 
-    console.log(recipeData);
+    if (process.env.DEBUG) console.log(recipeData);
 
     //There are multiple role options, either Need Any Of Roles or Need All Of Roles. If Need Any Of Roles, check if user has any of the roles. If Need All Of Roles, check if user has all of the roles
     if (recipeData.recipeOptions["Need Any Of Roles"]) {
       //Roles are enclosed in <@& and >, and there may be multiple roles. They may not be comma separated but commas and spaces may exist
-      console.log(recipeData.recipeOptions["Need Any Of Roles"]);
+      if (process.env.DEBUG) console.log(recipeData.recipeOptions["Need Any Of Roles"]);
       let roles = recipeData.recipeOptions["Need Any Of Roles"].split("<@&");
-      console.log(roles);
+      if (process.env.DEBUG) console.log(roles);
       roles = roles.map(role => role.replace(">", ""));
       roles = roles.map(role => role.replace(",", ""));
       roles = roles.map(role => role.replace(/\s+/g, ""));
       roles = roles.filter(role => role.length > 0);
-      console.log(roles);
+      if (process.env.DEBUG) console.log(roles);
       let hasRole = false;
       for (let i = 0; i < roles.length; i++) {
         if (user.roles.cache.some(role => role.id === roles[i])) {
@@ -945,7 +945,7 @@ class char {
     }
 
     returnEmbed.setDescription("Began crafting " + recipeData.recipeOptions.Icon + " " + recipe);
-    console.log(returnEmbed);
+    if (process.env.DEBUG) console.log(returnEmbed);
     return returnEmbed;
   }
 
@@ -1502,7 +1502,7 @@ class char {
   
     let members = await role.guild.members.fetch();
     members = members.filter(member => member.roles.cache.has(role.id));
-    console.log(members.length);
+    if (process.env.DEBUG) console.log(members.length);
   
     let errorMembers = [];
   
@@ -1510,10 +1510,10 @@ class char {
   
       // Check if the member has a character
       let charID = member.user.username;
-      console.log("ID" + charID);
-      console.log(id);
-      console.log(member);
-      console.log(charData[charID]);
+      if (process.env.DEBUG) console.log("ID" + charID);
+      if (process.env.DEBUG) console.log(id);
+      if (process.env.DEBUG) console.log(member);
+      if (process.env.DEBUG) console.log(charData[charID]);
       if (!charData[charID]) {
         errorMembers.push(charID);
         continue;
@@ -1535,7 +1535,7 @@ class char {
     }
   
     await dbm.saveCollection(collectionName, charData);
-    console.log(errorMembers);
+    if (process.env.DEBUG) console.log(errorMembers);
   
     return errorMembers;
   }
@@ -1679,7 +1679,7 @@ class char {
   }
 
   static async giveItemToPlayer(playerGiving, player, item, amount) {
-    console.log("start");
+    if (process.env.DEBUG) console.log("start");
     if (playerGiving === player) {
       return "You can't give items to yourself!";
     }
@@ -1706,7 +1706,7 @@ class char {
       return "Error: Player not found";
     }
 
-    console.log("playerGiving: " + playerGiving);
+    if (process.env.DEBUG) console.log("playerGiving: " + playerGiving);
 
     let charData2;
     [player, charData2] = await this.findPlayerData(player);
@@ -1714,7 +1714,7 @@ class char {
       return "Error: Player not found";
     }
 
-    console.log("player: " + player);
+    if (process.env.DEBUG) console.log("player: " + player);
 
     if (charData && charData2) {
       if (charData.inventory[item] && charData.inventory[item] >= amount) {
@@ -1755,9 +1755,9 @@ class char {
       return "Error: Player not found";
     }
 
-    console.log(charData.balance);
-    console.log(gold);
-    console.log(charData.balance >= gold);
+    if (process.env.DEBUG) console.log(charData.balance);
+    if (process.env.DEBUG) console.log(gold);
+    if (process.env.DEBUG) console.log(charData.balance >= gold);
     if (charData && charData2) {
       if (charData.balance >= gold) {
         charData.balance -= gold;

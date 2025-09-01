@@ -10,15 +10,15 @@ async function run() {
       const raw = await fs.promises.readFile(filePath, 'utf8');
       const data = JSON.parse(raw);
       await dbm.saveCollection(collectionName, data);
-      console.log(`[seed] ${collectionName}: seeded.`);
+      if (process.env.DEBUG) console.log(`[seed] ${collectionName}: seeded.`);
     } else {
-      console.log(`[seed] ${collectionName}: skipped, already has data.`);
+      if (process.env.DEBUG) console.log(`[seed] ${collectionName}: skipped, already has data.`);
     }
   }
 
   const ENABLED = process.env.SEED_ON_BOOT !== 'false';
   if (!ENABLED) {
-    console.log('[seed] Disabled via SEED_ON_BOOT=false.');
+    if (process.env.DEBUG) console.log('[seed] Disabled via SEED_ON_BOOT=false.');
     return;
   }
 
