@@ -979,7 +979,7 @@ When selected grants the:
     let roleName = role.name;
 
     //Add an income to keys/incomeList
-    let incomeList = await dbm.loadFile("keys", "incomeList");
+    let incomeList = await dbm.loadFile("keys", "incomeList") || {};
     let shopData = await dbm.loadCollection("shop");
     //income string is either a number, or a phrase such as 10 Wood or 10 Package Horse.
     //Must be used to create a field with a name, usually based on the role name, and than a map of various values, including goldGiven, itemGiven and itemAmount. Will also have a list of roles that have this income under "Roles"
@@ -995,12 +995,14 @@ When selected grants the:
     if (incomeSplit.length == 1) {
       income.goldGiven = parseInt(incomeSplit[0]);
     } else {
-      if (await shop.findItemName(income.itemGiven, shopData) == "ERROR") {
+      let amount = parseInt(incomeSplit[0]);
+      let itemName = incomeSplit.slice(1).join(" ");
+      let itemResult = await shop.findItemName(itemName, shopData);
+      if (itemResult == "ERROR") {
         return "Item not found";
-      } else {
-        income.itemGiven = await shop.findItemName(income.itemGiven, shopData);
       }
-      income.itemGiven = await shop.findItemName(incomeSplit[1], shopData);
+      income.itemGiven = itemResult;
+      income.itemAmount = amount;
     }
     income.roles.push(roleID);
     incomeList[roleName] = income;
