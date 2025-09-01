@@ -167,7 +167,7 @@ async function logData() {
     }
     const dateString = new Date().toISOString().split('T')[0];
     await saveFile('logs', dateString, logData);
-    console.log(`Log data for ${dateString} saved successfully.`);
+    if (process.env.DEBUG) console.log(`Log data for ${dateString} saved successfully.`);
   } else {
     const files = await fs.promises.readdir(storageDir);
     const collections = files
@@ -179,7 +179,7 @@ async function logData() {
     }
     const dateString = new Date().toISOString().split('T')[0];
     await saveFile('logs', dateString, logDataObj);
-    console.log(`Log data for ${dateString} saved successfully.`);
+    if (process.env.DEBUG) console.log(`Log data for ${dateString} saved successfully.`);
   }
 }
 

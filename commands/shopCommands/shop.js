@@ -6,10 +6,8 @@ module.exports = {
 		.setName('shop')
 		.setDescription('List shop items'),
 	async execute(interaction) {
-		// const itemListString = await shop.shop();
-		// console.log("DATA");
-		// console.log(itemListString);
-		// await interaction.reply(itemListString);
+                // const itemListString = await shop.shop();
+                // await interaction.reply(itemListString);
                await interaction.deferReply({ ephemeral: true });
                let [embed, rows] = await shop.createShopEmbed(1, interaction);
                await interaction.editReply({ embeds: [embed], components: rows });

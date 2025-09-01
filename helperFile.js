@@ -25,7 +25,7 @@ async function loadResourcesJSON() {
     const fs = require('fs');
     fs.writeFileSync('resources.json', JSON.stringify(resources, null, 2));
 
-    console.log("Resources saved to resources.json");
+    if (process.env.DEBUG) console.log("Resources saved to resources.json");
 }
 
 async function saveResourcesJSON() {
@@ -33,7 +33,7 @@ async function saveResourcesJSON() {
     const resources = JSON.parse(fs.readFileSync('resources.json'));
 
     await dbm.saveFile('keys', 'resources', resources);
-    console.log("Resources saved to database");
+    if (process.env.DEBUG) console.log("Resources saved to database");
 }
 
 async function getResourceEmojis() {
@@ -42,7 +42,7 @@ async function getResourceEmojis() {
     for (let resource in resources) {
         let emoji = clientManager.getEmoji(resource);
         if (!emoji || emoji == null) {
-            console.log(`Resource ${resource} does not have an emoji`);
+            if (process.env.DEBUG) console.log(`Resource ${resource} does not have an emoji`);
             continue;
         }
         resources[resource].emoji = emoji;
@@ -78,7 +78,7 @@ async function addShireToShireNames() {
         }
     }
 
-    console.log(kingdoms.Jorvik.shires);
+    if (process.env.DEBUG) console.log(kingdoms.Jorvik.shires);
 
     await dbm.saveFile('keys', 'kingdoms', kingdoms);
 }
@@ -125,7 +125,7 @@ async function resetIncomeCD() {
             let nextCycleTime = new Date(startDate);
 
             while (nextCycleTime < now) {
-                console.log(nextCycleTime, now)
+                if (process.env.DEBUG) console.log(nextCycleTime, now)
                 switch (delayUnit) {
                     case 'D':
                         nextCycleTime.setUTCDate(nextCycleTime.getUTCDate() + delayAmount);
@@ -142,18 +142,18 @@ async function resetIncomeCD() {
                 }
             }
 
-            console.log(nextCycleTime);
-            console.log(nextResetTimes);
-            console.log(delay);
-            console.log(nextResetTimes.get(delay));
-            console.log("Next Cycle Day" + nextCycleTime.getUTCDate() + " Next Cycle Month" + nextCycleTime.getUTCMonth() + " Next Cycle Year" + nextCycleTime.getUTCFullYear());
-            console.log("Now Day" + now.getUTCDate() + " Now Month" + now.getUTCMonth() + " Now Year" + now.getUTCFullYear());
+            if (process.env.DEBUG) console.log(nextCycleTime);
+            if (process.env.DEBUG) console.log(nextResetTimes);
+            if (process.env.DEBUG) console.log(delay);
+            if (process.env.DEBUG) console.log(nextResetTimes.get(delay));
+            if (process.env.DEBUG) console.log("Next Cycle Day" + nextCycleTime.getUTCDate() + " Next Cycle Month" + nextCycleTime.getUTCMonth() + " Next Cycle Year" + nextCycleTime.getUTCFullYear());
+            if (process.env.DEBUG) console.log("Now Day" + now.getUTCDate() + " Now Month" + now.getUTCMonth() + " Now Year" + now.getUTCFullYear());
 
             nextResetTimes.set(delay, nextCycleTime.getUTCDate() === now.getUTCDate() &&
                                       nextCycleTime.getUTCMonth() === now.getUTCMonth() &&
                                       nextCycleTime.getUTCFullYear() === now.getUTCFullYear());
 
-            console.log(nextResetTimes.get(delay));
+            if (process.env.DEBUG) console.log(nextResetTimes.get(delay));
           }
           if (nextResetTimes.get(delay)) {
             charData[key] = true;

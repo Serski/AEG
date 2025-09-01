@@ -25,7 +25,7 @@ async function migrateStatKeys() {
   }
 
   await dbm.saveCollection('shop', shopData);
-  console.log(`Migration complete. Updated ${changes} fields.`);
+  if (process.env.DEBUG) console.log(`Migration complete. Updated ${changes} fields.`);
 }
 
 migrateStatKeys().catch((err) => {

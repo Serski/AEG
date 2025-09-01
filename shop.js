@@ -286,7 +286,7 @@ class shop {
       price = parseInt(price);
       if (!(price == undefined || price == "" || price == null || isNaN(price) || price == 0)) {
         let channels = value.shopOptions.Channels;
-        console.log(channels);
+        if (process.env.DEBUG) console.log(channels);
         if (channels.includes("#")) {
           if (!channels.includes(channelID)) {
             continue;
@@ -679,7 +679,7 @@ class shop {
     try {
       await dbm.docDelete(fileName, itemName);
     } catch (error) {
-      console.log(error);
+      if (process.env.DEBUG) console.log(error);
       // Handle the error or do nothing
       // In JavaScript, you might want to handle errors differently
     }
@@ -746,8 +746,8 @@ class shop {
       return "Item not found!";
     }
 
-    console.log(itemName);
-    console.log(shopData[itemName]);
+    if (process.env.DEBUG) console.log(itemName);
+    if (process.env.DEBUG) console.log(shopData[itemName]);
 
     let data = shopData;
     let itemData = data[itemName];
@@ -762,7 +762,7 @@ class shop {
         aboutString = "Price: " + clientManager.getEmoji("Gold") + " " + itemData.shopOptions["Price (#)"] + "\n";
       }
       let descriptionString = "**Description:\n**" + itemData.infoOptions.Description;
-      console.log(itemData.usageOptions["Is Usable (Y/N)"] == "Yes");
+      if (process.env.DEBUG) console.log(itemData.usageOptions["Is Usable (Y/N)"] == "Yes");
       if (itemData.usageOptions["Is Usable (Y/N)"] == "Yes") {
         aboutString += "\n**On Usage:**\nGives:";
         //Iterate through usageOptions to find any key that starts with "Give Item". If any exist, add them to the aboutString. The value will be a string "Number Name" that will have to be split (Name may contain spaces, such as Iron Spear)
@@ -941,7 +941,7 @@ class shop {
 
     inspectEmbed.addFields({ name: '**About: **', value: aboutString });
     if (recipeData[recipeName].recipeOptions["Show Image"] != "") {
-      console.log(recipeData[recipeName]);
+      if (process.env.DEBUG) console.log(recipeData[recipeName]);
       inspectEmbed.setImage(recipeData[recipeName].recipeOptions["Show Image"]);
     }
 
@@ -999,7 +999,7 @@ class shop {
       .setTitle("**" + itemIcon + " " + itemName + "**")
       .setDescription('Edit the fields using the command /edititemfield <field number> <new value>');
     
-    console.log("Page number: " + pageNumber);
+    if (process.env.DEBUG) console.log("Page number: " + pageNumber);
     switch (pageNumber) {
       case 1:
         // Add fields for Info Options and Shop Options
@@ -1028,9 +1028,9 @@ class shop {
           }
         }
         usageOptionsArray.push(currentString);
-        console.log("Length " + usageOptionsArray.length)
+        if (process.env.DEBUG) console.log("Length " + usageOptionsArray.length)
         for (let i = 0; i < usageOptionsArray.length; i++) {
-          console.log(usageOptionsArray[i]);
+          if (process.env.DEBUG) console.log(usageOptionsArray[i]);
           if (i == 0) {
             embed.addFields({ name : '💥 Usage Options', value: usageOptionsArray[i]})
           } else {
@@ -1380,7 +1380,7 @@ class shop {
       } 
     }
 
-    console.log(recipeData)
+    if (process.env.DEBUG) console.log(recipeData)
 
     // Update the recipe data
     recipeData[category][fieldName] = newValue;
@@ -1421,10 +1421,10 @@ class shop {
       for (let i = 0; i < characters.length; i++) {
         if (userData[characters[i]].cooldowns && userData[characters[i]].cooldowns.craftSlots && characters[i] == "thegreatferret") {
           let slots = userData[characters[i]].cooldowns.craftSlots;
-          console.log(slots);
+          if (process.env.DEBUG) console.log(slots);
           //Slots is a json, not an array
           let slotsKeys = Object.keys(slots);
-          console.log(slotsKeys);
+          if (process.env.DEBUG) console.log(slotsKeys);
           for (let j = 0; j < slotsKeys.length; j++) {
             let key = slotsKeys[j];
             //Will either be recipeName or REPEAT_1_recipeName (repeat 2, etc), but you can't just check for inclusion because REPEAT_1_Woolen Tunic will include Wool
@@ -1439,9 +1439,9 @@ class shop {
               delete slots[key];
             }
           }
-          console.log(userData[characters[i]].cooldowns.craftSlots);
+          if (process.env.DEBUG) console.log(userData[characters[i]].cooldowns.craftSlots);
           userData[characters[i]].cooldowns.craftSlots = slots;
-          console.log(userData[characters[i]].cooldowns.craftSlots);
+          if (process.env.DEBUG) console.log(userData[characters[i]].cooldowns.craftSlots);
         }
       }
 
@@ -1498,12 +1498,12 @@ class shop {
       let hasRole = false;
       for (let i = 0; i < roles.length; i++) {
         if (user.roles.cache.some(role => role.id === roles[i])) {
-          console.log(roles[i]);
+          if (process.env.DEBUG) console.log(roles[i]);
           hasRole = true;
           break;
         }
       }
-      console.log(hasRole)
+      if (process.env.DEBUG) console.log(hasRole)
       if (!hasRole) {
         return "You do not have the required role to buy this item! You must have one of the following role(s): " + itemData.shopOptions["Need Role"];
       }

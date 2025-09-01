@@ -9,7 +9,7 @@ async function initRaidTargets() {
 
   // Save the entire object to the 'raidTargets' collection
   await dbm.saveCollection('raidTargets', targets);
-  console.log('raidTargets saved to DB');
+  if (process.env.DEBUG) console.log('raidTargets saved to DB');
 }
 
 initRaidTargets().catch((err) => {

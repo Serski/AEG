@@ -22,7 +22,7 @@ async function loadCommands() {
                                 if ('data' in command && 'execute' in command) {
                                         commands.push(command.data.toJSON());
                                 } else {
-                                        console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+                                        if (process.env.DEBUG) console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
                                 }
                         }
                 } else if (entry.isFile() && entry.name.endsWith('.js')) {
@@ -31,7 +31,7 @@ async function loadCommands() {
                         if ('data' in command && 'execute' in command) {
                                 commands.push(command.data.toJSON());
                         } else {
-                                console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+                                if (process.env.DEBUG) console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
                         }
                 }
         }
@@ -44,7 +44,7 @@ async function loadCommands() {
 
         // and deploy your commands!
         try {
-                console.log(`Started refreshing ${commands.length} application (/) commands.`);
+                if (process.env.DEBUG) console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
                 // The put method is used to fully refresh all commands in the guild with the current set
                 const data = await rest.put(
@@ -52,7 +52,7 @@ async function loadCommands() {
                         { body: commands },
                 );
 
-                console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+                if (process.env.DEBUG) console.log(`Successfully reloaded ${data.length} application (/) commands.`);
         } catch (error) {
                 console.error('Error reloading application (/) commands:', error);
         }

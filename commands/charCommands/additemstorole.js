@@ -17,11 +17,11 @@ module.exports = {
         const amount = interaction.options.getInteger('amount');
 
         const response = await char.addItemToRole(role, item, amount);
-        console.log("response" + response);
-        console.log(typeof response);
+        if (process.env.DEBUG) console.log("response" + response);
+        if (process.env.DEBUG) console.log(typeof response);
 
         if (typeof response == 'object') {
-            console.log("here");
+            if (process.env.DEBUG) console.log("here");
             if (response.length > 0) {
                 return interaction.reply("Errors on the following characters: " + response.join(", "));
             } else {
