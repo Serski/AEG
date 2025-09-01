@@ -6,6 +6,7 @@ const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, createWebhoo
 const shipUtils = require('./shipUtils');
 
 class char {
+  static incomeListCache = null;
   static async warn(playerID) {
     console.log(playerID);
     let collectionName = 'characters';
@@ -348,7 +349,10 @@ class char {
 
     // Load the data
     let charData = await dbm.loadFile(collectionName, userID);
-    let incomeListFromRoles = await dbm.loadFile('keys', 'incomeList');
+    if (char.incomeListCache === null) {
+      char.incomeListCache = await dbm.loadFile('keys', 'incomeList');
+    }
+    let incomeListFromRoles = char.incomeListCache;
 
     var now = new Date();
 
