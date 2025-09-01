@@ -344,7 +344,7 @@ class char {
     }
   }
 
-  static async incomes(userID, numericID) {
+  static async incomes(userID, numericID, roles = null) {
     let collectionName = 'characters';
 
     // Load the data
@@ -359,14 +359,19 @@ class char {
     let charIncomeData = [];
 
     //Add on incomes from roles. role.id is a number that corresponds to the role's ID. Meanwhile, incomeList data is a list of incomes- within each income from that list, there is a "roles" array that contains the ids of roles that match that income
-    let user = await clientManager.getUser(numericID);
-    let roles = user.roles.cache;
+    let rolesToCheck;
+    if (roles) {
+      rolesToCheck = roles;
+    } else {
+      let user = await clientManager.getUser(numericID);
+      rolesToCheck = user.roles.cache;
+    }
 
     let incomeAvailableKey = "incomeAvailable";
     for (let [income, incomeData] of Object.entries(incomeListFromRoles)) {
       let incomeRoles = incomeData.roles;
       for (let i = 0; i < incomeRoles.length; i++) {
-        if (roles.some(role => role.id === incomeRoles[i])) {
+        if (rolesToCheck.some(role => role.id === incomeRoles[i])) {
           charIncomeData.push({ income, data: incomeData });
           let delay = incomeData.delay || "1D";
           if (delay !== "1D") {
