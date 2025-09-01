@@ -4,6 +4,9 @@ const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('
 const clientManager = require('./clientManager');
 const dataGetters = require('./dataGetters');
 
+// Cache mapping of lower-case item names to their canonical names
+let itemNameMap = null;
+
 class shop {
   //Declare constants for class 
   static infoOptions = ['Name', 'Icon', 'Category', 'Image', 'Description', 'Transferrable (Y/N)'];
@@ -23,15 +26,20 @@ class shop {
     ];
 
   // Function to find an item by name in the shop
-  //THIS IS INEFFICIENT BECAUSE IT MEANS CALLING IT MEANS TWO CALLS TO THE DATABASE- FIX LATER
   static async findItemName(itemName, data) {
-    let dataKeys = Object.keys(data);
-    for (let i = 0; i < dataKeys.length; i++) {
-      if (dataKeys[i].toLowerCase() == itemName.toLowerCase()) {
-        return dataKeys[i];
+    // Lazily build name map on first call
+    if (itemNameMap === null) {
+      itemNameMap = {};
+    }
+    // Add any new keys from data to the cache
+    for (let key of Object.keys(data)) {
+      let lowerKey = key.toLowerCase();
+      if (!itemNameMap[lowerKey]) {
+        itemNameMap[lowerKey] = key;
       }
     }
-    return "ERROR";
+    // Return cached canonical name or "ERROR" if not found
+    return itemNameMap[itemName.toLowerCase()] || "ERROR";
   }
 
   static async convertToShopMap(rawShopLayoutData) {
