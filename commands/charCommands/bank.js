@@ -5,16 +5,14 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('bank')
 		.setDescription('Show bank'),
-	execute(interaction) {
+	async execute(interaction) {
 		const charID = interaction.user.tag;
-
-		(async () => {
-            let replyEmbed = await char.bank(charID);
-            if (typeof(replyEmbed) == 'string') {
-                await interaction.reply(replyEmbed);
-            } else {
-                await interaction.reply({ embeds: [replyEmbed] });
-            }
-		})()
+		await interaction.deferReply({ ephemeral: true });
+		const replyEmbed = await char.bank(charID);
+		if (typeof(replyEmbed) == 'string') {
+			await interaction.editReply(replyEmbed);
+		} else {
+			await interaction.editReply({ embeds: [replyEmbed] });
+		}
 	},
 };
