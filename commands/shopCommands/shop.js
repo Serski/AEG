@@ -10,8 +10,8 @@ module.exports = {
 		// console.log("DATA");
 		// console.log(itemListString);
 		// await interaction.reply(itemListString);
-		await interaction.deferReply();
-		let [embed, rows] = await shop.createShopEmbed(1, interaction);
-		await interaction.editReply({ embeds: [embed], components: rows});
+               await interaction.deferReply({ ephemeral: true });
+               let [embed, rows] = await shop.createShopEmbed(1, interaction);
+               await interaction.editReply({ embeds: [embed], components: rows });
 	},
 };
