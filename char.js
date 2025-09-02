@@ -463,15 +463,9 @@ class char {
       superstring += "\n";
     }
 
-    charData.balance += total;
     superstring +=  clientManager.getEmoji("Gold") + " **__Total Gold :__** `" + total + "`\n";
 
     for (let [resource, amount] of Object.entries(resourceMap)) {
-      if (charData.inventory[resource]) {
-        charData.inventory[resource] += amount;
-      } else {
-        charData.inventory[resource] = amount;
-      }
       superstring += clientManager.getEmoji(resource) + " **__Total " + resource + " :__** `" + amount + "`\n";
     }
 
@@ -482,19 +476,32 @@ class char {
       superstring += "Successfully collected!";
     }
 
-    for (let incomeAvailableKey of incomesCollectedArray) {
-      charData[incomeAvailableKey] = false;
-    }
-
     //Cast now.getTime()/1000 to int
     var tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
     superstring += "\nNext cycle  <t:" + Math.floor(tomorrow.getTime() / 1000) + ":R>";
-    
-    charData.incomeAvailable = false;
 
-    await dbm.saveFile(collectionName, userID, charData);
+    // Determine if we need to persist changes:
+    const needSave =
+        (total !== 0 || incomesCollectedArray.length > 0) ||
+        charData.incomeAvailable === true;
+
+    if (needSave) {
+      charData.balance += total;
+      for (const [resource, amount] of Object.entries(resourceMap)) {
+        if (charData.inventory[resource]) {
+          charData.inventory[resource] += amount;
+        } else {
+          charData.inventory[resource] = amount;
+        }
+      }
+      for (const key of incomesCollectedArray) {
+        charData[key] = false;
+      }
+      charData.incomeAvailable = false;
+      await dbm.saveFile(collectionName, userID, charData);
+    }
     
     const incomeEmbed = {
       color: 0x36393e,
