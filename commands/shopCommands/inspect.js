@@ -18,8 +18,8 @@ module.exports = {
             if (typeof(replyEmbed) == 'string') {
                 await interaction.reply({content: replyEmbed, ephemeral: true });
             } else {
-                await interaction.reply({ embeds: [replyEmbed] });
+                await interaction.reply({ embeds: [replyEmbed], ephemeral: true });
             }
-		})()
-	},
+                })()
+        },
 };
