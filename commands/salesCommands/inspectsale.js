@@ -17,9 +17,9 @@ module.exports = {
         let replyString = await marketplace.inspectSale(saleID);
         //if embed, display embed, otherwise display string
         if (typeof (replyString) == 'string') {
-            await interaction.reply(replyString);
+            await interaction.reply({ content: replyString, ephemeral: true });
         } else {
-            await interaction.reply({ embeds: [replyString] });
+            await interaction.reply({ embeds: [replyString], ephemeral: true });
         }
     },
 };
