@@ -19,7 +19,7 @@ module.exports = {
                 // Ephemeral reply
                 await interaction.reply({content: reply, ephemeral: true });
             } else {
-                await interaction.reply({ embeds: [reply] });
+                await interaction.reply({ embeds: [reply], ephemeral: true });
             }
             // Call the useItem function from the Shop class
         })()
