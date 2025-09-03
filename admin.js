@@ -1110,7 +1110,7 @@ When selected grants the:
     return [returnEmbed, [actionRow]];
   }
 
-  static async editIncomeMenu(income, charTag) {
+  static async editIncomeMenu(income, numericID) {
     let incomeList = await dbm.loadFile("keys", "incomeList");
     let incomeValue = incomeList[income];
     if (incomeValue == undefined) {
@@ -1170,18 +1170,21 @@ When selected grants the:
         "\n`[7] Income Delay: ` " + delayString
       );
 
-    let userData = await dbm.loadFile("characters", charTag);
+    let userData = await dbm.loadFile("characters", String(numericID));
+    if (!userData) {
+      userData = {};
+    }
     if (!userData.editingFields) {
       userData.editingFields = {};
     }
     userData.editingFields["Income Edited"] = income;
-    await dbm.saveFile("characters", charTag, userData);
+    await dbm.saveFile("characters", String(numericID), userData);
 
     return returnEmbed;
   }
 
-  static async editIncomeField(fieldNumber, charTag, newValue) {
-    let userData = await dbm.loadFile("characters", charTag)
+  static async editIncomeField(fieldNumber, numericID, newValue) {
+    let userData = await dbm.loadFile("characters", String(numericID));
     let editingFields = userData.editingFields;
     let income = editingFields["Income Edited"];
     let incomeList = await dbm.loadFile("keys", "incomeList");
@@ -1199,6 +1202,8 @@ When selected grants the:
         }
         delete incomeList[income];
         income = newValue;
+        userData.editingFields["Income Edited"] = income;
+        await dbm.saveFile("characters", String(numericID), userData);
         break;
       case 2:
         if (newValue == "DELETEFIELD") {
