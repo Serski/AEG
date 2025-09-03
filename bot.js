@@ -54,10 +54,26 @@ client.on('ready', () => {
 });
 
 client.on('clientReady', async () => {
-    [shop.shopCache, marketplace.marketplaceCache] = await Promise.all([
+    // Load shop and marketplace data in parallel
+    const [shopData, marketData] = await Promise.all([
         dbm.loadCollection('shop'),
         dbm.loadCollection('marketplace')
     ]);
+
+    // Share shop data cache across modules
+    shop.shopCache = marketplace.shopDataCache = shopData;
+    marketplace.marketplaceCache = marketData;
+
+    // Build a quick lookup for sale IDs -> { category, itemName }
+    marketplace.saleIndex = {};
+    const marketplaceData = marketData.marketplace || {};
+    for (const [category, items] of Object.entries(marketplaceData)) {
+        for (const [itemName, sales] of Object.entries(items)) {
+            for (const saleID of Object.keys(sales)) {
+                marketplace.saleIndex[saleID] = { category, itemName };
+            }
+        }
+    }
 
     // Preload additional frequently accessed collections
     await Promise.all([

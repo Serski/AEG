@@ -6,6 +6,7 @@ const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('
 class marketplace {
   static shopDataCache = null;
   static marketplaceCache = null;
+  static saleIndex = {};
   /**Function for a player to post a sale.
    * Will take the number of items, the item name, and the price they want to sell it for.
    * Will also be passed their user ID
