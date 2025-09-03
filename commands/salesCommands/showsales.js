@@ -18,19 +18,19 @@ module.exports = {
                 .setRequired(false)
         ),
     async execute(interaction) {
-        let player = interaction.options.getUser('player');
+        let seller = interaction.options.getUser('player');
         let page = interaction.options.getInteger('page');
-        if (process.env.DEBUG) console.log(player);
-        if (!player) {
-            player = interaction.user;
+        if (process.env.DEBUG) console.log(seller);
+        if (!seller) {
+            seller = interaction.user;
         }
         if (!page) {
             page = 1;
         }
 
-        const playerID = player.id;
+        const sellerID = seller.id;
 
-        let replyString = await marketplace.showSales(playerID, page);
+        let replyString = await marketplace.showSales(sellerID, page);
         //if embed, display embed, otherwise display string
         if (typeof (replyString) == 'string') {
             await interaction.reply(replyString);

@@ -1,4 +1,4 @@
-//Passes saleID and numericID to buySale function in marketplace.js
+//Passes saleID and buyerID to buySale function in marketplace.js
 
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const marketplace = require('../../marketplace');
@@ -14,8 +14,8 @@ module.exports = {
         ),
     async execute(interaction) {
         const saleID = interaction.options.getString('saleid');
-        const numericID = interaction.user.id;
-        let replyString = await marketplace.buySale(saleID, numericID);
+        const buyerID = interaction.user.id;
+        let replyString = await marketplace.buySale(saleID, buyerID);
         //if embed, display embed, otherwise display string
         if (typeof (replyString) == 'string') {
             await interaction.reply(replyString);
