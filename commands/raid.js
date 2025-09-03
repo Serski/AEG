@@ -227,7 +227,16 @@ module.exports = {
         .find(ch => ch.name === 'news-feed' && ch.isTextBased());
       if (newsChannel && newsMessage) {
         try {
-          newsChannel.send(newsMessage);
+          const [titleLine, ...rest] = newsMessage.split('\n');
+          const description = rest
+            .map(line => line.trim())
+            .filter(Boolean)
+            .join(' ');
+          const embed = new EmbedBuilder()
+            .setTitle(`**${titleLine} – Piracy Report**`)
+            .setDescription(description)
+            .setColor(0x8B0000);
+          await newsChannel.send({ content: ':RAID:', embeds: [embed] });
         } catch (err) {
           console.error('[raid] Failed to send news-feed message:', err);
         }
