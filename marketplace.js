@@ -310,15 +310,15 @@ class marketplace {
   }
 
   //Get itemcategory, itemname and sale from saleID
-  static async getSale(saleID) {
-    // Load the marketplace.json file
-    let marketData = await dbm.loadCollection('marketplace');
-    // Search through marketData for the saleID
+  static async getSale(saleID, marketData = null) {
+    // Load marketplace data if not provided
+    const data = marketData ?? await dbm.loadCollection('marketplace');
+    // Search through data for the saleID
     let sale;
     let itemName;
     let itemCategory;
-    for (const category in marketData.marketplace) {
-      const categoryItems = marketData.marketplace[category];
+    for (const category in data.marketplace) {
+      const categoryItems = data.marketplace[category];
       for (const item in categoryItems) {
         const sales = categoryItems[item];
         if (sales[saleID] != undefined) {
