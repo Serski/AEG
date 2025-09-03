@@ -37,12 +37,12 @@ class char {
   }
 
   // Function to add items
-  static async newChar(numericID, charName, charBio) {
+  static async newChar(numericID, charName, charBio, docID = numericID) {
     // Set the collection name
     let collectionName = 'characters';
 
     // Load the player's character data (if it exists)
-    let charData = await dbm.loadFile(collectionName, String(numericID));
+    let charData = await dbm.loadFile(collectionName, String(docID));
 
     if (charData) {
       // If the character already exists, update the fields
@@ -71,7 +71,7 @@ class char {
     }
 
     // Save the character data
-    await dbm.saveFile(collectionName, String(numericID), charData);
+    await dbm.saveFile(collectionName, String(docID), charData);
   }
 
   //returns player name and bio from playerID
