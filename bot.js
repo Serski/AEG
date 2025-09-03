@@ -93,10 +93,8 @@ client.on(Events.InteractionCreate, async interaction => {
 });
 
 client.on('guildMemberAdd', member => {
-    let memberID = member.id;
-    let memberName = member.user.tag;
-    let memberBio = "A new member of Britannia!";
-    char.newChar(memberID, memberName, memberBio);
+    const memberBio = "A new member of Britannia!";
+    char.newChar(member.id, member.user.tag, memberBio, member.id);
 });
 
 client.on('guildMemberRemove', member => {
