@@ -26,7 +26,8 @@ module.exports = {
             newValue = interaction.options.getString('newvalue');
         }
 
-        let reply = await admin.editMapField(interaction.user.id, fieldNumber, newValue);
+        const numericID = interaction.user.id;
+        let reply = await admin.editMapField(String(numericID), fieldNumber, newValue);
         if (typeof(reply) == 'string') {
             await interaction.reply(reply);
         } else {

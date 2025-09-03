@@ -9,8 +9,9 @@ module.exports = {
         .setDescription('Check warnings')
         .addUserOption(option => option.setName('player').setDescription('The player to check warnings of').setRequired(false)),
     async execute(interaction) {
-        const player = interaction.options.getUser('player')?.id || interaction.user.id;
-        const response = await char.checkWarns(player);
+        const numericID = interaction.user.id;
+        const player = interaction.options.getUser('player')?.id || numericID;
+        const response = await char.checkWarns(String(player));
 
         return interaction.reply(response);
     },

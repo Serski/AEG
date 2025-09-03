@@ -24,7 +24,7 @@ module.exports = {
 
         // Show the edit recipe menu
         const numericID = interaction.user.id;
-        let reply = await shop.editRecipeMenu(recipeName, numericID);
+        let reply = await shop.editRecipeMenu(recipeName, String(numericID));
         if (typeof(reply) == 'string') {
             await interaction.followUp(reply);
         } else {

@@ -147,7 +147,7 @@ newChar = async (interaction) => {
 
   // Call the newChar function from the char class with the info
   if (charName && charBio) {
-    char.newChar(numericID, charName, charBio);
+    char.newChar(String(numericID), charName, charBio);
     await interaction.reply(`Character '${charName}' has been created.`);
   } else {
     // Handle missing information
@@ -183,7 +183,7 @@ allItemSwitch = async (interaction) => {
 }
 itemSwitch = async (interaction) => {
   const numericID = interaction.user.id;
-  let [edittedEmbed, rows] = await shop.editItemMenu(interaction.customId.substring(12), interaction.customId[11], numericID);
+  let [edittedEmbed, rows] = await shop.editItemMenu(interaction.customId.substring(12), interaction.customId[11], String(numericID));
   await interaction.update({ embeds: [edittedEmbed], components: [rows]});
 }
 balaSwitch = async (interaction) => {

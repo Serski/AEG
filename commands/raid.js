@@ -25,8 +25,8 @@ module.exports = {
     .setName('raid')
     .setDescription('Launch a raid against one of the available targets'),
   async execute(interaction) {
-    const userId = interaction.user.id;
-    const charId = String(interaction.user.id);
+    const numericID = interaction.user.id;
+    const charId = String(numericID);
 
     const charData = await dbm.loadFile('characters', charId);
     if (!charData) {
@@ -70,7 +70,7 @@ module.exports = {
       fetchReply: true
     });
 
-    const filter = i => i.user.id === userId;
+    const filter = i => i.user.id === numericID;
     let targetInteraction;
     try {
       targetInteraction = await replyMessage.awaitMessageComponent({
@@ -83,7 +83,7 @@ module.exports = {
     }
 
     const targetKey = targetInteraction.values[0];
-    clientManager.setRaidSession(userId, { selectedTarget: targetKey });
+    clientManager.setRaidSession(numericID, { selectedTarget: targetKey });
 
     // Load the ship catalog so we know which entries are valid ships
     const catalog = await raidUtils.loadShipCatalog();
@@ -103,7 +103,7 @@ module.exports = {
       .slice(0, 5);
     if (shipEntries.length === 0) {
       await interaction.editReply({ content: 'You have no ships to deploy.', components: [] });
-      clientManager.clearRaidSession(userId);
+      clientManager.clearRaidSession(numericID);
       return;
     }
 
@@ -128,12 +128,12 @@ module.exports = {
     let modalInteraction;
     try {
       modalInteraction = await targetInteraction.awaitModalSubmit({
-        filter: i => i.customId === 'raidShipQuantities' && i.user.id === userId,
+        filter: i => i.customId === 'raidShipQuantities' && i.user.id === numericID,
         time: 60000
       });
       await modalInteraction.deferUpdate();
     } catch (err) {
-      clientManager.clearRaidSession(userId);
+      clientManager.clearRaidSession(numericID);
       return;
     }
 
@@ -146,12 +146,12 @@ module.exports = {
       }
     }
 
-    clientManager.setRaidSession(userId, { selectedTarget: targetKey, fleetSelection });
+    clientManager.setRaidSession(numericID, { selectedTarget: targetKey, fleetSelection });
 
     for (const [ship, qty] of Object.entries(fleetSelection)) {
       if (!fleet[ship] || fleet[ship] < qty) {
         await interaction.followUp({ content: `You do not have enough ${ship}.`, ephemeral: true });
-        clientManager.clearRaidSession(userId);
+        clientManager.clearRaidSession(numericID);
         return;
       }
     }
@@ -198,7 +198,7 @@ module.exports = {
     charData.lastRaidAt = now;
     await dbm.saveFile('characters', charId, charData);
 
-    await dbm.saveFile('raidLog', `${userId}-${now}`, {
+    await dbm.saveFile('raidLog', `${numericID}-${now}`, {
       user: charId,
       target: targetKey,
       fleet: fleetSelection,
@@ -255,6 +255,6 @@ module.exports = {
     } else {
       await interaction.editReply({ embeds: [resultEmbed], components: [] });
     }
-    clientManager.clearRaidSession(userId);
+    clientManager.clearRaidSession(numericID);
   },
 };

@@ -10,11 +10,11 @@ module.exports = {
                 .setDescription('Quantity to deposit')
                 .setRequired(true)),
 	execute(interaction) {
-                const charID = interaction.user.id;
+                const numericID = interaction.user.id;
         const quantity = interaction.options.getInteger('quantity');
 
-		(async () => {
-            let replyEmbed = await char.deposit(charID, quantity);
+                (async () => {
+            let replyEmbed = await char.deposit(String(numericID), quantity);
             if (typeof(replyEmbed) == 'string') {
                 await interaction.reply(replyEmbed);
             } else {

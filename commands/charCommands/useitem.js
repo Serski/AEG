@@ -16,17 +16,18 @@ module.exports = {
 			.setRequired(false)
 		),
 	execute(interaction) {
-		const itemName = interaction.options.getString('itemname');
+                const itemName = interaction.options.getString('itemname');
         const numberItems = interaction.options.getInteger('numbertouse');
+        const numericID = interaction.user.id;
 
-		(async () => {
-            let reply = await char.useItem(itemName, interaction.user.id, numberItems)
+                (async () => {
+            let reply = await char.useItem(itemName, String(numericID), numberItems)
             if (typeof(reply) == 'string') {
                 await interaction.reply(reply);
             } else {
                 await interaction.reply({ embeds: [reply] });
             }
-			// Call the useItem function from the Shop class
-		})()
-	},
+                        // Call the useItem function from the Shop class
+                })()
+        },
 };

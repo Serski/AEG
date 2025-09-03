@@ -10,7 +10,8 @@ module.exports = {
         .setDefaultMemberPermissions(0),
     async execute(interaction) {
         try {
-            let userData = await dbm.loadFile('characters', String(interaction.user.id));
+            const numericID = interaction.user.id;
+            let userData = await dbm.loadFile('characters', String(numericID));
 
             let mapName = userData.editingFields["Map Edited"];
             let mapTypeEdited = userData.editingFields["Map Type Edited"];

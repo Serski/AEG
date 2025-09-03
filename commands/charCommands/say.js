@@ -12,9 +12,10 @@ module.exports = {
 		),
 	execute(interaction) {
         const message = interaction.options.getString('message');
+        const numericID = interaction.user.id;
 
-		(async () => {
-            let reply = await char.say(interaction.user.id, message, interaction.channel)
+                (async () => {
+            let reply = await char.say(String(numericID), message, interaction.channel)
             if (typeof(reply) == 'string') {
                 await interaction.reply({ content: reply, ephemeral: true });
             } else {

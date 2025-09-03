@@ -12,11 +12,11 @@ module.exports = {
 		),
 	execute(interaction) {
                 const avatarURL = interaction.options.getString('avatarurl');
-                const userID = interaction.user.id;
+                const numericID = interaction.user.id;
 
                 (async () => {
-                        let replyString = await char.setAvatar(avatarURL, userID)
+                        let replyString = await char.setAvatar(avatarURL, String(numericID))
                         await interaction.reply(replyString);
                 })()
-	},
+        },
 };

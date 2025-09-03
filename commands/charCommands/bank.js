@@ -6,13 +6,13 @@ module.exports = {
 		.setName('bank')
 		.setDescription('Show bank'),
 	async execute(interaction) {
-                const charID = interaction.user.id;
-		await interaction.deferReply({ ephemeral: true });
-		const replyEmbed = await char.bank(charID);
-		if (typeof(replyEmbed) == 'string') {
-			await interaction.editReply(replyEmbed);
-		} else {
-			await interaction.editReply({ embeds: [replyEmbed] });
-		}
+                const numericID = interaction.user.id;
+                await interaction.deferReply({ ephemeral: true });
+                const replyEmbed = await char.bank(String(numericID));
+                if (typeof(replyEmbed) == 'string') {
+                        await interaction.editReply(replyEmbed);
+                } else {
+                        await interaction.editReply({ embeds: [replyEmbed] });
+                }
 	},
 };

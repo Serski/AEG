@@ -14,12 +14,12 @@ module.exports = {
                 .setDescription('Quantity to grab')
                 .setRequired(true)),
 	execute(interaction) {
-                const charID = interaction.user.id;
+                const numericID = interaction.user.id;
         const item = interaction.options.getString('item');
         const quantity = interaction.options.getInteger('quantity');
 
 		(async () => {
-            let replyEmbed = await char.grab(charID, item, quantity);
+            let replyEmbed = await char.grab(String(numericID), item, quantity);
             if (typeof(replyEmbed) == 'string') {
                 await interaction.reply(replyEmbed);
             } else {

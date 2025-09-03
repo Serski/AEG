@@ -13,10 +13,11 @@ module.exports = {
         ),
     async execute(interaction) {
         const role = interaction.options.getString('income');
+        const numericID = interaction.user.id;
 
         (async () => {
             //addIncome(roleID, incomeString)
-            let reply = await admin.editIncomeMenu(role, interaction.user.id);
+            let reply = await admin.editIncomeMenu(role, String(numericID));
             if (typeof(reply) == 'string') {
                 await interaction.reply(reply);
             } else {

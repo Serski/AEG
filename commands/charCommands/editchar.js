@@ -6,7 +6,8 @@ module.exports = {
 		.setName('editchar')
 		.setDescription('Edit your character'),
 	async execute(interaction) {
-        placeholderArray = await char.editCharPlaceholders(interaction.user.id);
+        const numericID = interaction.user.id;
+        placeholderArray = await char.editCharPlaceholders(String(numericID));
 
 		// Create the modal
 		const modal = new ModalBuilder()
