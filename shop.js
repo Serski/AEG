@@ -1,4 +1,5 @@
 const dbm = require('./database-manager'); // Importing the database manager
+const char = require('./char');
 const Discord = require('discord.js');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 const clientManager = require('./clientManager');
@@ -543,7 +544,7 @@ class shop {
   //function to create an embed of player inventory
   static async createInventoryEmbed(charID) {
     // load data for this character and shop.json
-    const charData = await dbm.loadFile('characters', String(charID));
+    const [player, charData] = await char.findPlayerData(charID);
     const shopData = await this.getShopData();
 
     // If character doesn't exist, instruct user to create one
@@ -575,7 +576,7 @@ class shop {
       inventory[category].push(item);
     }
     if (deleted) {
-      await dbm.saveFile('characters', String(charID), charData);
+      await char.updatePlayer(player, charData);
     }
     // let inventory = [];
     // for (const item in charData.inventory) {
@@ -622,7 +623,7 @@ class shop {
 
   static async storage(charID) {
     // load data for this character and shop.json
-    const charData = await dbm.loadFile('characters', String(charID));
+    const [player, charData] = await char.findPlayerData(charID);
     const shopData = await this.getShopData();
 
     // If character doesn't exist, instruct user to create one
@@ -654,7 +655,7 @@ class shop {
       storage[category].push(item);
     }
     if (deleted) {
-      await dbm.saveFile('characters', String(charID), charData);
+      await char.updatePlayer(player, charData);
     }
     // let inventory = [];
     // for (const item in charData.inventory) {
@@ -1016,7 +1017,7 @@ class shop {
     }
 
     // Load user data, check if user has attribute "Item Edited" and if so change the value to the item name. If not, create the attribute
-    let userData = await dbm.loadFile('characters', String(numericID));
+    let [player, userData] = await char.findPlayerData(numericID);
     if (!userData) {
       userData = {};
     }
@@ -1024,7 +1025,7 @@ class shop {
       userData.editingFields = {};
     }
     userData.editingFields["Item Edited"] = itemName;
-    await dbm.saveFile('characters', String(numericID), userData);
+    await char.updatePlayer(player, userData);
 
     //Loatd item data
     let itemData = shopData[itemName];
@@ -1127,7 +1128,7 @@ class shop {
 
     recipeData = recipeData[recipeName];
 
-    let userData = await dbm.loadFile('characters', String(numericID));
+    let [player, userData] = await char.findPlayerData(numericID);
     if (!userData) {
       userData = {};
     }
@@ -1135,7 +1136,7 @@ class shop {
       userData.editingFields = {};
     }
     userData.editingFields["Recipe Edited"] = recipeName;
-    await dbm.saveFile('characters', String(numericID), userData);
+    await char.updatePlayer(player, userData);
 
     const recipeOptions = this.recipeOptions;
 
@@ -1155,7 +1156,7 @@ class shop {
   static async editItemField(numericID, fieldNumber, newValue) {
     let shopData = await this.getShopData();
     // Load user data
-    let charData = await dbm.loadFile('characters', String(numericID));
+    let [player, charData] = await char.findPlayerData(numericID);
     let itemName;
     if (!charData || !charData.editingFields || !charData.editingFields["Item Edited"]) {
       return "You are not currently editing any items!";
@@ -1291,8 +1292,9 @@ class shop {
 
       //Change the item name in the user's editingFields
       charData.editingFields["Item Edited"] = newValue;
-      await dbm.saveFile('characters', String(numericID), charData);
+      await char.updatePlayer(player, charData);
       await dbm.saveCollection('characters', allChars);
+      char.charCache.clear();
       await this.refreshShopCache();
 
       return `Item name changed to ${newValue}`;
@@ -1313,7 +1315,7 @@ class shop {
 
   static async editRecipeField(numericID, fieldNumber, newValue) {
     // Load user data
-    let charData = await dbm.loadFile('characters', String(numericID));
+    let [player, charData] = await char.findPlayerData(numericID);
     let recipeName;
     if (!charData || !charData.editingFields || !charData.editingFields["Recipe Edited"]) {
       return "You are not currently editing any recipes!";
@@ -1498,8 +1500,9 @@ class shop {
         }
       }
 
-      await dbm.saveFile('characters', String(numericID), charData);
+      await char.updatePlayer(player, charData);
       await dbm.saveCollection('characters', allChars);
+      char.charCache.clear();
 
       return `Recipe name changed to ${newValue}`;
     } else {

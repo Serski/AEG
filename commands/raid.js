@@ -2,6 +2,7 @@ const { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, Componen
 const path = require('path');
 const raidUtils = require('../raidUtils');
 const dbm = require('../database-manager');
+const char = require('../char');
 const clientManager = require('../clientManager');
 
 // Custom display names for each difficulty
@@ -29,7 +30,7 @@ module.exports = {
     const numericID = interaction.user.id;
     const charId = String(numericID);
 
-    const charData = await dbm.loadFile('characters', charId);
+    const [player, charData] = await char.findPlayerData(charId);
     if (!charData) {
       await interaction.editReply({ content: 'Create a character first with /newchar.' });
       return;
@@ -197,7 +198,7 @@ module.exports = {
     }
 
     charData.lastRaidAt = now;
-    await dbm.saveFile('characters', charId, charData);
+    await char.updatePlayer(player, charData);
 
     await dbm.saveFile('raidLog', `${numericID}-${now}`, {
       user: charId,

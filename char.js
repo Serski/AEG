@@ -7,6 +7,7 @@ const shipUtils = require('./shipUtils');
 
 class char {
   static incomeListCache = null;
+  static charCache = new Map();
   static async warn(numericID) {
     if (process.env.DEBUG) console.log(numericID);
     let collectionName = 'characters';
@@ -16,7 +17,7 @@ class char {
         charData.warns = 0;
       }
       charData.warns++;
-      await dbm.saveFile(collectionName, String(numericID), charData);
+      await this.updatePlayer(numericID, charData);
       return "Player has been warned. They now have " + charData.warns + " warnings.";
     } else {
       return "Player not found";
@@ -71,7 +72,7 @@ class char {
     }
 
     // Save the character data
-    await dbm.saveFile(collectionName, String(docID), charData);
+    await this.updatePlayer(docID, charData);
   }
 
   //returns player name and bio from playerID
@@ -98,7 +99,7 @@ class char {
 
         charData.icon = avatarURL;
 
-        await dbm.saveFile(collectionName, String(numericID), charData);
+        await this.updatePlayer(numericID, charData);
 
         return "Avatar has been set";
       } else {
@@ -303,7 +304,7 @@ class char {
       charData.stats.CHA = cha;
       charData.stats.HP = hp;
       if (process.env.DEBUG) console.log(numericID);
-      await dbm.saveFile('characters', String(numericID), charData);
+      await this.updatePlayer(numericID, charData);
     }
 
     return "**`━━━━━━━Stats━━━━━━━`**\n"+
@@ -1791,11 +1792,21 @@ class char {
 
   static async findPlayerData(id) {
     const player = String(id);
+    if (this.charCache.has(player)) {
+      return [player, this.charCache.get(player)];
+    }
     const charData = await dbm.loadFile('characters', player);
     if (!charData) {
       return [false, false];
     }
+    this.charCache.set(player, charData);
     return [player, charData];
+  }
+
+  static async updatePlayer(id, data) {
+    const player = String(id);
+    await dbm.saveFile('characters', player, data);
+    this.charCache.set(player, data);
   }
 }
 
