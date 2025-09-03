@@ -53,9 +53,11 @@ class marketplace {
       "price": price,
       "number": numberItems
     }
-    // Save the character.json file and update marketplace data
-    await dbm.saveFile('characters', String(sellerID), charData);
-    await dbm.saveCollection('marketplace', mktData);
+    // Save the character.json file and update marketplace data in parallel
+    await Promise.all([
+      dbm.saveFile('characters', String(sellerID), charData),
+      dbm.saveCollection('marketplace', mktData)
+    ]);
     marketplace.marketplaceCache = mktData;
     // Track sale location for faster lookups
     marketplace.saleIndex[itemID] = { category: itemCategory, itemName };
@@ -271,8 +273,10 @@ class marketplace {
       buyerChar.inventory[foundItemName] += sale.number;
       delete marketData.marketplace[foundCategory][foundItemName][saleID];
       delete marketplace.saleIndex[saleID];
-      await dbm.saveFile('characters', String(buyerID), buyerChar);
-      await dbm.saveCollection('marketplace', marketData);
+      await Promise.all([
+        dbm.saveFile('characters', String(buyerID), buyerChar),
+        dbm.saveCollection('marketplace', marketData)
+      ]);
       marketplace.marketplaceCache = marketData;
       let embed = new EmbedBuilder();
       embed.setDescription(`<@${buyerID}> bought **${sale.number} ${await shop.getItemIcon(foundItemName, shopData)} ${foundItemName}** back from themselves. It was listed for ${clientManager.getEmoji("Gold")}**${sale.price}**.`);
