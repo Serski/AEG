@@ -1467,7 +1467,7 @@ class char {
 
   static async addItemToPlayer(player, item, amount) {
     let collectionName = 'characters';
-    let shopData = await dbm.loadCollection('shop');
+    const shopData = await shop.getShopData();
     item = await shop.findItemName(item, shopData);
     let charData;
     [player, charData] = await this.findPlayerData(player);
@@ -1479,12 +1479,14 @@ class char {
     }
     if (charData) {
       //If amount is positive, add items to player or set to amount if they have none of the item already. If amount is negative, remove items from player or set to 0 if they have none of the item already, or less than the amount.
+      let inventoryChanged = false;
       if (amount > 0) {
         if (charData.inventory[item]) {
           charData.inventory[item] += amount;
         } else {
           charData.inventory[item] = amount;
         }
+        inventoryChanged = true;
       } else if (amount < 0) {
         if (charData.inventory[item]) {
           if (charData.inventory[item] + amount > 0) {
@@ -1492,12 +1494,13 @@ class char {
           } else {
             charData.inventory[item] = 0;
           }
-        } else {
-          charData.inventory[item] = 0;
+          inventoryChanged = true;
         }
       }
-      await dbm.saveFile(collectionName, String(player), charData);
-      return true;
+      if (inventoryChanged) {
+        await dbm.saveFile(collectionName, String(player), charData);
+      }
+      return inventoryChanged;
     } else {
       return false;
     }
@@ -1697,7 +1700,7 @@ class char {
 
     //Check if player has item, if they do, remove it and give it to player
     let collectionName = 'characters';
-    let shopData = await dbm.loadCollection('shop');
+    const shopData = await shop.getShopData();
 
     item = await shop.findItemName(item, shopData);
     if (item === "ERROR") {
@@ -1707,32 +1710,28 @@ class char {
     if (shopData[item].infoOptions["Transferrable (Y/N)"] == "No") {
       return "This item cannot be transferred!";
     }
-    let charData;
-    [playerGiving, charData] = await this.findPlayerData(playerGiving);
-    if (!playerGiving) {
+    const [[giverId, giverData], [targetId, targetData]] = await Promise.all([
+      this.findPlayerData(playerGiving),
+      this.findPlayerData(player)
+    ]);
+
+    if (!giverId || !targetId) {
       return "Error: Player not found";
     }
 
-    if (process.env.DEBUG) console.log("playerGiving: " + playerGiving);
+    if (process.env.DEBUG) console.log("playerGiving: " + giverId);
+    if (process.env.DEBUG) console.log("player: " + targetId);
 
-    let charData2;
-    [player, charData2] = await this.findPlayerData(player);
-    if (!player) {
-      return "Error: Player not found";
-    }
-
-    if (process.env.DEBUG) console.log("player: " + player);
-
-    if (charData && charData2) {
-      if (charData.inventory[item] && charData.inventory[item] >= amount) {
-        charData.inventory[item] -= amount;
-        if (charData2.inventory[item]) {
-          charData2.inventory[item] += amount;
+    if (giverData && targetData) {
+      if (giverData.inventory[item] && giverData.inventory[item] >= amount) {
+        giverData.inventory[item] -= amount;
+        if (targetData.inventory[item]) {
+          targetData.inventory[item] += amount;
         } else {
-          charData2.inventory[item] = amount;
+          targetData.inventory[item] = amount;
         }
-        await dbm.saveFile(collectionName, String(playerGiving), charData);
-        await dbm.saveFile(collectionName, String(player), charData2);
+        await dbm.saveFile(collectionName, String(giverId), giverData);
+        await dbm.saveFile(collectionName, String(targetId), targetData);
         return true;
       } else {
         return "You don't have enough of that item!";
