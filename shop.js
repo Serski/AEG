@@ -511,22 +511,30 @@ class shop {
 
   //function to create an embed of player inventory
   static async createInventoryEmbed(charID) {
-    // load data from characters.json and shop.json
-    const charData = await dbm.loadCollection('characters');
+    // load data for this character and shop.json
+    const charData = await dbm.loadFile('characters', String(charID));
     const shopData = await dbm.loadCollection('shop');
+
+    // If character doesn't exist, instruct user to create one
+    if (!charData) {
+      return new Discord.EmbedBuilder()
+        .setTitle('Inventory')
+        .setColor(0x36393e)
+        .setDescription("You haven't made a character! Use /newchar first");
+    }
 
     // create a 2d of items in the player's inventory sorted by category. Remove items with 0 quantity or that don't exist in the shop
     let deleted = false;
     let inventory = [];
-    for (const item in charData[charID].inventory) {
-      if (charData[charID].inventory[item] == 0) {
+    for (const item in charData.inventory) {
+      if (charData.inventory[item] == 0) {
         deleted = true;
-        delete charData[charID].inventory[item];
+        delete charData.inventory[item];
         continue;
       }
       if (!shopData[item]) {
         deleted = true;
-        delete charData[charID].inventory[item];
+        delete charData.inventory[item];
         continue;
       }
       const category = shopData[item].infoOptions.Category;
@@ -536,10 +544,10 @@ class shop {
       inventory[category].push(item);
     }
     if (deleted) {
-      await dbm.saveCollection('characters', charData);
+      await dbm.saveFile('characters', String(charID), charData);
     }
     // let inventory = [];
-    // for (const item in charData[charID].inventory) {
+    // for (const item in charData.inventory) {
     //   const category = shopData[item].category;
     //   if (!inventory[category]) {
     //     inventory[category] = [];
@@ -558,7 +566,7 @@ class shop {
       descriptionText += inventory[category]
         .map((item) => {
           const icon = shopData[item].infoOptions.Icon;
-          const quantity = charData[charID].inventory[item];
+          const quantity = charData.inventory[item];
 
           let alignSpaces = ' ' 
           if ((30 - item.length - ("" + quantity).length) > 0){
@@ -582,22 +590,30 @@ class shop {
   }
 
   static async storage(charID) {
-    // load data from characters.json and shop.json
-    const charData = await dbm.loadCollection('characters');
+    // load data for this character and shop.json
+    const charData = await dbm.loadFile('characters', String(charID));
     const shopData = await dbm.loadCollection('shop');
+
+    // If character doesn't exist, instruct user to create one
+    if (!charData) {
+      return new Discord.EmbedBuilder()
+        .setTitle('Storage')
+        .setColor(0x36393e)
+        .setDescription("You haven't made a character! Use /newchar first");
+    }
 
     // create a 2d of items in the player's storage sorted by category. Remove items with 0 quantity or that don't exist in the shop
     let deleted = false;
     let storage = [];
-    for (const item in charData[charID].storage) {
-      if (charData[charID].storage[item] == 0) {
+    for (const item in charData.storage) {
+      if (charData.storage[item] == 0) {
         deleted = true;
-        delete charData[charID].storage[item];
+        delete charData.storage[item];
         continue;
       }
       if (!shopData[item]) {
         deleted = true;
-        delete charData[charID].storage[item];
+        delete charData.storage[item];
         continue;
       }
       const category = shopData[item].infoOptions.Category;
@@ -607,10 +623,10 @@ class shop {
       storage[category].push(item);
     }
     if (deleted) {
-      await dbm.saveCollection('characters', charData);
+      await dbm.saveFile('characters', String(charID), charData);
     }
     // let inventory = [];
-    // for (const item in charData[charID].inventory) {
+    // for (const item in charData.inventory) {
     //   const category = shopData[item].category;
     //   if (!inventory[category]) {
     //     inventory[category] = [];
@@ -629,7 +645,7 @@ class shop {
       descriptionText += storage[category]
         .map((item) => {
           const icon = shopData[item].infoOptions.Icon;
-          const quantity = charData[charID].storage[item];
+          const quantity = charData.storage[item];
 
           let alignSpaces = ' ' 
           if ((30 - item.length - ("" + quantity).length) > 0){
