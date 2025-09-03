@@ -2,14 +2,8 @@ const dbm = require('./database-manager');
 
 class dataGetters {
     static async getCharFromNumericID(numericID) {
-        let collectionName = 'characters';
-        let data = await dbm.loadCollection(collectionName);
-        for (let [charID, charData] of Object.entries(data)) {
-            if (parseInt(charData.numericID) === parseInt(numericID)) {
-                return charID;
-            }
-        }
-        return "ERROR";
+        const charData = await dbm.loadFile('characters', String(numericID));
+        return charData ? String(numericID) : 'ERROR';
     }
 }
 module.exports = dataGetters;
