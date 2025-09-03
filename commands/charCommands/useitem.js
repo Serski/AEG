@@ -20,7 +20,7 @@ module.exports = {
         const numberItems = interaction.options.getInteger('numbertouse');
 
 		(async () => {
-            let reply = await char.useItem(itemName, interaction.user.tag, numberItems)
+            let reply = await char.useItem(itemName, interaction.user.id, numberItems)
             if (typeof(reply) == 'string') {
                 await interaction.reply(reply);
             } else {

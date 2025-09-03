@@ -11,12 +11,12 @@ module.exports = {
 			.setRequired(true)
 		),
 	execute(interaction) {
-		const avatarURL = interaction.options.getString('avatarurl');
-		const userID = interaction.user.tag;
+                const avatarURL = interaction.options.getString('avatarurl');
+                const userID = interaction.user.id;
 
-		(async () => {
-			let replyString = await char.setAvatar(avatarURL, userID)
-			await interaction.reply(replyString);
-		})()
+                (async () => {
+                        let replyString = await char.setAvatar(avatarURL, userID)
+                        await interaction.reply(replyString);
+                })()
 	},
 };

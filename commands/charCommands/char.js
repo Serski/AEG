@@ -6,7 +6,7 @@ module.exports = {
 		.setName('char')
 		.setDescription('Show player character'),
 	execute(interaction) {
-		const charID = interaction.user.tag;
+                const charID = interaction.user.id;
 
 		(async () => {
             let replyEmbed = await char.char(charID);

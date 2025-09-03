@@ -6,7 +6,7 @@ module.exports = {
 		.setName('me')
 		.setDescription('Show player character- only RP aspects'),
 	execute(interaction) {
-		const charID = interaction.user.tag;
+                const charID = interaction.user.id;
 
 		(async () => {
             let replyEmbed = await char.me(charID);

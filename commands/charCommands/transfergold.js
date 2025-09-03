@@ -13,8 +13,8 @@ module.exports = {
         .addUserOption(option => option.setName('playergetting').setDescription('The player to give gold to').setRequired(true))
         .addIntegerOption(option => option.setName('amount').setDescription('The amount of gold to give').setRequired(true)),
     async execute(interaction) {
-        const playerGiving = interaction.options.getUser('playergiving').toString();
-        const player = interaction.options.getUser('playergetting').toString();
+        const playerGiving = interaction.options.getUser('playergiving').id;
+        const player = interaction.options.getUser('playergetting').id;
         const amount = interaction.options.getInteger('amount');
         const response = await char.giveGoldToPlayer(playerGiving, player, amount);
 

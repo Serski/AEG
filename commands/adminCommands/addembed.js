@@ -31,7 +31,7 @@ module.exports = {
             await interaction.reply({ content: 'Embed menu should appear below', ephemeral: true });
 
             // Show the map menu
-            let reply = await admin.editMapMenu(map, interaction.user.tag, type);
+            let reply = await admin.editMapMenu(map, interaction.user.id, type);
             if (typeof(reply) == 'string') {
                 await interaction.followUp(reply);
             } else {

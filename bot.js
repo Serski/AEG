@@ -93,28 +93,15 @@ client.on(Events.InteractionCreate, async interaction => {
 });
 
 client.on('guildMemberAdd', member => {
-    // Assuming 'newchar' is a function you've defined to handle the new character creation
-	let memberID = member.id;
-	let memberName = member.user.tag;
-	let memberBio = "A new member of Britannia!";
-	char.newChar(memberName, memberName, memberBio, memberID);
+    let memberID = member.id;
+    let memberName = member.user.tag;
+    let memberBio = "A new member of Britannia!";
+    char.newChar(memberID, memberName, memberBio);
 });
 
 client.on('guildMemberRemove', member => {
-	let memberID = member.id;
-        if (process.env.DEBUG) console.log("Member ID: " + memberID);
-});
-
-client.on('userUpdate', (oldMember, newMember) => {
-	// Since data in Characters is stored by tag, we need to update the username in the database when a user changes their username
-	let oldName = oldMember.tag;
-	let newName = newMember.tag;
-
-	oldData = dbm.loadFile('characters', oldName);
-	if (oldData) {
-		dbm.saveFile('characters', newName, oldData);
-		dbm.docDelete('characters', oldName);
-	}
+    let memberID = member.id;
+    if (process.env.DEBUG) console.log("Member ID: " + memberID);
 });
 
 //For commands that need to be run daily, and daily logging of infos and such

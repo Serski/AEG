@@ -7,7 +7,7 @@ module.exports = {
         .setDescription('View crafting cooldowns'),
     async execute(interaction) {
         try {
-            const userID = interaction.user.tag;
+            const userID = interaction.user.id;
             var replyEmbed = await char.craftingCooldowns(userID);
             await interaction.reply(({ embeds: [replyEmbed] }));
         } catch (error) {

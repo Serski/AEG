@@ -26,7 +26,7 @@ module.exports = {
     .setDescription('Launch a raid against one of the available targets'),
   async execute(interaction) {
     const userId = interaction.user.id;
-    const charId = interaction.user.tag;
+    const charId = String(interaction.user.id);
 
     const charData = await dbm.loadFile('characters', charId);
     if (!charData) {

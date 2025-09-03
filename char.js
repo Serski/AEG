@@ -7,25 +7,25 @@ const shipUtils = require('./shipUtils');
 
 class char {
   static incomeListCache = null;
-  static async warn(playerID) {
-    if (process.env.DEBUG) console.log(playerID);
+  static async warn(numericID) {
+    if (process.env.DEBUG) console.log(numericID);
     let collectionName = 'characters';
-    let charData = await dbm.loadFile(collectionName, playerID);
+    let charData = await dbm.loadFile(collectionName, String(numericID));
     if (charData) {
       if (!charData.warns) {
         charData.warns = 0;
       }
       charData.warns++;
-      await dbm.saveFile(collectionName, playerID, charData);
+      await dbm.saveFile(collectionName, String(numericID), charData);
       return "Player has been warned. They now have " + charData.warns + " warnings.";
     } else {
       return "Player not found";
     }
   }
 
-  static async checkWarns(playerID) {
+  static async checkWarns(numericID) {
     let collectionName = 'characters';
-    let charData = await dbm.loadFile(collectionName, playerID);
+    let charData = await dbm.loadFile(collectionName, String(numericID));
     if (charData) {
       if (!charData.warns) {
         charData.warns = 0;
@@ -37,12 +37,12 @@ class char {
   }
 
   // Function to add items
-  static async newChar(playerID, charName, charBio, numericID) {
+  static async newChar(numericID, charName, charBio) {
     // Set the collection name
     let collectionName = 'characters';
 
     // Load the player's character data (if it exists)
-    let charData = await dbm.loadFile(collectionName, playerID);
+    let charData = await dbm.loadFile(collectionName, String(numericID));
 
     if (charData) {
       // If the character already exists, update the fields
@@ -71,35 +71,35 @@ class char {
     }
 
     // Save the character data
-    await dbm.saveFile(collectionName, playerID, charData);
+    await dbm.saveFile(collectionName, String(numericID), charData);
   }
 
   //returns player name and bio from playerID
-  static async editCharPlaceholders(playerID) {
+  static async editCharPlaceholders(numericID) {
     let collectionName = 'characters';
-    let charData = await dbm.loadFile(collectionName, playerID);
+    let charData = await dbm.loadFile(collectionName, String(numericID));
     if (charData) {
       return [charData.name, charData.bio];
     } else {
       return "ERROR";
     }
-  }  
+  }
 
   //Setavatar using new saveFile and loadFile
-  static async setAvatar(avatarURL, userID) {
+  static async setAvatar(avatarURL, numericID) {
     try {
       // Make a HEAD request to check if the URL leads to a valid image
       const response = await axios.head(avatarURL, { maxRedirects: 5 });
-  
+
       // Check if the response status code indicates success (e.g., 200)
       if (response.status === 200) {
         let collectionName = 'characters';
-        let charData = await dbm.loadFile(collectionName, userID);
-  
+        let charData = await dbm.loadFile(collectionName, String(numericID));
+
         charData.icon = avatarURL;
-  
-        await dbm.saveFile(collectionName, userID, charData);
-  
+
+        await dbm.saveFile(collectionName, String(numericID), charData);
+
         return "Avatar has been set";
       } else {
         return "Error: Avatar URL is not valid (HTTP status code " + response.status + ").";
@@ -110,9 +110,9 @@ class char {
   }
 
   //New commands using saveFile, saveCollection, loadFile and loadCollection
-  static async balance(userID) {
+  static async balance(numericID) {
     let collectionName = 'characters';
-    let charData = await dbm.loadFile(collectionName, userID);
+    let charData = await dbm.loadFile(collectionName, String(numericID));
     if (charData) {
       const charEmbed = {
         color: 0x36393e,
@@ -128,11 +128,11 @@ class char {
     }
   }
 
-  static async stats(userID) {
+  static async stats(numericID) {
     let collectionName = 'characters';
     let charData;
     try {
-      charData = await dbm.loadFile(collectionName, userID);
+      charData = await dbm.loadFile(collectionName, String(numericID));
     } catch (error) {
       console.error(error);
       return "Character not found- use /newchar first";
@@ -144,7 +144,7 @@ class char {
           name: charData.name,
           icon_url: charData.icon ? charData.icon : 'https://cdn.discordapp.com/attachments/1393917452731289680/1411714755042869268/AEGIR_SMALL_copy.png?ex=68b5a951&is=68b457d1&hm=36aea50e9270da5b5b7d65cf9364ce946e1a05ebc2aa0ed44bf76e80470673f2',
         },
-        description: await this.getStatsBlock(charData, userID),
+        description: await this.getStatsBlock(charData, String(numericID)),
       };
 
       return charEmbed;
@@ -197,9 +197,9 @@ class char {
     return [balanceEmbed, rows];
   }
 
-  static async me(userID) {
+  static async me(numericID) {
     let collectionName = 'characters';
-    let charData = await dbm.loadFile(collectionName, userID);
+    let charData = await dbm.loadFile(collectionName, String(numericID));
     if (charData) {
       let bioString = charData.bio;
 
@@ -214,9 +214,9 @@ class char {
     }
   }
 
-  static async fleetPower(userID) {
+  static async fleetPower(numericID) {
     const collectionName = 'characters';
-    const charData = await dbm.loadFile(collectionName, userID);
+    const charData = await dbm.loadFile(collectionName, String(numericID));
     if (!charData) {
       return "You haven't made a character! Use /newchar first";
     }
@@ -232,9 +232,9 @@ class char {
     return stats;
   }
 
-  static async char(userID) {
+  static async char(numericID) {
     let collectionName = 'characters';
-    let charData = await dbm.loadFile(collectionName, userID);
+    let charData = await dbm.loadFile(collectionName, String(numericID));
     if (charData) {
       let bioString = charData.bio;
 
@@ -249,7 +249,7 @@ class char {
         fields: [
           {
             name: clientManager.getEmoji("Gold") + " Balance: " + (charData.balance ? charData.balance : 0),
-            value: await this.getStatsBlock(charData, userID),
+            value: await this.getStatsBlock(charData, String(numericID)),
           },
         ],
       };
@@ -259,7 +259,7 @@ class char {
     }
   }
 
-  static async getStatsBlock(charData, userID) {
+  static async getStatsBlock(charData, numericID) {
     const strEmoji = clientManager.getEmoji("STR");
     const dexEmoji = clientManager.getEmoji("DEX");
     const intEmoji = clientManager.getEmoji("INT");
@@ -302,8 +302,8 @@ class char {
       charData.stats.INT = int;
       charData.stats.CHA = cha;
       charData.stats.HP = hp;
-      if (process.env.DEBUG) console.log(userID);
-      await dbm.saveFile('characters', userID, charData);
+      if (process.env.DEBUG) console.log(numericID);
+      await dbm.saveFile('characters', String(numericID), charData);
     }
 
     return "**`━━━━━━━Stats━━━━━━━`**\n"+
@@ -315,8 +315,8 @@ class char {
             "**`━━━━━━━━━━━━━━━━━━━`**";
   }
 
-  static async say(userID, message, channelID) {
-    let charData = await dbm.loadFile('characters', userID);
+  static async say(numericID, message, channelID) {
+    let charData = await dbm.loadFile('characters', String(numericID));
     if (charData) {
       let webhookName = charData.name;
       //if charData.icon is undefined, set it to the default avatar
@@ -344,11 +344,11 @@ class char {
     }
   }
 
-  static async incomes(userID, numericID, roles = null) {
+  static async incomes(numericID, roles = null) {
     let collectionName = 'characters';
 
     // Load the data
-    let charData = await dbm.loadFile(collectionName, userID);
+    let charData = await dbm.loadFile(collectionName, String(numericID));
     if (char.incomeListCache === null) {
       char.incomeListCache = await dbm.loadFile('keys', 'incomeList');
     }
@@ -500,7 +500,7 @@ class char {
         charData[key] = false;
       }
       charData.incomeAvailable = false;
-      await dbm.saveFile(collectionName, userID, charData);
+      await dbm.saveFile(collectionName, String(numericID), charData);
     }
     
     const incomeEmbed = {
@@ -508,7 +508,7 @@ class char {
       title: "**__Incomes__**",
       description: `<@${numericID}>\n\n${superstring}`,
     };
-  
+
     return [incomeEmbed, afterString];
   }
 
@@ -596,7 +596,7 @@ class char {
 
     let returnEmbed = new EmbedBuilder();
     const charactersCollection = 'characters';
-    let charData = await dbm.loadFile(charactersCollection, charID);
+    let charData = await dbm.loadFile(charactersCollection, String(charID));
     const shopCollection = 'shop';
     let itemData = await dbm.loadFile(shopCollection, itemName);
 
@@ -782,7 +782,7 @@ class char {
       returnEmbed.addFields({ name: '**Items:**', value: itemString });
     }
 
-    await dbm.saveFile(charactersCollection, charID, charData);
+    await dbm.saveFile(charactersCollection, String(charID), charData);
 
       //If theres an error, give 
     if (takeRoles) {
@@ -1062,7 +1062,7 @@ class char {
 
     let returnEmbed = new EmbedBuilder();
     const charactersCollection = 'characters';
-    let charData = await dbm.loadFile(charactersCollection, charID);
+    let charData = await dbm.loadFile(charactersCollection, String(charID));
     const shopCollection = 'shop';
     let shopData = await dbm.loadCollection(shopCollection);
 
@@ -1121,7 +1121,7 @@ class char {
         return "Item does not have a crafting time. Likely an error in setup, ping Alex or Serski";
       }
     }
-    dbm.saveFile(charactersCollection, charID, charData);
+    dbm.saveFile(charactersCollection, String(charID), charData);
     return returnEmbed;
   }
 
@@ -1129,7 +1129,7 @@ class char {
   static async craftingCooldowns(charID) {
     let returnEmbed = new EmbedBuilder();
     const charactersCollection = 'characters';
-    let charData = await dbm.loadFile(charactersCollection, charID);
+    let charData = await dbm.loadFile(charactersCollection, String(charID));
     const shopCollection = 'shop';
     let shopData = await dbm.loadCollection(shopCollection);
     let finishedCrafts = [];
@@ -1180,7 +1180,7 @@ class char {
 
         delete charData.cooldowns.craftSlots[finishedSlotKeys[i]];
 
-        await dbm.saveFile(charactersCollection, charID, charData);
+        await dbm.saveFile(charactersCollection, String(charID), charData);
       }
     }
 
@@ -1200,7 +1200,7 @@ class char {
 
     let returnEmbed = new EmbedBuilder();
     const charactersCollection = 'characters';
-    let charData = await dbm.loadFile(charactersCollection, charID);
+    let charData = await dbm.loadFile(charactersCollection, String(charID));
     const shopCollection = 'shop';
     let shopData = await dbm.loadCollection(shopCollection);
 
@@ -1396,7 +1396,7 @@ class char {
         { name: '**Can be used again:**', value: '<t:' + charData.cooldowns[itemName] + ':R>'}
       );
     }
-    dbm.saveFile(charactersCollection, charID, charData);
+    dbm.saveFile(charactersCollection, String(charID), charData);
     return returnEmbed;
   }*/
 
@@ -1409,7 +1409,7 @@ class char {
     }
     if (charData) {
       charData.balance += gold;
-      await dbm.saveFile(collectionName, player, charData);
+      await dbm.saveFile(collectionName, String(player), charData);
       return true;
     } else {
       return false;
@@ -1425,7 +1425,7 @@ class char {
     }
     if (charData) {
       charData.balance = gold;
-      await dbm.saveFile(collectionName, player, charData);
+      await dbm.saveFile(collectionName, String(player), charData);
       return true;
     } else {
       return false;
@@ -1460,7 +1460,7 @@ class char {
       if (charData.stats[stat] > 100) {
         charData.stats[stat] = 100;
       }
-      await dbm.saveFile(collectionName, player, charData);
+      await dbm.saveFile(collectionName, String(player), charData);
       return stat;
     }
   }
@@ -1496,7 +1496,7 @@ class char {
           charData.inventory[item] = 0;
         }
       }
-      await dbm.saveFile(collectionName, player, charData);
+      await dbm.saveFile(collectionName, String(player), charData);
       return true;
     } else {
       return false;
@@ -1574,7 +1574,7 @@ class char {
           charData.storage[item] = amount;
         }
         charData.inventory[item] -= amount;
-        await dbm.saveFile(collectionName, player, charData);
+        await dbm.saveFile(collectionName, String(player), charData);
         return true;
       } else {
         return "You don't have enough of that item!";
@@ -1612,7 +1612,7 @@ class char {
           charData.inventory[item] = amount;
         }
         charData.storage[item] -= amount;
-        await dbm.saveFile(collectionName, player, charData);
+        await dbm.saveFile(collectionName, String(player), charData);
         return true;
       } else {
         return "You don't have enough of that item!";
@@ -1634,7 +1634,7 @@ class char {
       if (charData.balance >= gold) {
         charData.balance -= gold;
         charData.bank += gold;
-        await dbm.saveFile(collectionName, player, charData);
+        await dbm.saveFile(collectionName, String(player), charData);
         return true;
       } else {
         return "You don't have enough gold!";
@@ -1656,7 +1656,7 @@ class char {
       if (charData.bank >= gold) {
         charData.balance += gold;
         charData.bank -= gold;
-        await dbm.saveFile(collectionName, player, charData);
+        await dbm.saveFile(collectionName, String(player), charData);
         return true;
       } else {
         return "You don't have enough gold!";
@@ -1664,9 +1664,9 @@ class char {
     }
   }
 
-  static async bank(userID) {
+  static async bank(numericID) {
     let collectionName = 'characters';
-    let charData = await dbm.loadFile(collectionName, userID);
+    let charData = await dbm.loadFile(collectionName, String(numericID));
     if (charData) {
       if (!charData.bank) {
         charData.bank = 0;
@@ -1731,8 +1731,8 @@ class char {
         } else {
           charData2.inventory[item] = amount;
         }
-        await dbm.saveFile(collectionName, playerGiving, charData);
-        await dbm.saveFile(collectionName, player, charData2);
+        await dbm.saveFile(collectionName, String(playerGiving), charData);
+        await dbm.saveFile(collectionName, String(player), charData2);
         return true;
       } else {
         return "You don't have enough of that item!";
@@ -1769,8 +1769,8 @@ class char {
       if (charData.balance >= gold) {
         charData.balance -= gold;
         charData2.balance += gold;
-        await dbm.saveFile(collectionName, playerGiving, charData);
-        await dbm.saveFile(collectionName, player, charData2);
+        await dbm.saveFile(collectionName, String(playerGiving), charData);
+        await dbm.saveFile(collectionName, String(player), charData2);
         return true;
       } else {
         return "You don't have enough gold!";
@@ -1780,25 +1780,12 @@ class char {
 
 
 
-  static async findPlayerData(player) {
-    let collectionName = 'characters';
-    //Load collection
-    let data = await dbm.loadCollection(collectionName);
-    //Find if player can be found easily, if yes return player and charData
-    if (data[player]) {
-      return [player, data[player]];
-    } else {
-      //If not, try to find player by numeric ID
-      //Player ID that would be passed is surrounded by <@{ID}>, so need to remove those to find id
-      player = player.replace("<@", "");
-      player = player.replace(">", "");
-      for (let [key, value] of Object.entries(data)) {
-        if (value.numericID === player) {
-          return [key, value];
-        }
-      }
+  static async findPlayerData(id) {
+    const player = String(id);
+    const charData = await dbm.loadFile('characters', player);
+    if (charData) {
+      return [player, charData];
     }
-    //If player cannot be found, return false
     return [false, false];
   }
 }

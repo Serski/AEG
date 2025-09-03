@@ -6,7 +6,7 @@ module.exports = {
 		.setName('balance')
 		.setDescription('Show balance'),
 	async execute(interaction) {
-		const charID = interaction.user.tag;
+                const charID = interaction.user.id;
 
 		await interaction.deferReply({ ephemeral: true });
 

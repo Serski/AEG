@@ -11,8 +11,8 @@ module.exports = {
         .addStringOption(option => option.setName('item').setDescription('The item to give').setRequired(true))
         .addIntegerOption(option => option.setName('amount').setDescription('The amount of items to give').setRequired(false)),
     async execute(interaction) {
-        const playerGiving = interaction.user.toString();
-        const player = interaction.options.getUser('player').toString();
+        const playerGiving = interaction.user.id;
+        const player = interaction.options.getUser('player').id;
         const item = interaction.options.getString('item');
         let amount = interaction.options.getInteger('amount');
         if (!amount) {

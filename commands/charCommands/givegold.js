@@ -11,8 +11,8 @@ module.exports = {
         .addUserOption(option => option.setName('player').setDescription('The player to give gold to').setRequired(true))
         .addIntegerOption(option => option.setName('amount').setDescription('The amount of gold to give').setRequired(true)),
     async execute(interaction) {
-        const playerGiving = interaction.user.toString();
-        const player = interaction.options.getUser('player').toString();
+        const playerGiving = interaction.user.id;
+        const player = interaction.options.getUser('player').id;
         const amount = interaction.options.getInteger('amount');
         const response = await char.giveGoldToPlayer(playerGiving, player, amount);
 

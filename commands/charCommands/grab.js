@@ -14,7 +14,7 @@ module.exports = {
                 .setDescription('Quantity to grab')
                 .setRequired(true)),
 	execute(interaction) {
-		const charID = interaction.user.tag;
+                const charID = interaction.user.id;
         const item = interaction.options.getString('item');
         const quantity = interaction.options.getInteger('quantity');
 
