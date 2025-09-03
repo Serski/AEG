@@ -967,16 +967,16 @@ class shop {
       return "Item not found!";
     }
 
-    //Load user data, check if user has attribute "Item Edited" and if so change the value to the item name. If not, create the attribute
-    let userData = await dbm.loadCollection('characters');
-    if (!userData[numericID]) {
-      userData[numericID] = {};
+    // Load user data, check if user has attribute "Item Edited" and if so change the value to the item name. If not, create the attribute
+    let userData = await dbm.loadFile('characters', String(numericID));
+    if (!userData) {
+      userData = {};
     }
-    if (!userData[numericID].editingFields) {
-      userData[numericID].editingFields = {};
+    if (!userData.editingFields) {
+      userData.editingFields = {};
     }
-    userData[numericID].editingFields["Item Edited"] = itemName;
-    await dbm.saveFile('characters', String(numericID), userData[numericID]);
+    userData.editingFields["Item Edited"] = itemName;
+    await dbm.saveFile('characters', String(numericID), userData);
 
     //Loatd item data
     let itemData = shopData[itemName];
@@ -1079,12 +1079,15 @@ class shop {
 
     recipeData = recipeData[recipeName];
 
-    let userData = await dbm.loadCollection('characters');
-    if (!userData[numericID].editingFields) {
-      userData[numericID].editingFields = {};
+    let userData = await dbm.loadFile('characters', String(numericID));
+    if (!userData) {
+      userData = {};
     }
-    userData[numericID].editingFields["Recipe Edited"] = recipeName;
-    await dbm.saveCollection('characters', userData);
+    if (!userData.editingFields) {
+      userData.editingFields = {};
+    }
+    userData.editingFields["Recipe Edited"] = recipeName;
+    await dbm.saveFile('characters', String(numericID), userData);
 
     const recipeOptions = this.recipeOptions;
 
@@ -1104,12 +1107,12 @@ class shop {
   static async editItemField(numericID, fieldNumber, newValue) {
     let shopData = await dbm.loadCollection('shop');
     // Load user data
-    let userData = await dbm.loadCollection('characters');
+    let charData = await dbm.loadFile('characters', String(numericID));
     let itemName;
-    if (!userData[numericID].editingFields["Item Edited"]) {
-      return "You are not currently editing any items!"; 
+    if (!charData || !charData.editingFields || !charData.editingFields["Item Edited"]) {
+      return "You are not currently editing any items!";
     } else {
-      itemName = userData[numericID].editingFields["Item Edited"];
+      itemName = charData.editingFields["Item Edited"];
     }
     itemName = await this.findItemName(itemName, shopData);
     if (itemName == "ERROR") {
@@ -1224,22 +1227,24 @@ class shop {
       await dbm.saveFile('shop', newValue, itemData);
 
       //Go into every character and change the item name in their inventory
-      for (let charID in userData) {
-        if (userData[charID].inventory[itemName]) {
-          userData[charID].inventory[newValue] = userData[charID].inventory[itemName];
-          delete userData[charID].inventory[itemName];
+      let allChars = await dbm.loadCollection('characters');
+      for (let charID in allChars) {
+        if (allChars[charID].inventory && allChars[charID].inventory[itemName]) {
+          allChars[charID].inventory[newValue] = allChars[charID].inventory[itemName];
+          delete allChars[charID].inventory[itemName];
         }
-        if (userData[charID].storage && userData[charID].storage[itemName]) {
-          userData[charID].storage[newValue] = userData[charID].storage[itemName];
-          delete userData[charID].storage[itemName];
+        if (allChars[charID].storage && allChars[charID].storage[itemName]) {
+          allChars[charID].storage[newValue] = allChars[charID].storage[itemName];
+          delete allChars[charID].storage[itemName];
         }
       }
       //Delete old item
       await dbm.docDelete('shop', itemName);
 
       //Change the item name in the user's editingFields
-      userData[numericID].editingFields["Item Edited"] = newValue;
-      await dbm.saveCollection('characters', userData);
+      charData.editingFields["Item Edited"] = newValue;
+      await dbm.saveFile('characters', String(numericID), charData);
+      await dbm.saveCollection('characters', allChars);
 
       return `Item name changed to ${newValue}`;
     } else {
@@ -1258,12 +1263,12 @@ class shop {
 
   static async editRecipeField(numericID, fieldNumber, newValue) {
     // Load user data
-    let userData = await dbm.loadCollection('characters');
+    let charData = await dbm.loadFile('characters', String(numericID));
     let recipeName;
-    if (!userData[numericID].editingFields["Recipe Edited"]) {
+    if (!charData || !charData.editingFields || !charData.editingFields["Recipe Edited"]) {
       return "You are not currently editing any recipes!";
     } else {
-      recipeName = userData[numericID].editingFields["Recipe Edited"];
+      recipeName = charData.editingFields["Recipe Edited"];
     }
 
     // Load the recipe data
@@ -1411,13 +1416,14 @@ class shop {
       await dbm.docDelete('recipes', recipeName);
 
       //Change the recipe name in the user's editingFields
-      userData[numericID].editingFields["Recipe Edited"] = newValue;
+      charData.editingFields["Recipe Edited"] = newValue;
 
       //For each character in the userdata, in their cooldowns.craftSlots fields, replace the old name with the new name if it exists
-      let characters = Object.keys(userData);
+      let allChars = await dbm.loadCollection('characters');
+      let characters = Object.keys(allChars);
       for (let i = 0; i < characters.length; i++) {
-        if (userData[characters[i]].cooldowns && userData[characters[i]].cooldowns.craftSlots && characters[i] == "thegreatferret") {
-          let slots = userData[characters[i]].cooldowns.craftSlots;
+        if (allChars[characters[i]].cooldowns && allChars[characters[i]].cooldowns.craftSlots && characters[i] == "thegreatferret") {
+          let slots = allChars[characters[i]].cooldowns.craftSlots;
           if (process.env.DEBUG) console.log(slots);
           //Slots is a json, not an array
           let slotsKeys = Object.keys(slots);
@@ -1436,13 +1442,14 @@ class shop {
               delete slots[key];
             }
           }
-          if (process.env.DEBUG) console.log(userData[characters[i]].cooldowns.craftSlots);
-          userData[characters[i]].cooldowns.craftSlots = slots;
-          if (process.env.DEBUG) console.log(userData[characters[i]].cooldowns.craftSlots);
+          if (process.env.DEBUG) console.log(allChars[characters[i]].cooldowns.craftSlots);
+          allChars[characters[i]].cooldowns.craftSlots = slots;
+          if (process.env.DEBUG) console.log(allChars[characters[i]].cooldowns.craftSlots);
         }
       }
 
-      await dbm.saveCollection('characters', userData);
+      await dbm.saveFile('characters', String(numericID), charData);
+      await dbm.saveCollection('characters', allChars);
 
       return `Recipe name changed to ${newValue}`;
     } else {
