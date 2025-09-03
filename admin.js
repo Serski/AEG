@@ -327,7 +327,7 @@ When selected grants the:
     return newMapName;
   }
 
-  static async editMapMenu(mapName, tag, mapType = "map") {
+  static async editMapMenu(mapName, numericID, mapType = "map") {
     // Load the map data
     let mapData = await dbm.loadFile('keys', mapType + 's');
   
@@ -345,13 +345,13 @@ When selected grants the:
   
     mapData = mapData[mapName];
   
-    let userData = await dbm.loadFile('characters', tag);
+    let userData = await dbm.loadFile('characters', String(numericID));
     if (!userData.editingFields) {
       userData.editingFields = {};
     }
     userData.editingFields["Map Edited"] = mapName;
     userData.editingFields["Map Type Edited"] = mapType;
-    await dbm.saveFile('characters', tag, userData);
+    await dbm.saveFile('characters', String(numericID), userData);
   
     // Construct the edit menu embed
     const embed = new EmbedBuilder()
@@ -414,9 +414,9 @@ When selected grants the:
     interaction.reply("About section has been updated");
   }
   
-  static async editMapField(charTag, field, value) {
+  static async editMapField(numericID, field, value) {
     // Load the maps collection
-    let charData = await dbm.loadFile('characters', charTag);
+    let charData = await dbm.loadFile('characters', String(numericID));
     if (!charData.editingFields || !charData.editingFields["Map Edited"] || !charData.editingFields["Map Type Edited"]) {
       return "You must use /editmapmenu first to select a map to edit";
     }
@@ -576,8 +576,8 @@ When selected grants the:
     let guild = interaction.guild;
     let user = await guild.members.fetch(interaction.user.id);
 
-    let userTag = interaction.user.tag;
-    let char = await dbm.loadFile("characters", userTag);
+    const numericID = interaction.user.id;
+    let char = await dbm.loadFile("characters", String(numericID));
     //add all shires from all kingdoms to a new tempShires object
     let tempShires = {};
     for (const kingdom in kingdoms) {
@@ -635,7 +635,7 @@ When selected grants the:
 
     await user.roles.add(role);
     await user.roles.add(kingdomRole);
-    await dbm.saveFile("characters", userTag, char);
+    await dbm.saveFile("characters", String(numericID), char);
 
 
     await interaction.reply({ 
@@ -652,8 +652,8 @@ When selected grants the:
     let guild = interaction.guild;
     let user = await guild.members.fetch(interaction.user.id);
 
-    let userTag = interaction.user.tag;
-    let char = await dbm.loadFile("characters", userTag);
+    const numericID = interaction.user.id;
+    let char = await dbm.loadFile("characters", String(numericID));
     for (const role of user.roles.cache) {
       if (Object.values(tradeNodes).some(tradeNode => tradeNode.roleCode == role[1].id)) {
         await interaction.reply({ content: "You are already a member of a trade node! You cannot switch trade nodes", ephemeral: true });
@@ -676,7 +676,7 @@ When selected grants the:
 
     await user.roles.add(role);
     char.tradeNodeID = selectedTradeNode;
-    await dbm.saveFile("characters", userTag, char);
+    await dbm.saveFile("characters", String(numericID), char);
 
     await interaction.reply({ 
       content: "You have selected " + tradeNode.name + " as your trade node", 
@@ -692,8 +692,8 @@ When selected grants the:
     let guild = interaction.guild;
     let user = await guild.members.fetch(interaction.user.id);
 
-    let userTag = interaction.user.tag;
-    let char = await dbm.loadFile("characters", userTag);
+    const numericID = interaction.user.id;
+    let char = await dbm.loadFile("characters", String(numericID));
     for (const role of user.roles.cache) {
       if (Object.values(resources).some(resource => resource.roleCode == role[1].id)) {
         await interaction.reply({ content: "You are already a producer of a resource! You cannot switch resources", ephemeral: true });
@@ -716,7 +716,7 @@ When selected grants the:
 
     await user.roles.add(role);
     char.resourceID = selectedResource;
-    await dbm.saveFile("characters", userTag, char);
+    await dbm.saveFile("characters", String(numericID), char);
 
     await interaction.reply({ 
       content: "You have selected " + resource.emoji + resource.name, 
@@ -739,8 +739,8 @@ When selected grants the:
       classBaseRoleName = "Trader Base Role";
     }
 
-    let userTag = interaction.user.tag;
-    let char = await dbm.loadFile("characters", userTag);
+    const numericID = interaction.user.id;
+    let char = await dbm.loadFile("characters", String(numericID));
     for (const role of user.roles.cache) {
       if (role[1].name == "Trader" || role[1].name == "Farmer") {
         await interaction.reply({ content: "You are already a member of a class! You cannot switch classes", ephemeral: true });
@@ -783,8 +783,8 @@ When selected grants the:
     let guild = interaction.guild;
     let user = await guild.members.fetch(interaction.user.id);
 
-    let userTag = interaction.user.tag;
-    let char = await dbm.loadFile("characters", userTag);
+    const numericID = interaction.user.id;
+    let char = await dbm.loadFile("characters", String(numericID));
     for (const role of user.roles.cache) {
       if (Object.values(parties).some(party => party.name.toLowerCase() == role[1].name.toLowerCase())) {
         await interaction.reply({ content: "You are already a member of a party! You cannot switch parties", ephemeral: true });
@@ -799,7 +799,7 @@ When selected grants the:
 
     await user.roles.add(role);
     char.partyID = selectedParty;
-    await dbm.saveFile("characters", userTag, char);
+    await dbm.saveFile("characters", String(numericID), char);
 
     await interaction.reply({ 
       content: "You have selected " + party.emoji + party.name + "\n\n" + party.motto, 

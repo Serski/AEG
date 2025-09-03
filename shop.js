@@ -2,7 +2,6 @@ const dbm = require('./database-manager'); // Importing the database manager
 const Discord = require('discord.js');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 const clientManager = require('./clientManager');
-const dataGetters = require('./dataGetters');
 
 class shop {
   //Declare constants for class 
@@ -512,7 +511,6 @@ class shop {
 
   //function to create an embed of player inventory
   static async createInventoryEmbed(charID) {
-    charID = await dataGetters.getCharFromNumericID(charID);
     // load data from characters.json and shop.json
     const charData = await dbm.loadCollection('characters');
     const shopData = await dbm.loadCollection('shop');
@@ -584,7 +582,6 @@ class shop {
   }
 
   static async storage(charID) {
-    charID = await dataGetters.getCharFromNumericID(charID);
     // load data from characters.json and shop.json
     const charData = await dbm.loadCollection('characters');
     const shopData = await dbm.loadCollection('shop');
@@ -962,7 +959,7 @@ class shop {
     Page 2: Usage Options
     Usage Options: Is Usable, Removed on Use, Need Role, Give Role, Take Role, Show an Image, Show a Message, Give/Take Money, Cooldown, Give Item, Give Item 2, Give Item 3, Take Item, Take Item 2, Take Item 3, Give Item, Give Item 2, Give Item 3, Change HP, Change STR, Change DEX, Change INT, Change CHA
     */
-  static async editItemMenu(itemName, pageNumber, tag) {
+  static async editItemMenu(itemName, pageNumber, numericID) {
     pageNumber = Number(pageNumber);
     let shopData = await dbm.loadCollection('shop');
     itemName = await this.findItemName(itemName, shopData);
@@ -972,14 +969,14 @@ class shop {
 
     //Load user data, check if user has attribute "Item Edited" and if so change the value to the item name. If not, create the attribute
     let userData = await dbm.loadCollection('characters');
-    if (!userData[tag]) {
-      userData[tag] = {};
+    if (!userData[numericID]) {
+      userData[numericID] = {};
     }
-    if (!userData[tag].editingFields) {
-      userData[tag].editingFields = {};
+    if (!userData[numericID].editingFields) {
+      userData[numericID].editingFields = {};
     }
-    userData[tag].editingFields["Item Edited"] = itemName;
-    await dbm.saveFile('characters', tag, userData[tag]);
+    userData[numericID].editingFields["Item Edited"] = itemName;
+    await dbm.saveFile('characters', String(numericID), userData[numericID]);
 
     //Loatd item data
     let itemData = shopData[itemName];
@@ -1064,7 +1061,7 @@ class shop {
     return [embed, rows];
   }
 
-  static async editRecipeMenu(recipeName, tag) {
+  static async editRecipeMenu(recipeName, numericID) {
     // Load the recipe data
     let recipeData = await dbm.loadCollection('recipes', recipeName);
 
@@ -1083,10 +1080,10 @@ class shop {
     recipeData = recipeData[recipeName];
 
     let userData = await dbm.loadCollection('characters');
-    if (!userData[tag].editingFields) {
-      userData[tag].editingFields = {};
+    if (!userData[numericID].editingFields) {
+      userData[numericID].editingFields = {};
     }
-    userData[tag].editingFields["Recipe Edited"] = recipeName;
+    userData[numericID].editingFields["Recipe Edited"] = recipeName;
     await dbm.saveCollection('characters', userData);
 
     const recipeOptions = this.recipeOptions;
@@ -1104,15 +1101,15 @@ class shop {
     return embed;
   }
 
-  static async editItemField(userTag, fieldNumber, newValue) {
+  static async editItemField(numericID, fieldNumber, newValue) {
     let shopData = await dbm.loadCollection('shop');
     // Load user data
     let userData = await dbm.loadCollection('characters');
     let itemName;
-    if (!userData[userTag].editingFields["Item Edited"]) {
-      return "You are not currently editing any items!";
+    if (!userData[numericID].editingFields["Item Edited"]) {
+      return "You are not currently editing any items!"; 
     } else {
-      itemName = userData[userTag].editingFields["Item Edited"];
+      itemName = userData[numericID].editingFields["Item Edited"];
     }
     itemName = await this.findItemName(itemName, shopData);
     if (itemName == "ERROR") {
@@ -1241,7 +1238,7 @@ class shop {
       await dbm.docDelete('shop', itemName);
 
       //Change the item name in the user's editingFields
-      userData[userTag].editingFields["Item Edited"] = newValue;
+      userData[numericID].editingFields["Item Edited"] = newValue;
       await dbm.saveCollection('characters', userData);
 
       return `Item name changed to ${newValue}`;
@@ -1259,14 +1256,14 @@ class shop {
     return `Field ${fieldName} updated to ${newValue} for item ${itemName}`;
   }
 
-  static async editRecipeField(userTag, fieldNumber, newValue) {
+  static async editRecipeField(numericID, fieldNumber, newValue) {
     // Load user data
     let userData = await dbm.loadCollection('characters');
     let recipeName;
-    if (!userData[userTag].editingFields["Recipe Edited"]) {
+    if (!userData[numericID].editingFields["Recipe Edited"]) {
       return "You are not currently editing any recipes!";
     } else {
-      recipeName = userData[userTag].editingFields["Recipe Edited"];
+      recipeName = userData[numericID].editingFields["Recipe Edited"];
     }
 
     // Load the recipe data
@@ -1414,7 +1411,7 @@ class shop {
       await dbm.docDelete('recipes', recipeName);
 
       //Change the recipe name in the user's editingFields
-      userData[userTag].editingFields["Recipe Edited"] = newValue;
+      userData[numericID].editingFields["Recipe Edited"] = newValue;
 
       //For each character in the userdata, in their cooldowns.craftSlots fields, replace the old name with the new name if it exists
       let characters = Object.keys(userData);

@@ -182,7 +182,8 @@ allItemSwitch = async (interaction) => {
   await interaction.update({ embeds: [edittedEmbed], components: rows});
 }
 itemSwitch = async (interaction) => {
-  let [edittedEmbed, rows] = await shop.editItemMenu(interaction.customId.substring(12), interaction.customId[11], interaction.user.tag);
+  const numericID = interaction.user.id;
+  let [edittedEmbed, rows] = await shop.editItemMenu(interaction.customId.substring(12), interaction.customId[11], numericID);
   await interaction.update({ embeds: [edittedEmbed], components: [rows]});
 }
 balaSwitch = async (interaction) => {

@@ -6,14 +6,14 @@ const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('
 class marketplace {
   /**Function for a player to post a sale.
    * Will take the number of items, the item name, and the price they want to sell it for.
-   * Will also be passed their user tag and ID
+   * Will also be passed their user ID
    * Will load the character.json file and check if they have enough of the item
    * If they do, it will take the items from their inventory and add them to the marketplace under a created unique ID
    * Items will be added to the marketplace according to their item name and category- i.e. all iron swords will be next to each other, and the iron swords will be next to steel swords
    * */ 
-  static async postSale(numberItems, itemName, price, userTag, userID) {
+  static async postSale(numberItems, itemName, price, userID) {
     // Load the character.json and marketplace.json file
-    let charData = await dbm.loadFile('characters', userTag);
+    let charData = await dbm.loadFile('characters', String(userID));
     let marketData = await dbm.loadCollection('marketplace');
     let shopData = await dbm.loadCollection('shop');
     // Find the item name using shop.findItemName
@@ -45,13 +45,12 @@ class marketplace {
     marketData.marketplace[itemCategory][itemName] = marketData.marketplace[itemCategory][itemName] || {};
 
     marketData.marketplace[itemCategory][itemName][itemID] = {
-      "seller": userTag,
+      "sellerID": String(userID),
       "price": price,
-      "number": numberItems,
-      "sellerID": userID
+      "number": numberItems
     }
     // Save the character.json file
-    await dbm.saveFile('characters', userTag, charData);
+    await dbm.saveFile('characters', String(userID), charData);
     await dbm.saveCollection('marketplace', marketData);
     // Create an embed to return on success. Will just say @user listed **numberItems :itemIcon: itemName** to the **/sales** page for <:Gold:1232097113089904710>**price**.
     let embed = new EmbedBuilder();
@@ -179,13 +178,15 @@ class marketplace {
  
 
   //Create a one page sales embed of just the sales for one player
-  static async showSales(player, page) {
+  static async showSales(playerID, page) {
     // Load the marketplace.json file
     let marketData = await dbm.loadCollection('marketplace');
     let shopData = await dbm.loadCollection('shop');
     // Create an embed to return on success. Will just say @user has listed **numberItems :itemIcon: itemName** for <:Gold:1232097113089904710>**price**.
     let embed = new EmbedBuilder();
-    embed.setTitle(`${player}'s Sales`);
+    const playerUser = await clientManager.getUser(playerID);
+    const playerTag = playerUser ? playerUser.user.tag : playerID;
+    embed.setTitle(`${playerTag}'s Sales`);
     embed.setColor(0x36393e);
     let descriptionText = '';
     let n = 1;
@@ -195,7 +196,7 @@ class marketplace {
         const sales = categoryItems[itemName];
         for (const saleID in sales) {
           const sale = sales[saleID];
-          if (sale.seller == player) {
+          if (sale.sellerID == playerID) {
             const number = sale.number;
             const item = itemName;
             const icon = await shop.getItemIcon(itemName, shopData);
@@ -227,7 +228,7 @@ class marketplace {
   }
 
   //Buy a sale. Send the money from the buyer to the seller, and give the buyer the items. If the seller is buying their own sale, merely give them back their items, no need to check their money- this functionality will exist for accidental sales
-  static async buySale(saleID, userTag, userID) {
+  static async buySale(saleID, userID) {
     // Load the character.json and marketplace.json file
     let charData = await dbm.loadCollection('characters');
     let marketData = await dbm.loadCollection('marketplace');
@@ -242,10 +243,10 @@ class marketplace {
     // If the buyer is the seller, merely give them back their items, no need to check their money- this functionality will exist for accidental sales
     if (sale.sellerID == userID) {
       // Give the buyer the items
-      if (!charData[userTag].inventory[foundItemName]) {
-        charData[userTag].inventory[foundItemName] = 0;
+      if (!charData[String(userID)].inventory[foundItemName]) {
+        charData[String(userID)].inventory[foundItemName] = 0;
       }
-      charData[userTag].inventory[foundItemName] += sale.number;
+      charData[String(userID)].inventory[foundItemName] += sale.number;
       // Remove the sale from the marketplace
       delete marketData.marketplace[foundCategory][foundItemName][saleID];
       // Save the character.json file
@@ -259,20 +260,20 @@ class marketplace {
     }
 
     // Check if the buyer has enough money
-    if (charData[userTag].balance < sale.price) {
+    if (charData[String(userID)].balance < sale.price) {
       return "You don't have enough money to buy that!";
     }
     // Take the money from the buyer
-    charData[userTag].balance -= sale.price;
+    charData[String(userID)].balance -= sale.price;
     // Give the money to the seller
-    charData[sale.seller].balance += sale.price;
+    charData[sale.sellerID].balance += sale.price;
 
-    if (!charData[userTag].inventory[foundItemName]) {
-      charData[userTag].inventory[foundItemName] = 0;
+    if (!charData[String(userID)].inventory[foundItemName]) {
+      charData[String(userID)].inventory[foundItemName] = 0;
     }
 
     // Give the buyer the items
-    charData[userTag].inventory[foundItemName] += Number(sale.number);
+    charData[String(userID)].inventory[foundItemName] += Number(sale.number);
     // Remove the sale from the marketplace
     delete marketData.marketplace[foundCategory][foundItemName][saleID];
     // Save the character.json file
@@ -301,7 +302,9 @@ class marketplace {
     embed.setTitle(`Sale ${saleID}`);
     embed.setColor(0x36393e);
     embed.setDescription(`**${sale.number} ${await shop.getItemIcon(itemName, shopData)} ${itemName}** for ${clientManager.getEmoji("Gold")}**${sale.price}**.`);
-    embed.setFooter({text: `Seller: ${sale.seller}`});
+    const sellerUser = await clientManager.getUser(sale.sellerID);
+    const sellerTag = sellerUser ? sellerUser.user.tag : sale.sellerID;
+    embed.setFooter({text: `Seller: ${sellerTag}`});
     return embed;
   }
 
