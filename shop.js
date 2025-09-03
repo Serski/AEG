@@ -4,7 +4,7 @@ const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('
 const clientManager = require('./clientManager');
 
 class shop {
-  //Declare constants for class 
+  //Declare constants for class
   static infoOptions = ['Name', 'Icon', 'Category', 'Image', 'Description', 'Transferrable (Y/N)'];
   static shopOptions = ['Price (#)', 'Need Role', 'Give Role', 'Take Role', 'Quantity (#)', 'Channels'];
   static usageOptions = [
@@ -20,6 +20,24 @@ class shop {
       'Result 1', 'Result 2', 'Result 3', 'Result 4', 'Result 5',
       'Craft Time in Hours (#)', 'Need None Of Roles', 'Need All Of Roles', 'Need Any Of Roles', 'Is Public (Y/N)'
     ];
+
+  static shopCache = null;
+
+  static async getShopData() {
+    if (!this.shopCache) {
+      this.shopCache = await dbm.loadCollection('shop');
+    }
+    return this.shopCache;
+  }
+
+  static async refreshShopCache() {
+    this.shopCache = await dbm.loadCollection('shop');
+    return this.shopCache;
+  }
+
+  static clearShopCache() {
+    this.shopCache = null;
+  }
 
   // Function to find an item by name in the shop
   //THIS IS INEFFICIENT BECAUSE IT MEANS CALLING IT MEANS TWO CALLS TO THE DATABASE- FIX LATER
@@ -82,12 +100,13 @@ class shop {
       }
     }
     await dbm.saveFile('shop', itemName, itemData);
+    await this.refreshShopCache();
   }
 
   static async addRecipe(recipeName) {
     //Go into the recipes file. First check if another copy of this recipe exists. If it does, add a space and number to recipe name and check again
     let data = await dbm.loadCollection('recipes');
-    let shopData = await dbm.loadCollection('shop');
+    let shopData = await this.getShopData();
     let recipeNames = Object.keys(data);
     let i = 1;
     let newRecipeName = recipeName;
@@ -127,7 +146,7 @@ class shop {
   static async recipesEmbed(isPublic, page) {
     const itemsPerPage = 1000; // Number of recipes per page
     let data = await dbm.loadCollection('recipes');
-    let shopData = await dbm.loadCollection('shop');
+    let shopData = await this.getShopData();
     let publicRecipes = [];
     let privateRecipes = [];
   
@@ -230,7 +249,7 @@ class shop {
 
   static async updateAllItemVersions() {
     //Update all item versions
-    let data = await dbm.loadCollection('shop');
+    let data = await this.getShopData();
     let itemNames = Object.keys(data);
     for (let i = 0; i < itemNames.length; i++) {
       await this.updateItemVersion(itemNames[i]);
@@ -240,7 +259,7 @@ class shop {
 
   static async updateItemVersion(itemName) {
     // Convert all item data to the new options. Carry over whatever new options it has
-    let itemData = await dbm.loadFile('shop', itemName);
+    let itemData = (await this.getShopData())[itemName];
 
     // Create a new itemData object with the new options
     let newItemData = {
@@ -262,6 +281,7 @@ class shop {
     };
 
     await dbm.saveFile('shop', itemName, newItemData);
+    await this.refreshShopCache();
 
     //If no errors, return a success message
     if (newItemData != undefined) {
@@ -276,7 +296,7 @@ class shop {
     page = Number(page);
     const itemsPerPage = 25;
     // Load data from shop.json and shoplayout.json
-    const shopData = await dbm.loadCollection('shop');
+    const shopData = await this.getShopData();
     // Convert the shop data to a an array of maps of category to items
     let shopLayoutData = {};
     for (let [key, value] of Object.entries(shopData)) {
@@ -392,7 +412,7 @@ class shop {
   }
 
   static async renameCategory(oldCategory, newCategory) {
-    let data = await dbm.loadCollection('shop');
+    let data = await this.getShopData();
     let itemNames = Object.keys(data);
     for (let i = 0; i < itemNames.length; i++) {
       if (data[itemNames[i]].infoOptions.Category == oldCategory) {
@@ -400,6 +420,7 @@ class shop {
       }
     }
     await dbm.saveCollection('shop', data);
+    await this.refreshShopCache();
     return "Category renamed!";
   }
 
@@ -407,7 +428,7 @@ class shop {
     page = Number(page);
     const itemsPerPage = 25;
     // Load data from shop.json and shoplayout.json
-    const shopData = await dbm.loadCollection('shop');
+    const shopData = await this.getShopData();
     //Turn shopData into an array of keys
     let itemArray = Object.keys(shopData);
     //Put the array into an array of categories each containing all items in the category, alphabetically
@@ -513,7 +534,7 @@ class shop {
   static async createInventoryEmbed(charID) {
     // load data for this character and shop.json
     const charData = await dbm.loadFile('characters', String(charID));
-    const shopData = await dbm.loadCollection('shop');
+    const shopData = await this.getShopData();
 
     // If character doesn't exist, instruct user to create one
     if (!charData) {
@@ -592,7 +613,7 @@ class shop {
   static async storage(charID) {
     // load data for this character and shop.json
     const charData = await dbm.loadFile('characters', String(charID));
-    const shopData = await dbm.loadCollection('shop');
+    const shopData = await this.getShopData();
 
     // If character doesn't exist, instruct user to create one
     if (!charData) {
@@ -683,7 +704,7 @@ class shop {
   static async removeItem(itemName) {
     // Set the database name
     let fileName = 'shop';
-    let shopData = await dbm.loadCollection(fileName);
+    let shopData = await this.getShopData();
     itemName = await this.findItemName(itemName, shopData);
     if (itemName == "ERROR") {
       return "Error! Item not found! Make sure to include spaces and not include the emoji.";
@@ -691,6 +712,7 @@ class shop {
     // Try to remove the item, and if it doesn't exist, catch the error
     try {
       await dbm.docDelete(fileName, itemName);
+      await this.refreshShopCache();
     } catch (error) {
       if (process.env.DEBUG) console.log(error);
       // Handle the error or do nothing
@@ -716,7 +738,7 @@ class shop {
   }
 
   static async getItemPrice(itemName) {
-    let data = await dbm.loadCollection('shop');
+    let data = await this.getShopData();
     var price;
     if (data[itemName]) {
       if (data[itemName].shopOptions["Price (#)"] == undefined) {
@@ -730,7 +752,7 @@ class shop {
   }
 
   static async getItemCategory(itemName, shopData = null) {
-    const data = shopData ?? await dbm.loadCollection('shop');
+    const data = shopData ?? await this.getShopData();
     var category;
     if (data[itemName]) {
       category = data[itemName].infoOptions.Category;
@@ -740,8 +762,8 @@ class shop {
     return category;
   }
 
-  static async getItemIcon(itemName, shopData) {
-    let data = shopData;
+  static async getItemIcon(itemName, shopData = null) {
+    let data = shopData ?? await this.getShopData();
     var icon;
     if (data[itemName]) {
       icon = data[itemName].infoOptions.Icon;
@@ -752,7 +774,7 @@ class shop {
   }
 
   static async inspect(itemName) {
-    let shopData = await dbm.loadCollection('shop');
+    let shopData = await this.getShopData();
     itemName = await this.findItemName(itemName, shopData);
 
     if (itemName == "ERROR") {
@@ -878,7 +900,7 @@ class shop {
 
   static async inspectRecipe(recipeName) {
     let recipeData = await dbm.loadCollection('recipes');
-    let shopData = await dbm.loadCollection('shop');
+    let shopData = await this.getShopData();
     if (!recipeData[recipeName]) {
       //Check if lower case version of recipeName exists
       let recipeNames = Object.keys(recipeData);
@@ -977,7 +999,7 @@ class shop {
     */
   static async editItemMenu(itemName, pageNumber, numericID) {
     pageNumber = Number(pageNumber);
-    let shopData = await dbm.loadCollection('shop');
+    let shopData = await this.getShopData();
     itemName = await this.findItemName(itemName, shopData);
     if (itemName == "ERROR") {
       return "Item not found!";
@@ -1121,7 +1143,7 @@ class shop {
   }
 
   static async editItemField(numericID, fieldNumber, newValue) {
-    let shopData = await dbm.loadCollection('shop');
+    let shopData = await this.getShopData();
     // Load user data
     let charData = await dbm.loadFile('characters', String(numericID));
     let itemName;
@@ -1261,6 +1283,7 @@ class shop {
       charData.editingFields["Item Edited"] = newValue;
       await dbm.saveFile('characters', String(numericID), charData);
       await dbm.saveCollection('characters', allChars);
+      await this.refreshShopCache();
 
       return `Item name changed to ${newValue}`;
     } else {
@@ -1270,6 +1293,7 @@ class shop {
 
     // Save the updated item data
     await dbm.saveFile('shop', itemName, itemData);
+    await this.refreshShopCache();
 
     if (nullValue) {
       return `Field ${fieldName} reset to blank for item ${itemName}`;
@@ -1290,7 +1314,7 @@ class shop {
     // Load the recipe data
     let recipeData = await dbm.loadFile('recipes', recipeName);
 
-    let shopData = await dbm.loadCollection('shop');
+    let shopData = await this.getShopData();
 
     const recipeOptions = this.recipeOptions;
 
@@ -1408,7 +1432,7 @@ class shop {
       let result = newValue.split(" ").slice(1).join(" ");
 
       if (!recipeData[result]) {
-        let data = await dbm.loadCollection('shop');
+        let data = await this.getShopData();
         if (data[result]) {
           recipeData.recipeOptions["Name"] = result;
           recipeData.recipeOptions["Icon"] = data[result].infoOptions.Icon;
@@ -1478,7 +1502,7 @@ class shop {
   } 
 
   static async buyItem(itemName, charID, numToBuy, channelId) {
-    let shopData = await dbm.loadCollection('shop');
+    let shopData = await this.getShopData();
     itemName = await this.findItemName(itemName, shopData);
     if (itemName == "ERROR") {
       return "Item not found!";
