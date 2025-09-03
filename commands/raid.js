@@ -25,8 +25,7 @@ module.exports = {
     .setName('raid')
     .setDescription('Launch a raid against one of the available targets'),
   async execute(interaction) {
-    await interaction.deferReply({ flags: 64 });
-
+          await interaction.deferReply({ flags: 64 });
     const numericID = interaction.user.id;
     const charId = String(numericID);
 

@@ -10,25 +10,26 @@ module.exports = {
                 .setDescription('The command you want helped with')
                 .setRequired(false)),
 	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
 		try {
             let command = interaction.options.getString('command');
 
             if (command == null) {
                 let [embed, rows] = await admin.generalHelpMenu(1, false);
-                await interaction.reply({ embeds: [embed], components: rows});
+                await interaction.editReply({ embeds: [embed], components: rows});
                 return;
             } else {
                 let replyEmbed = await admin.commandHelp(command);
                 if (replyEmbed == null) {
-                    await interaction.reply({ content: "Command not found: if this command exists, contact Alex to add it to the help list", ephemeral: true });
+                    await interaction.editReply({ content: "Command not found: if this command exists, contact Alex to add it to the help list" });
                 } else {
-                    await interaction.reply({ embeds: [replyEmbed] });
+                    await interaction.editReply({ embeds: [replyEmbed] });
                 }
                 return;
             }
         } catch (error) {
             console.error("Failed to help:", error);
-            await interaction.reply({ content: "Failed to help. Please try again.", ephemeral: true });
+            await interaction.editReply({ content: "Failed to help. Please try again." });
         }
 	},
 };

@@ -18,10 +18,11 @@ module.exports = {
                 .setRequired(false)
         ),
     async execute(interaction) {
+            await interaction.deferReply({ flags: 64 });
         const fieldNumber = interaction.options.getInteger('fieldnumber');
         let newValue;
         if (interaction.options.getString('newvalue') == null) {
-            return await interaction.reply('If you want to remove a field, please make the new value "DELETE" in all caps');
+            return await interaction.editReply('If you want to remove a field, please make the new value "DELETE" in all caps');
         } else {
             newValue = interaction.options.getString('newvalue');
         }
@@ -32,9 +33,9 @@ module.exports = {
         const numericID = interaction.user.id;
         let reply = await admin.editIncomeField(fieldNumber, String(numericID), newValue);
         if (typeof(reply) == 'string') {
-            await interaction.reply(reply);
+            await interaction.editReply(reply);
         } else {
-            await interaction.reply({ embeds: [reply] });
+            await interaction.editReply({ embeds: [reply] });
         }
     }
 };

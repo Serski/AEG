@@ -7,10 +7,11 @@ module.exports = {
 		.setDefaultMemberPermissions(0)
 		.setDescription('List all items'),
 	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
                 // const itemListString = await shop.shop();
-                // await interaction.reply(itemListString);
+                // await interaction.editReply(itemListString);
 		let [embed, rows] = await shop.createAllItemsEmbed(1, interaction);
                 if (process.env.DEBUG) console.log(rows);
-		await interaction.reply({ embeds: [embed], components: rows});
+		await interaction.editReply({ embeds: [embed], components: rows});
 	},
 };

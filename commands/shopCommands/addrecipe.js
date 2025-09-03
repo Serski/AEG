@@ -12,6 +12,7 @@ module.exports = {
             .setDescription('The name of the recipe')
             .setRequired(false)),
     async execute(interaction) {
+            await interaction.deferReply({ flags: 64 });
         let recipeName = interaction.options.getString('recipename');
         if (!recipeName) {
             recipeName = 'New Recipe';
@@ -20,7 +21,7 @@ module.exports = {
         recipeName = await shop.addRecipe(recipeName);
         
         // Respons with an ephemeral message saying that recipe should appear below
-        await interaction.reply({ content: 'Edit recipe menu should appear below', ephemeral: true });
+        await interaction.editReply({ content: 'Edit recipe menu should appear below' });
 
         // Show the edit recipe menu
         const numericID = interaction.user.id;

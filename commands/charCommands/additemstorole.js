@@ -12,6 +12,7 @@ module.exports = {
         .addStringOption(option => option.setName('item').setDescription('The item to add').setRequired(true))
         .addIntegerOption(option => option.setName('amount').setDescription('The amount of items to add').setRequired(true)),
     async execute(interaction) {
+            await interaction.deferReply({ flags: 64 });
         const role = interaction.options.getRole('role');
         const item = interaction.options.getString('item');
         const amount = interaction.options.getInteger('amount');
@@ -23,12 +24,12 @@ module.exports = {
         if (typeof response == 'object') {
             if (process.env.DEBUG) console.log("here");
             if (response.length > 0) {
-                return interaction.reply("Errors on the following characters: " + response.join(", "));
+                return interaction.editReply("Errors on the following characters: " + response.join(", "));
             } else {
-                return interaction.reply(`Gave ${amount} ${item} to ${role}`);
+                return interaction.editReply(`Gave ${amount} ${item} to ${role}`);
             }
         } else {
-            return interaction.reply(response);
+            return interaction.editReply(response);
         }
     },
 };

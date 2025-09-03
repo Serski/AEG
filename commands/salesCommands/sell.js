@@ -22,6 +22,7 @@ module.exports = {
                 .setRequired(true)
         ),
     async execute(interaction) {
+            await interaction.deferReply({ flags: 64 });
         const itemName = interaction.options.getString('itemname');
         const quantity = interaction.options.getInteger('quantity');
         const price = interaction.options.getInteger('price');
@@ -30,9 +31,9 @@ module.exports = {
         (async () => {
             let reply = await marketplace.postSale(quantity, itemName, price, String(numericID));
             if (typeof (reply) == 'string') {
-                await interaction.reply(reply);
+                await interaction.editReply(reply);
             } else {
-                await interaction.reply({ embeds: [reply] });
+                await interaction.editReply({ embeds: [reply] });
             }
         })()
     }

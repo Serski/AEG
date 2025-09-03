@@ -12,8 +12,9 @@ module.exports = {
 				.setRequired(true)
 		),
 	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
         const userID = interaction.options.getUser('user').id;
 		var replyEmbed = await shop.createInventoryEmbed(userID);
-		await interaction.reply(({ embeds: [replyEmbed] }));
+		await interaction.editReply(({ embeds: [replyEmbed] }));
 	},
 };

@@ -15,7 +15,8 @@ module.exports = {
 			.setDescription('How many do you want to buy (Leave blank for 1)')
 			.setRequired(false)
 		),
-	execute(interaction) {
+	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
                 const itemName = interaction.options.getString('itemname');
         const numberItems = interaction.options.getInteger('numbertouse');
         const numericID = interaction.user.id;
@@ -23,9 +24,9 @@ module.exports = {
                 (async () => {
             let reply = await char.useItem(itemName, String(numericID), numberItems)
             if (typeof(reply) == 'string') {
-                await interaction.reply(reply);
+                await interaction.editReply(reply);
             } else {
-                await interaction.reply({ embeds: [reply] });
+                await interaction.editReply({ embeds: [reply] });
             }
                         // Call the useItem function from the Shop class
                 })()

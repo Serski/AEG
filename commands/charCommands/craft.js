@@ -10,15 +10,16 @@ module.exports = {
 			.setDescription('The recipe name')
 			.setRequired(true)
 		),
-	execute(interaction) {
+	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
 		const recipe = interaction.options.getString('recipe');
 
 		(async () => {
             let reply = await char.craft(interaction.user, recipe, interaction.guild)
             if (typeof(reply) == 'string') {
-                await interaction.reply(reply);
+                await interaction.editReply(reply);
             } else {
-                await interaction.reply({ embeds: [reply] });
+                await interaction.editReply({ embeds: [reply] });
             }
 			// Call the useItem function from the Shop class
 		})()

@@ -20,6 +20,7 @@ module.exports = {
                 .setDescription('The name of the embed')
                 .setRequired(true)),
 	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
 		try {
             let type = interaction.options.getString('type');
             let embed = interaction.options.getString('embed');
@@ -27,13 +28,13 @@ module.exports = {
             // Call the method with the channel object directly
             let reply = await admin.map(embed, channelID, type);
             if (typeof(reply) == 'string') {
-                await interaction.reply(reply);
+                await interaction.editReply(reply);
             } else {
-                await interaction.reply({ embeds: [reply]});
+                await interaction.editReply({ embeds: [reply]});
             }
         } catch (error) {
             console.error("Failed to add map menu:", error);
-            await interaction.reply({ content: "Failed to add the map. Please try again.", ephemeral: true });
+            await interaction.editReply({ content: "Failed to add the map. Please try again." });
         }
 	},
 };

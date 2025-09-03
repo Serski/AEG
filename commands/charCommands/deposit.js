@@ -9,16 +9,17 @@ module.exports = {
             option.setName('quantity')
                 .setDescription('Quantity to deposit')
                 .setRequired(true)),
-	execute(interaction) {
+	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
                 const numericID = interaction.user.id;
         const quantity = interaction.options.getInteger('quantity');
 
                 (async () => {
             let replyEmbed = await char.deposit(String(numericID), quantity);
             if (typeof(replyEmbed) == 'string') {
-                await interaction.reply(replyEmbed);
+                await interaction.editReply(replyEmbed);
             } else {
-                await interaction.reply("Deposited " + quantity + " gold to bank");
+                await interaction.editReply("Deposited " + quantity + " gold to bank");
             }
 		})()
 	},

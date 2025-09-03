@@ -7,13 +7,14 @@ module.exports = {
 		.setDescription('Initialize the menus to join a party')
 		.setDefaultMemberPermissions(0),
 	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
 		try {
             // Call the method with the channel object directly
             await admin.initPartySelect(interaction.channel);
-            await interaction.reply({ content: "Set! Select menus should appear just below this message", ephemeral: true });
+            await interaction.editReply({ content: "Set! Select menus should appear just below this message" });
         } catch (error) {
             console.error("Failed to initialize select menu:", error);
-            await interaction.reply({ content: "Failed to set the select menus. Please try again.", ephemeral: true });
+            await interaction.editReply({ content: "Failed to set the select menus. Please try again." });
         }
 	},
 };

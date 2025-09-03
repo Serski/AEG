@@ -12,17 +12,18 @@ module.exports = {
         .addStringOption(option => option.setName('item').setDescription('The item to take').setRequired(true))
         .addIntegerOption(option => option.setName('amount').setDescription('The amount of items to take').setRequired(true)),
     async execute(interaction) {
+            await interaction.deferReply({ flags: 64 });
         const player = interaction.options.getUser('player').id;
         const item = interaction.options.getString('item');
         const amount = interaction.options.getInteger('amount');
         const response = await char.addItemToPlayer(player, item, -amount);
 
         if (response == true) {
-            return interaction.reply(`Took ${amount} ${item} from ${player}`);
+            return interaction.editReply(`Took ${amount} ${item} from ${player}`);
         } else if (response == false || !response) {
-            return interaction.reply('Something went wrong');
+            return interaction.editReply('Something went wrong');
         } else {
-            return interaction.reply(response);
+            return interaction.editReply(response);
         }
     },
 };

@@ -13,13 +13,14 @@ module.exports = {
                 .setRequired(true)
         ),
     async execute(interaction) {
+            await interaction.deferReply({ flags: 64 });
         const saleID = interaction.options.getString('saleid');
         let replyString = await marketplace.inspectSale(saleID);
         //if embed, display embed, otherwise display string
         if (typeof (replyString) == 'string') {
-            await interaction.reply({ content: replyString, ephemeral: true });
+            await interaction.editReply({ content: replyString });
         } else {
-            await interaction.reply({ embeds: [replyString], ephemeral: true });
+            await interaction.editReply({ embeds: [replyString] });
         }
     },
 };

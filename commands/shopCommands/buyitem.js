@@ -15,14 +15,15 @@ module.exports = {
 			.setDescription('The item name')
 			.setRequired(true)
 		),
-	execute(interaction) {
+	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
         const itemName = interaction.options.getString('itemname');
         const numberItems = interaction.options.getInteger('numbertobuy');
         const numericID = interaction.user.id;
 
                 (async () => {
             let reply = await shop.buyItem(itemName, String(numericID), numberItems, interaction.channelId)
-            interaction.reply(reply);
+            interaction.editReply(reply);
                         // Call the addItem function from the Shop class
                 })()
         },

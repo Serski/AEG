@@ -16,6 +16,7 @@ module.exports = {
         .addIntegerOption(option => option.setName('value').setDescription('The value to change stat by').setRequired(true))
         .setDefaultMemberPermissions(0),
     async execute(interaction) {
+            await interaction.deferReply({ flags: 64 });
         const player = interaction.options.getUser('player').id;
         const stat = interaction.options.getString('stat');
         const value = interaction.options.getInteger('value');
@@ -24,11 +25,11 @@ module.exports = {
 
         if (response) {
             if (response == "Error: Player not found") {
-                return interaction.reply(`Player not found`);
+                return interaction.editReply(`Player not found`);
             }
-            return interaction.reply(`Changed ${response} by ${value} for ${player}`);
+            return interaction.editReply(`Changed ${response} by ${value} for ${player}`);
         } else {
-            return interaction.reply('Something went wrong');
+            return interaction.editReply('Something went wrong');
         }
     },
 };

@@ -13,7 +13,8 @@ module.exports = {
             option.setName('quantity')
                 .setDescription('Quantity to grab')
                 .setRequired(true)),
-	execute(interaction) {
+	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
                 const numericID = interaction.user.id;
         const item = interaction.options.getString('item');
         const quantity = interaction.options.getInteger('quantity');
@@ -21,9 +22,9 @@ module.exports = {
 		(async () => {
             let replyEmbed = await char.grab(String(numericID), item, quantity);
             if (typeof(replyEmbed) == 'string') {
-                await interaction.reply(replyEmbed);
+                await interaction.editReply(replyEmbed);
             } else {
-                await interaction.reply("Grabbed " + quantity + " " + item + " from storage");
+                await interaction.editReply("Grabbed " + quantity + " " + item + " from storage");
             }
 		})()
 	},

@@ -6,8 +6,8 @@ module.exports = {
 		.setName('bank')
 		.setDescription('Show bank'),
 	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
                 const numericID = interaction.user.id;
-                await interaction.deferReply({ ephemeral: true });
                 const replyEmbed = await char.bank(String(numericID));
                 if (typeof(replyEmbed) == 'string') {
                         await interaction.editReply(replyEmbed);

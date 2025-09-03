@@ -8,14 +8,15 @@ module.exports = {
         .addUserOption(option => option.setName('player').setDescription('The player to show the balance of').setRequired(true))
         .setDefaultMemberPermissions(0),
         async execute(interaction) {
+                await interaction.deferReply({ flags: 64 });
                 const charID = interaction.options.getUser('player').id;
 
 		(async () => {
             let replyEmbed = await char.balance(charID);
             if (typeof(replyEmbed) == 'string') {
-                await interaction.reply(replyEmbed);
+                await interaction.editReply(replyEmbed);
             } else {
-                await interaction.reply({ embeds: [replyEmbed] });
+                await interaction.editReply({ embeds: [replyEmbed] });
             }
 		})()
 	},

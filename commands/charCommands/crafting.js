@@ -6,14 +6,15 @@ module.exports = {
         .setName('crafting')
         .setDescription('View crafting cooldowns'),
     async execute(interaction) {
+            await interaction.deferReply({ flags: 64 });
         try {
             const numericID = interaction.user.id;
             var replyEmbed = await char.craftingCooldowns(String(numericID));
-            await interaction.reply(({ embeds: [replyEmbed] }));
+            await interaction.editReply(({ embeds: [replyEmbed] }));
         } catch (error) {
             if (process.env.DEBUG) console.log(error);
             if (replyEmbed) {
-                await interaction.reply(replyEmbed);
+                await interaction.editReply(replyEmbed);
             }
         }
     },

@@ -11,6 +11,7 @@ module.exports = {
         .addStringOption(option => option.setName('item').setDescription('The item to give').setRequired(true))
         .addIntegerOption(option => option.setName('amount').setDescription('The amount of items to give').setRequired(false)),
     async execute(interaction) {
+            await interaction.deferReply({ flags: 64 });
         const numericID = interaction.user.id;
         const player = interaction.options.getUser('player').id;
         const item = interaction.options.getString('item');
@@ -21,11 +22,11 @@ module.exports = {
         const response = await char.giveItemToPlayer(String(numericID), String(player), item, amount);
 
         if (response == true) {
-            return interaction.reply(`Gave ${amount} ${item} to ${player}`);
+            return interaction.editReply(`Gave ${amount} ${item} to ${player}`);
         } else if (response == false || !response) {
-            return interaction.reply('Something went wrong');
+            return interaction.editReply('Something went wrong');
         } else {
-            return interaction.reply(response);
+            return interaction.editReply(response);
         }
     },
 };
