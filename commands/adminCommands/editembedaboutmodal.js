@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const admin = require('../../admin'); // Importing the database manager
+const char = require('../../char');
 const dbm = require ('../../database-manager');
 
 ///editfield <field number> <new value>
@@ -11,7 +12,7 @@ module.exports = {
     async execute(interaction) {
         try {
             const numericID = interaction.user.id;
-            let userData = await dbm.loadFile('characters', String(numericID));
+            let [player, userData] = await char.findPlayerData(numericID);
 
             let mapName = userData.editingFields["Map Edited"];
             let mapTypeEdited = userData.editingFields["Map Type Edited"];

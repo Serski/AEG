@@ -18,7 +18,7 @@ class marketplace {
     const shopData = marketplace.shopDataCache;
 
     // Load the character file
-    const charData = await dbm.loadFile('characters', String(sellerID));
+    const [sellerIDStr, charData] = await char.findPlayerData(sellerID);
     const mktData = marketplace.marketplaceCache || { idfile: { lastID: 1000 }, marketplace: {} };
     marketplace.marketplaceCache = mktData;
     // Find the item name using shop.findItemName
@@ -55,7 +55,7 @@ class marketplace {
     }
     // Save the character.json file and update marketplace data in parallel
     await Promise.all([
-      dbm.saveFile('characters', String(sellerID), charData),
+      char.updatePlayer(sellerIDStr, charData),
       dbm.saveCollection('marketplace', mktData)
     ]);
     marketplace.marketplaceCache = mktData;
@@ -262,9 +262,9 @@ class marketplace {
     }
 
     // Load buyer and seller characters in parallel
-    const [buyerChar, sellerChar] = await Promise.all([
-      dbm.loadFile('characters', String(buyerID)),
-      dbm.loadFile('characters', String(sale.sellerID))
+    const [[buyerIDStr, buyerChar], [sellerIDStr, sellerChar]] = await Promise.all([
+      char.findPlayerData(buyerID),
+      char.findPlayerData(sale.sellerID)
     ]);
 
     // If the buyer is the seller, give them back the items
@@ -274,7 +274,7 @@ class marketplace {
       delete marketData.marketplace[foundCategory][foundItemName][saleID];
       delete marketplace.saleIndex[saleID];
       await Promise.all([
-        dbm.saveFile('characters', String(buyerID), buyerChar),
+        char.updatePlayer(buyerIDStr, buyerChar),
         dbm.saveCollection('marketplace', marketData)
       ]);
       marketplace.marketplaceCache = marketData;
@@ -302,8 +302,8 @@ class marketplace {
 
     // Save updated character files and marketplace
     await Promise.all([
-      dbm.saveFile('characters', String(buyerID), buyerChar),
-      dbm.saveFile('characters', String(sale.sellerID), sellerChar),
+      char.updatePlayer(buyerIDStr, buyerChar),
+      char.updatePlayer(sellerIDStr, sellerChar),
       dbm.saveCollection('marketplace', marketData)
     ]);
     marketplace.marketplaceCache = marketData;

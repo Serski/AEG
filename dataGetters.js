@@ -1,9 +1,9 @@
-const dbm = require('./database-manager');
+const char = require('./char');
 
 class dataGetters {
     static async getCharFromNumericID(numericID) {
-        const charData = await dbm.loadFile('characters', String(numericID));
-        return charData ? String(numericID) : 'ERROR';
+        const [idStr, charData] = await char.findPlayerData(numericID);
+        return charData ? idStr : 'ERROR';
     }
 }
 module.exports = dataGetters;

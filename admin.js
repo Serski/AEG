@@ -1,4 +1,5 @@
 const dbm = require('./database-manager'); // Importing the database manager
+const char = require('./char');
 const axios = require('axios');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, createWebhook, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
 const shop = require('./shop');
@@ -345,13 +346,13 @@ When selected grants the:
   
     mapData = mapData[mapName];
   
-    let userData = await dbm.loadFile('characters', String(numericID));
+    let [player, userData] = await char.findPlayerData(numericID);
     if (!userData.editingFields) {
       userData.editingFields = {};
     }
     userData.editingFields["Map Edited"] = mapName;
     userData.editingFields["Map Type Edited"] = mapType;
-    await dbm.saveFile('characters', String(numericID), userData);
+    await char.updatePlayer(player, userData);
   
     // Construct the edit menu embed
     const embed = new EmbedBuilder()
@@ -416,7 +417,7 @@ When selected grants the:
   
   static async editMapField(numericID, field, value) {
     // Load the maps collection
-    let charData = await dbm.loadFile('characters', String(numericID));
+    let [player, charData] = await char.findPlayerData(numericID);
     if (!charData.editingFields || !charData.editingFields["Map Edited"] || !charData.editingFields["Map Type Edited"]) {
       return "You must use /editmapmenu first to select a map to edit";
     }
