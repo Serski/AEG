@@ -54,14 +54,19 @@ client.on('ready', () => {
 });
 
 client.on('clientReady', async () => {
-    // Load shop and marketplace data in parallel
+    const preloadChars = (process.env.PRELOAD_CHAR_IDS || '').split(',').filter(Boolean);
+
+    // Load all required collections in parallel
     const [shopData, marketData] = await Promise.all([
-        dbm.loadCollection('shop'),
-        dbm.loadCollection('marketplace')
+        shop.getShopData(),
+        dbm.loadCollection('marketplace'),
+        dbm.loadCollection('keys'),
+        dbm.loadCollection('recipes'),
+        ...preloadChars.map(id => char.findPlayerData(id.trim()))
     ]);
 
     // Share shop data cache across modules
-    shop.shopCache = marketplace.shopDataCache = shopData;
+    marketplace.shopDataCache = shopData;
     marketplace.marketplaceCache = marketData;
 
     // Build a quick lookup for sale IDs -> { category, itemName }
@@ -74,12 +79,6 @@ client.on('clientReady', async () => {
             }
         }
     }
-
-    // Preload additional frequently accessed collections
-    await Promise.all([
-        dbm.loadCollection('keys'),
-        dbm.loadCollection('recipes'),
-    ]);
 });
 
 // //message handler
