@@ -23,10 +23,11 @@ module.exports = {
     async execute(interaction) {
         const role = interaction.options.getString('embed');
         const type = interaction.options.getString('type');
+        const numericID = interaction.user.id;
 
         (async () => {
             //addIncome(roleID, incomeString)
-            let reply = await admin.editMapMenu(role, interaction.user.id, type);
+            let reply = await admin.editMapMenu(role, String(numericID), type);
             if (typeof(reply) == 'string') {
                 await interaction.reply(reply);
             } else {

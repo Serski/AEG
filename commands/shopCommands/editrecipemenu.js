@@ -17,12 +17,12 @@ module.exports = {
                 (async () => {
                         //shop.editrecipeMenu returns an array with the first element being the replyEmbed and the second element being the rows
                         const numericID = interaction.user.id;
-                        let reply = await shop.editRecipeMenu(recipeName, numericID);
-            if (typeof(reply) == 'string') {
-                await interaction.reply(reply);
-            } else {
-                await interaction.reply({ embeds: [reply]});
-            }
+                        let reply = await shop.editRecipeMenu(recipeName, String(numericID));
+                        if (typeof(reply) == 'string') {
+                            await interaction.reply(reply);
+                        } else {
+                            await interaction.reply({ embeds: [reply]});
+                        }
 		})()
 	},
 };

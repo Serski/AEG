@@ -10,11 +10,11 @@ module.exports = {
                 .setDescription('Quantity to withdraw')
                 .setRequired(true)),
 	execute(interaction) {
-                const charID = interaction.user.id;
+                const numericID = interaction.user.id;
         const quantity = interaction.options.getInteger('quantity');
 
-		(async () => {
-            let replyEmbed = await char.withdraw(charID, quantity);
+                (async () => {
+            let replyEmbed = await char.withdraw(String(numericID), quantity);
             if (typeof(replyEmbed) == 'string') {
                 await interaction.reply(replyEmbed);
             } else {

@@ -21,7 +21,7 @@ module.exports = {
         const fieldNumber = interaction.options.getInteger('fieldnumber');
         const newValue = interaction.options.getString('newvalue');
         const numericID = interaction.user.id;
-        let reply = await shop.editRecipeField(numericID, fieldNumber, newValue);
+        let reply = await shop.editRecipeField(String(numericID), fieldNumber, newValue);
         await interaction.reply(reply);
     }
 };

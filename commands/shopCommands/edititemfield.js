@@ -23,7 +23,7 @@ module.exports = {
 
         if (process.env.DEBUG) console.log('new value: ' + newValue);
         const numericID = interaction.user.id;
-        let reply = await shop.editItemField(numericID, fieldNumber, newValue);
+        let reply = await shop.editItemField(String(numericID), fieldNumber, newValue);
         await interaction.reply(reply);
     }
 };

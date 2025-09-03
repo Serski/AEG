@@ -29,7 +29,8 @@ module.exports = {
             newValue = "DELETEFIELD";
         }
 
-        let reply = await admin.editIncomeField(fieldNumber, interaction.user.id, newValue);
+        const numericID = interaction.user.id;
+        let reply = await admin.editIncomeField(fieldNumber, String(numericID), newValue);
         if (typeof(reply) == 'string') {
             await interaction.reply(reply);
         } else {

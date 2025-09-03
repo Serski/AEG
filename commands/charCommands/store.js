@@ -14,12 +14,12 @@ module.exports = {
                 .setDescription('Quantity to store')
                 .setRequired(true)),
 	execute(interaction) {
-                const charID = interaction.user.id;
+                const numericID = interaction.user.id;
         const item = interaction.options.getString('item');
         const quantity = interaction.options.getInteger('quantity');
 
 		(async () => {
-            let replyEmbed = await char.store(charID, item, quantity);
+            let replyEmbed = await char.store(String(numericID), item, quantity);
             if (typeof(replyEmbed) == 'string') {
                 await interaction.reply(replyEmbed);
             } else {

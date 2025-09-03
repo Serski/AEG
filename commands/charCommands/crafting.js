@@ -7,8 +7,8 @@ module.exports = {
         .setDescription('View crafting cooldowns'),
     async execute(interaction) {
         try {
-            const userID = interaction.user.id;
-            var replyEmbed = await char.craftingCooldowns(userID);
+            const numericID = interaction.user.id;
+            var replyEmbed = await char.craftingCooldowns(String(numericID));
             await interaction.reply(({ embeds: [replyEmbed] }));
         } catch (error) {
             if (process.env.DEBUG) console.log(error);

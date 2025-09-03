@@ -6,10 +6,10 @@ module.exports = {
 		.setName('char')
 		.setDescription('Show player character'),
 	execute(interaction) {
-                const charID = interaction.user.id;
+                const numericID = interaction.user.id;
 
-		(async () => {
-            let replyEmbed = await char.char(charID);
+                (async () => {
+            let replyEmbed = await char.char(String(numericID));
             if (typeof(replyEmbed) == 'string') {
                 await interaction.reply(replyEmbed);
             } else {

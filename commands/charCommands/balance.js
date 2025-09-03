@@ -6,15 +6,15 @@ module.exports = {
 		.setName('balance')
 		.setDescription('Show balance'),
 	async execute(interaction) {
-                const charID = interaction.user.id;
+                const numericID = interaction.user.id;
 
-		await interaction.deferReply({ ephemeral: true });
+                await interaction.deferReply({ ephemeral: true });
 
-		const replyEmbed = await char.balance(charID);
-		if (typeof(replyEmbed) == 'string') {
-			await interaction.editReply(replyEmbed);
-		} else {
-			await interaction.editReply({ embeds: [replyEmbed] });
-		}
+                const replyEmbed = await char.balance(String(numericID));
+                if (typeof(replyEmbed) == 'string') {
+                        await interaction.editReply(replyEmbed);
+                } else {
+                        await interaction.editReply({ embeds: [replyEmbed] });
+                }
 	},
 };

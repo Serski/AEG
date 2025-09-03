@@ -6,10 +6,10 @@ module.exports = {
 		.setName('stats')
 		.setDescription('Show player stats'),
 	execute(interaction) {
-                const charID = interaction.user.id;
+                const numericID = interaction.user.id;
 
-		(async () => {
-            let replyEmbed = await char.stats(charID);
+                (async () => {
+            let replyEmbed = await char.stats(String(numericID));
             if (typeof(replyEmbed) == 'string') {
                 await interaction.reply({ content: replyEmbed, ephemeral: true });
             } else {

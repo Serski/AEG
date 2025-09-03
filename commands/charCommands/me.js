@@ -6,15 +6,15 @@ module.exports = {
 		.setName('me')
 		.setDescription('Show player character- only RP aspects'),
 	execute(interaction) {
-                const charID = interaction.user.id;
+                const numericID = interaction.user.id;
 
-		(async () => {
-            let replyEmbed = await char.me(charID);
+                (async () => {
+            let replyEmbed = await char.me(String(numericID));
             if (typeof(replyEmbed) == 'string') {
                 await interaction.reply(replyEmbed);
             } else {
                 await interaction.reply({ embeds: [replyEmbed] });
             }
-		})()
-	},
+                })()
+        },
 };

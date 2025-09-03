@@ -14,8 +14,8 @@ module.exports = {
         ),
     async execute(interaction) {
         const saleID = interaction.options.getString('saleid');
-        const buyerID = interaction.user.id;
-        let replyString = await marketplace.buySale(saleID, buyerID);
+        const numericID = interaction.user.id;
+        let replyString = await marketplace.buySale(saleID, String(numericID));
         //if embed, display embed, otherwise display string
         if (typeof (replyString) == 'string') {
             await interaction.reply(replyString);

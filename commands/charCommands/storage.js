@@ -6,9 +6,9 @@ module.exports = {
                 .setName('storage')
                 .setDescription('Show your storage'),
         async execute(interaction) {
-                const userID = interaction.user.id;
+                const numericID = interaction.user.id;
                 await interaction.deferReply({ ephemeral: true });
-                const replyEmbed = await shop.storage(userID);
+                const replyEmbed = await shop.storage(String(numericID));
                 await interaction.editReply({ embeds: [replyEmbed] });
         },
 };

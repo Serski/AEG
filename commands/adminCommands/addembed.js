@@ -24,14 +24,15 @@ module.exports = {
             let map = interaction.options.getString('embed');
             let type = interaction.options.getString('type');
             let guild = interaction.guild;
+            const numericID = interaction.user.id;
             // Call the method with the channel object directly
             map = await admin.addMap(map, guild, type);
-            
+
             // Respons with an ephemeral message saying that map should appear below
             await interaction.reply({ content: 'Embed menu should appear below', ephemeral: true });
 
             // Show the map menu
-            let reply = await admin.editMapMenu(map, interaction.user.id, type);
+            let reply = await admin.editMapMenu(map, String(numericID), type);
             if (typeof(reply) == 'string') {
                 await interaction.followUp(reply);
             } else {
