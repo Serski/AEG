@@ -105,8 +105,10 @@ class shop {
 
   static async addRecipe(recipeName) {
     //Go into the recipes file. First check if another copy of this recipe exists. If it does, add a space and number to recipe name and check again
-    let data = await dbm.loadCollection('recipes');
-    let shopData = await this.getShopData();
+    const [data, shopData] = await Promise.all([
+      dbm.loadCollection('recipes'),
+      this.getShopData()
+    ]);
     let recipeNames = Object.keys(data);
     let i = 1;
     let newRecipeName = recipeName;
@@ -145,8 +147,10 @@ class shop {
 
   static async recipesEmbed(isPublic, page) {
     const itemsPerPage = 1000; // Number of recipes per page
-    let data = await dbm.loadCollection('recipes');
-    let shopData = await this.getShopData();
+    const [data, shopData] = await Promise.all([
+      dbm.loadCollection('recipes'),
+      this.getShopData()
+    ]);
     let publicRecipes = [];
     let privateRecipes = [];
   
