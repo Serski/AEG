@@ -271,8 +271,10 @@ class marketplace {
       buyerChar.inventory[foundItemName] += sale.number;
       delete marketData.marketplace[foundCategory][foundItemName][saleID];
       delete marketplace.saleIndex[saleID];
-      await dbm.saveFile('characters', String(buyerID), buyerChar);
-      await dbm.saveCollection('marketplace', marketData);
+      await Promise.all([
+        dbm.saveFile('characters', String(buyerID), buyerChar),
+        dbm.saveCollection('marketplace', marketData)
+      ]);
       marketplace.marketplaceCache = marketData;
       let embed = new EmbedBuilder();
       embed.setDescription(`<@${buyerID}> bought **${sale.number} ${await shop.getItemIcon(foundItemName, shopData)} ${foundItemName}** back from themselves. It was listed for ${clientManager.getEmoji("Gold")}**${sale.price}**.`);
@@ -297,9 +299,11 @@ class marketplace {
     delete marketplace.saleIndex[saleID];
 
     // Save updated character files and marketplace
-    await dbm.saveFile('characters', String(buyerID), buyerChar);
-    await dbm.saveFile('characters', String(sale.sellerID), sellerChar);
-    await dbm.saveCollection('marketplace', marketData);
+    await Promise.all([
+      dbm.saveFile('characters', String(buyerID), buyerChar),
+      dbm.saveFile('characters', String(sale.sellerID), sellerChar),
+      dbm.saveCollection('marketplace', marketData)
+    ]);
     marketplace.marketplaceCache = marketData;
 
     let embed = new EmbedBuilder();
