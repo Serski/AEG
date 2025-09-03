@@ -1792,10 +1792,10 @@ class char {
   static async findPlayerData(id) {
     const player = String(id);
     const charData = await dbm.loadFile('characters', player);
-    if (charData) {
-      return [player, charData];
+    if (!charData) {
+      return [false, false];
     }
-    return [false, false];
+    return [player, charData];
   }
 }
 
