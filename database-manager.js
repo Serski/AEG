@@ -29,6 +29,17 @@ if (!fs.existsSync(storageDir)) {
   fs.mkdirSync(storageDir);
 }
 
+// Simple in-memory cache to avoid repeatedly reading the same JSON files
+// Structure: { [collectionName]: Map<docId, data> }
+const collectionCache = new Map();
+
+function getCache(collectionName) {
+  if (!collectionCache.has(collectionName)) {
+    collectionCache.set(collectionName, new Map());
+  }
+  return collectionCache.get(collectionName);
+}
+
 function formatTable(name) {
   return name.replace(/[^a-zA-Z0-9_]/g, '');
 }
@@ -51,8 +62,36 @@ async function saveCollection(collectionName, data) {
     }
     await pgClient.query('COMMIT');
   } else {
-    const filePath = path.join(storageDir, `${collectionName}.json`);
-    await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
+    const dirPath = path.join(storageDir, collectionName);
+    const useDir = fs.existsSync(dirPath);
+    if (useDir) {
+      await fs.promises.mkdir(dirPath, { recursive: true });
+      const cache = getCache(collectionName);
+      const existing = new Set(
+        await fs.promises
+          .readdir(dirPath)
+          .then((files) => files.filter((f) => f.endsWith('.json')).map((f) => path.basename(f, '.json')))
+      );
+      for (const [id, value] of Object.entries(data)) {
+        const filePath = path.join(dirPath, `${id}.json`);
+        await fs.promises.writeFile(filePath, JSON.stringify(value, null, 2));
+        cache.set(id, value);
+        existing.delete(id);
+      }
+      // Remove docs no longer present
+      for (const id of existing) {
+        await fs.promises.unlink(path.join(dirPath, `${id}.json`)).catch(() => {});
+        cache.delete(id);
+      }
+    } else {
+      const filePath = path.join(storageDir, `${collectionName}.json`);
+      await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
+      const cache = getCache(collectionName);
+      cache.clear();
+      for (const [id, value] of Object.entries(data)) {
+        cache.set(id, value);
+      }
+    }
   }
 }
 
@@ -68,10 +107,37 @@ async function loadCollection(collectionName) {
     }
     return data;
   } else {
+    const dirPath = path.join(storageDir, collectionName);
+    try {
+      const stat = await fs.promises.stat(dirPath);
+      if (stat.isDirectory()) {
+        const files = await fs.promises.readdir(dirPath);
+        const data = {};
+        const cache = getCache(collectionName);
+        cache.clear();
+        for (const file of files) {
+          if (!file.endsWith('.json')) continue;
+          const id = path.basename(file, '.json');
+          const content = await fs.promises.readFile(path.join(dirPath, file), 'utf8');
+          const parsed = JSON.parse(content);
+          data[id] = parsed;
+          cache.set(id, parsed);
+        }
+        return data;
+      }
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err;
+    }
     const filePath = path.join(storageDir, `${collectionName}.json`);
     try {
       const content = await fs.promises.readFile(filePath, 'utf8');
-      return JSON.parse(content);
+      const parsed = JSON.parse(content);
+      const cache = getCache(collectionName);
+      cache.clear();
+      for (const [id, value] of Object.entries(parsed)) {
+        cache.set(id, value);
+      }
+      return parsed;
     } catch (err) {
       if (err.code === 'ENOENT') {
         return {};
@@ -100,9 +166,12 @@ async function saveFile(collectionName, docId, data) {
       [docId, data]
     );
   } else {
-    const collectionData = await loadCollection(collectionName);
-    collectionData[docId] = data;
-    await saveCollection(collectionName, collectionData);
+    const dirPath = path.join(storageDir, collectionName);
+    await fs.promises.mkdir(dirPath, { recursive: true });
+    const filePath = path.join(dirPath, `${docId}.json`);
+    await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
+    const cache = getCache(collectionName);
+    cache.set(docId, data);
   }
 }
 
@@ -114,8 +183,33 @@ async function loadFile(collectionName, docId) {
     const res = await pgClient.query(`SELECT data FROM ${table} WHERE id = $1`, [docId]);
     return res.rows[0] ? res.rows[0].data : undefined;
   } else {
-    const collectionData = await loadCollection(collectionName);
-    return collectionData.hasOwnProperty(docId) ? collectionData[docId] : undefined;
+    const cache = getCache(collectionName);
+    if (cache.has(docId)) return cache.get(docId);
+    const dirPath = path.join(storageDir, collectionName);
+    const filePath = path.join(dirPath, `${docId}.json`);
+    try {
+      const content = await fs.promises.readFile(filePath, 'utf8');
+      const data = JSON.parse(content);
+      cache.set(docId, data);
+      return data;
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        const collectionPath = path.join(storageDir, `${collectionName}.json`);
+        try {
+          const content = await fs.promises.readFile(collectionPath, 'utf8');
+          const parsed = JSON.parse(content);
+          if (parsed.hasOwnProperty(docId)) {
+            cache.set(docId, parsed[docId]);
+            return parsed[docId];
+          }
+          return undefined;
+        } catch (err2) {
+          if (err2.code === 'ENOENT') return undefined;
+          throw err2;
+        }
+      }
+      throw err;
+    }
   }
 }
 
@@ -126,10 +220,21 @@ async function docDelete(collectionName, docName) {
     await ensureTable(table);
     await pgClient.query(`DELETE FROM ${table} WHERE id = $1`, [docName]);
   } else {
-    const collectionData = await loadCollection(collectionName);
-    if (collectionData.hasOwnProperty(docName)) {
-      delete collectionData[docName];
-      await saveCollection(collectionName, collectionData);
+    const dirPath = path.join(storageDir, collectionName);
+    const filePath = path.join(dirPath, `${docName}.json`);
+    try {
+      await fs.promises.unlink(filePath);
+      getCache(collectionName).delete(docName);
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        const collectionData = await loadCollection(collectionName);
+        if (collectionData.hasOwnProperty(docName)) {
+          delete collectionData[docName];
+          await saveCollection(collectionName, collectionData);
+        }
+      } else {
+        throw err;
+      }
     }
   }
 }
@@ -141,13 +246,10 @@ async function fieldDelete(collectionName, docName, deleteField) {
     await ensureTable(table);
     await pgClient.query(`UPDATE ${table} SET data = data - $2 WHERE id = $1`, [docName, deleteField]);
   } else {
-    const collectionData = await loadCollection(collectionName);
-    if (
-      collectionData.hasOwnProperty(docName) &&
-      collectionData[docName].hasOwnProperty(deleteField)
-    ) {
-      delete collectionData[docName][deleteField];
-      await saveCollection(collectionName, collectionData);
+    const doc = await loadFile(collectionName, docName);
+    if (doc && Object.prototype.hasOwnProperty.call(doc, deleteField)) {
+      delete doc[deleteField];
+      await saveFile(collectionName, docName, doc);
     }
   }
 }
@@ -170,9 +272,16 @@ async function logData() {
     if (process.env.DEBUG) console.log(`Log data for ${dateString} saved successfully.`);
   } else {
     const files = await fs.promises.readdir(storageDir);
-    const collections = files
-      .filter((file) => file.endsWith('.json') && file !== 'logs.json')
-      .map((file) => path.basename(file, '.json'));
+    const collections = [];
+    for (const file of files) {
+      const full = path.join(storageDir, file);
+      const stat = await fs.promises.stat(full);
+      if (stat.isDirectory()) {
+        collections.push(file);
+      } else if (file.endsWith('.json') && file !== 'logs.json') {
+        collections.push(path.basename(file, '.json'));
+      }
+    }
     const logDataObj = {};
     for (const collectionName of collections) {
       logDataObj[collectionName] = await loadCollection(collectionName);
