@@ -567,7 +567,7 @@ class char {
     //   'Take Item', 'Take Item 2', 'Take Item 3', 'Take Item 4', 'Take Item 5',
     //   'Change HP (#)', 'Change STR (#)', 'Change DEX (#)', 'Change INT (#)', 'Change CHA (#)', 'Revive (Y/N)', 'Durability (#)'
     // ];
-    let shopData = await dbm.loadCollection('shop');
+    let shopData = await shop.getShopData();
     itemName = await shop.findItemName(itemName, shopData);
 
     if (!numToUse) {
@@ -941,7 +941,7 @@ class char {
   //Creates cooldowns embed, followed by a return string if any recipes are completed
   static async craftingCooldowns(charID) {
     let charData = await dbm.loadCollection('characters');
-    let shopData = await dbm.loadCollection('shop');
+    let shopData = await shop.getShopData();
     let recipeData = await dbm.loadCollection('recipes');
     let finishedCrafts = [];
 

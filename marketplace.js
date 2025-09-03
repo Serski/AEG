@@ -1,10 +1,9 @@
 const dbm = require('./database-manager'); // Importing the database manager
-const shop = require('./shop'); // Importing the database manager
-const char = require('./char'); // Importing the database manager
-const clientManager = require('./clientManager'); // Importing the database manager
+const shop = require('./shop'); // Importing the shop module
+const char = require('./char'); // Importing the character manager
+const clientManager = require('./clientManager'); // Importing the client manager
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 class marketplace {
-  static shopDataCache = null;
   static marketplaceCache = null;
   static saleIndex = {};
   /**Function for a player to post a sale.
@@ -15,7 +14,7 @@ class marketplace {
    * Items will be added to the marketplace according to their item name and category- i.e. all iron swords will be next to each other, and the iron swords will be next to steel swords
    * */ 
   static async postSale(numberItems, itemName, price, sellerID) {
-    const shopData = marketplace.shopDataCache;
+    const shopData = await shop.getShopData();
 
     // Load the character file
     const [sellerIDStr, charData] = await char.findPlayerData(sellerID);
@@ -75,10 +74,9 @@ class marketplace {
     // Load cached marketplace and shop data in parallel
     const [marketData, shopData] = await Promise.all([
       marketplace.marketplaceCache ?? dbm.loadCollection('marketplace'),
-      marketplace.shopDataCache ?? dbm.loadCollection('shop')
+      shop.getShopData()
     ]);
     marketplace.marketplaceCache = marketData;
-    marketplace.shopDataCache = shopData;
 
     // Max items allowed per page
     const maxItemsPerPage = 25;
@@ -195,10 +193,9 @@ class marketplace {
     // Load cached marketplace and shop data in parallel
     const [marketData, shopData] = await Promise.all([
       marketplace.marketplaceCache ?? dbm.loadCollection('marketplace'),
-      marketplace.shopDataCache ?? dbm.loadCollection('shop')
+      shop.getShopData()
     ]);
     marketplace.marketplaceCache = marketData;
-    marketplace.shopDataCache = shopData;
     // Create an embed to return on success. Will just say @user has listed **numberItems :itemIcon: itemName** for <:Gold:1232097113089904710>**price**.
     let embed = new EmbedBuilder();
     const playerUser = await clientManager.getUser(sellerID);
@@ -247,8 +244,9 @@ class marketplace {
   //Buy a sale. Send the money from the buyer to the seller, and give the buyer the items.
   //If the seller is buying their own sale, merely give them back their items; no need to check their money.
   static async buySale(saleID, buyerID) {
-    const marketData = marketplace.marketplaceCache;
-    const shopData = marketplace.shopDataCache;
+    const marketData = marketplace.marketplaceCache ?? await dbm.loadCollection('marketplace');
+    marketplace.marketplaceCache = marketData;
+    const shopData = await shop.getShopData();
 
     // Locate the sale using the index
     const indexEntry = marketplace.saleIndex[saleID];
@@ -315,10 +313,7 @@ class marketplace {
 
   //Inspect a sale. Will take the saleID and return an embed with the sale information
   static async inspectSale(saleID) {
-    if (!marketplace.shopDataCache) {
-      marketplace.shopDataCache = await dbm.loadCollection('shop');
-    }
-    const shopData = marketplace.shopDataCache;
+    const shopData = await shop.getShopData();
     // Search through marketData for the saleID
     const [itemCategory, itemName, sale] = await marketplace.getSale(saleID);
     // If the saleID doesn't exist, return an error
@@ -377,7 +372,6 @@ class marketplace {
   //Invalidate cached collections
   static invalidateCaches() {
     marketplace.marketplaceCache = null;
-    marketplace.shopDataCache = null;
     marketplace.saleIndex = {};
   }
 }

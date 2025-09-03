@@ -1,13 +1,14 @@
 const dbm = require('./database-manager');
 const keys = require('./keys');
 const clientManager = require('./clientManager');
+const shop = require('./shop');
 
 // Load the shop collection, add the "Need None Of Roles" field to each document's usageOptions, and save the collection back to the database
 // This is a one-time script to add the "Need None Of Roles" field to each document's usageOptions
 // Usage: node addNeedNoneOfRolesToShop.js
 async function addNeedNoneOfRolesToShop() {
     // Load the shop collection
-    const shopCollection = await dbm.loadCollection('shop');
+    const shopCollection = await shop.getShopData();
 
     // Add the "Need None Of Roles" field to each document's usageOptions
     for (let shopItem in shopCollection) {

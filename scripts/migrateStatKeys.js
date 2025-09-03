@@ -1,4 +1,5 @@
 const dbm = require('../database-manager');
+const shop = require('../shop');
 
 const KEY_MAP = {
   'Change Legitimacy (#)': 'Change HP (#)',
@@ -9,7 +10,7 @@ const KEY_MAP = {
 };
 
 async function migrateStatKeys() {
-  const shopData = await dbm.loadCollection('shop');
+  const shopData = await shop.getShopData();
   let changes = 0;
 
   for (const [itemName, itemData] of Object.entries(shopData)) {
