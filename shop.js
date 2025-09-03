@@ -729,8 +729,8 @@ class shop {
     return price;
   }
 
-  static async getItemCategory(itemName) {
-    let data = await dbm.loadCollection('shop');
+  static async getItemCategory(itemName, shopData = null) {
+    const data = shopData ?? await dbm.loadCollection('shop');
     var category;
     if (data[itemName]) {
       category = data[itemName].infoOptions.Category;
