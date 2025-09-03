@@ -25,12 +25,14 @@ module.exports = {
     .setName('raid')
     .setDescription('Launch a raid against one of the available targets'),
   async execute(interaction) {
+    await interaction.deferReply({ flags: 64 });
+
     const numericID = interaction.user.id;
     const charId = String(numericID);
 
     const charData = await dbm.loadFile('characters', charId);
     if (!charData) {
-      await interaction.reply({ content: 'Create a character first with /newchar.', ephemeral: true });
+      await interaction.editReply({ content: 'Create a character first with /newchar.' });
       return;
     }
 
@@ -38,7 +40,7 @@ module.exports = {
     const COOLDOWN = 3 * 60 * 1000; // 1 hour
     if (charData.lastRaidAt && now - charData.lastRaidAt < COOLDOWN) {
       const mins = Math.ceil((COOLDOWN - (now - charData.lastRaidAt)) / 60000);
-      await interaction.reply({ content: `You must wait ${mins} more minutes before raiding again.`, ephemeral: true });
+      await interaction.editReply({ content: `You must wait ${mins} more minutes before raiding again.` });
       return;
     }
 
@@ -62,13 +64,13 @@ module.exports = {
       { name: 'raidPanel.png' }
     );
 
-    const replyMessage = await interaction.reply({
+    await interaction.editReply({
       embeds: [raidEmbed],
       components: [ new ActionRowBuilder().addComponents(targetMenu) ],
-      files: [ raidImage ],
-      flags: 64,
-      fetchReply: true
+      files: [ raidImage ]
     });
+
+    const replyMessage = await interaction.fetchReply();
 
     const filter = i => i.user.id === numericID;
     let targetInteraction;
@@ -150,7 +152,7 @@ module.exports = {
 
     for (const [ship, qty] of Object.entries(fleetSelection)) {
       if (!fleet[ship] || fleet[ship] < qty) {
-        await interaction.followUp({ content: `You do not have enough ${ship}.`, ephemeral: true });
+        await interaction.followUp({ content: `You do not have enough ${ship}.` });
         clientManager.clearRaidSession(numericID);
         return;
       }
