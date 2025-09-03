@@ -301,9 +301,11 @@ class marketplace {
     delete marketplace.saleIndex[saleID];
 
     // Save updated character files and marketplace
-    await dbm.saveFile('characters', String(buyerID), buyerChar);
-    await dbm.saveFile('characters', String(sale.sellerID), sellerChar);
-    await dbm.saveCollection('marketplace', marketData);
+    await Promise.all([
+      dbm.saveFile('characters', String(buyerID), buyerChar),
+      dbm.saveFile('characters', String(sale.sellerID), sellerChar),
+      dbm.saveCollection('marketplace', marketData)
+    ]);
     marketplace.marketplaceCache = marketData;
 
     let embed = new EmbedBuilder();
