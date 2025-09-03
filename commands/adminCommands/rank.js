@@ -10,7 +10,8 @@ module.exports = {
 			.setDescription('The rank name')
 			.setRequired(true)
 		),
-	execute(interaction) {
+	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
 		const rankName = interaction.options.getString('rank');
 
 		(async () => {
@@ -19,9 +20,9 @@ module.exports = {
 			// If the return is a string, it's an error message
             if (typeof(returnEmbed) == 'string') {
                 // If it's a string, it's an error message, ephemeral it
-                await interaction.reply({content: returnEmbed, ephemeral: true });
+                await interaction.editReply({content: returnEmbed });
             } else {
-                await interaction.reply({ embeds: [returnEmbed] });
+                await interaction.editReply({ embeds: [returnEmbed] });
             }
 			// Call the addItem function from the Shop class
 		})()

@@ -18,12 +18,13 @@ module.exports = {
                 .setRequired(false)
         ),
     async execute(interaction) {
+            await interaction.deferReply({ flags: 64 });
         const fieldNumber = interaction.options.getInteger('fieldnumber');
         const newValue = interaction.options.getString('newvalue');
 
         if (process.env.DEBUG) console.log('new value: ' + newValue);
         const numericID = interaction.user.id;
         let reply = await shop.editItemField(String(numericID), fieldNumber, newValue);
-        await interaction.reply(reply);
+        await interaction.editReply(reply);
     }
 };

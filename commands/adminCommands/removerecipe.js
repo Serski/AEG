@@ -11,16 +11,17 @@ module.exports = {
 			.setDescription('The recipe name')
 			.setRequired(true)
 		),
-	execute(interaction) {
+	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
 		const itemName = interaction.options.getString('recipe');
 
 		(async () => {
             let returnString = await shop.removeRecipe(itemName);
 
 			if (returnString) {
-				await interaction.reply(returnString);
+				await interaction.editReply(returnString);
 			} else {
-				await interaction.reply(`Recipe '${itemName}' has been removed.`);
+				await interaction.editReply(`Recipe '${itemName}' has been removed.`);
 			}
 			// Call the addItem function from the Shop class
 		})()

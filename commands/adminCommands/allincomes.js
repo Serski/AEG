@@ -7,7 +7,7 @@ module.exports = {
 		.setDescription('List all incomes')
 		.setDefaultMemberPermissions(0),
 	async execute(interaction) {
-        await interaction.deferReply();
+	        await interaction.deferReply({ flags: 64 });
 		try {
             let reply = await admin.allIncomes(1);
             if (typeof(reply) == 'string') {
@@ -18,7 +18,7 @@ module.exports = {
             }
         } catch (error) {
             console.error("Failed to get incomes", error);
-            await interaction.editReply({ content: "An error was caught. Contact Alex.", ephemeral: true });
+            await interaction.editReply({ content: "An error was caught. Contact Alex." });
         }
 	},
 };

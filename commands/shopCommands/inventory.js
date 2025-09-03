@@ -6,9 +6,9 @@ module.exports = {
                 .setName('inventory')
                 .setDescription('Displays your inventory'),
         async execute(interaction) {
+                await interaction.deferReply({ flags: 64 });
                 const numericID = interaction.user.id;
                 // Immediately defer the reply so Discord doesn’t time out
-                await interaction.deferReply({ flags: 64 }); // 64 = Ephemeral
                 const inventoryEmbed = await shop.createInventoryEmbed(String(numericID));
                 // Edit the deferred reply with the embed
                 await interaction.editReply({ embeds: [inventoryEmbed] });

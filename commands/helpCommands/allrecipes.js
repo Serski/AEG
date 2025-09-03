@@ -6,14 +6,15 @@ module.exports = {
 		.setName('allrecipes')
 		.setDescription('List all recipes'),
 	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
         reply = await shop.recipesEmbed(!interaction.member.permissions.has(PermissionFlagsBits.Administrator), 1);
         if (typeof(reply) == 'string') {
-            await interaction.reply(reply);
+            await interaction.editReply(reply);
             return;
         }
         else {
             let [embed, rows] = reply;
-            await interaction.reply({ embeds: [reply[0]], components: [reply[1]]});
+            await interaction.editReply({ embeds: [reply[0]], components: [reply[1]]});
         }
 	},
 };

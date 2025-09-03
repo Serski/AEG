@@ -5,15 +5,16 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('me')
 		.setDescription('Show player character- only RP aspects'),
-	execute(interaction) {
+	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
                 const numericID = interaction.user.id;
 
                 (async () => {
             let replyEmbed = await char.me(String(numericID));
             if (typeof(replyEmbed) == 'string') {
-                await interaction.reply(replyEmbed);
+                await interaction.editReply(replyEmbed);
             } else {
-                await interaction.reply({ embeds: [replyEmbed] });
+                await interaction.editReply({ embeds: [replyEmbed] });
             }
                 })()
         },

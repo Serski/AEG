@@ -7,17 +7,18 @@ module.exports = {
         .setDescription('List all kingdoms owned by a player')
         .setDefaultMemberPermissions(0),
     async execute(interaction) {
+            await interaction.deferReply({ flags: 64 });
         try {
             let reply = await admin.listKingdoms();
             //Reply is an embed
             if (typeof(reply) == 'string') {
-                await interaction.reply({ content: reply, ephemeral: true });
+                await interaction.editReply({ content: reply });
                 return;
             }
-            await interaction.reply({ embeds: [reply] });
+            await interaction.editReply({ embeds: [reply] });
         } catch (error) {
             console.error("Failed to get player kingdoms", error);
-            await interaction.reply({ content: "An error was caught. Contact Alex.", ephemeral: true });
+            await interaction.editReply({ content: "An error was caught. Contact Alex." });
         }
     }
 };

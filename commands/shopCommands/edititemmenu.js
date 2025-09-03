@@ -12,10 +12,8 @@ module.exports = {
                 .setRequired(true)
         ),
     async execute(interaction) {
+            await interaction.deferReply({ flags: 64 });
         const itemName = interaction.options.getString('itemname');
-        await interaction.deferReply();
-
-        // shop.editItemMenu returns an array with the first element being the replyEmbed and the second element being the rows
         const numericID = interaction.user.id;
         const reply = await shop.editItemMenu(itemName, 1, String(numericID));
         if (typeof reply === 'string') {

@@ -12,17 +12,18 @@ module.exports = {
             )
 		.setDefaultMemberPermissions(0),
 	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
 		try {
             // Call the method with the channel object directly
             let response = await admin.initShireSelect(interaction.channel, interaction.options.getString('name'));
             if (response != "Select menu set!") {
-                await interaction.reply({ content: response, ephemeral: true });
+                await interaction.editReply({ content: response });
                 return;
             }
-            await interaction.reply({ content: "Set! Select menu should appear just below this message", ephemeral: true });
+            await interaction.editReply({ content: "Set! Select menu should appear just below this message" });
         } catch (error) {
             console.error("Failed to initialize select menu:", error);
-            await interaction.reply({ content: "Failed to set the select menu. Please try again.", ephemeral: true });
+            await interaction.editReply({ content: "Failed to set the select menu. Please try again." });
         }
 	},
 };

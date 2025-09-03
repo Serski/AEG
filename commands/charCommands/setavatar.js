@@ -10,13 +10,14 @@ module.exports = {
 			.setDescription('URL of your avatar')
 			.setRequired(true)
 		),
-	execute(interaction) {
+	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
                 const avatarURL = interaction.options.getString('avatarurl');
                 const numericID = interaction.user.id;
 
                 (async () => {
                         let replyString = await char.setAvatar(avatarURL, String(numericID))
-                        await interaction.reply(replyString);
+                        await interaction.editReply(replyString);
                 })()
         },
 };

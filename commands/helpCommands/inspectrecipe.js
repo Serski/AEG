@@ -11,15 +11,16 @@ module.exports = {
                 .setRequired(true)
         ),
     async execute(interaction) {
+            await interaction.deferReply({ flags: 64 });
         const recipe = interaction.options.getString('recipe');
 
         (async () => {
             let reply = await shop.inspectRecipe(recipe)
             if (typeof(reply) == 'string') {
                 // Ephemeral reply
-                await interaction.reply({content: reply, ephemeral: true });
+                await interaction.editReply({content: reply });
             } else {
-                await interaction.reply({ embeds: [reply], ephemeral: true });
+                await interaction.editReply({ embeds: [reply] });
             }
             // Call the useItem function from the Shop class
         })()

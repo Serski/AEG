@@ -11,13 +11,14 @@ module.exports = {
 			.setDescription('The item name')
 			.setRequired(true)
 		),
-	execute(interaction) {
+	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
 		const itemName = interaction.options.getString('itemname');
 
 		(async () => {
 			//shop.editItemMenu returns an array with the first element being the replyEmbed and the second element being the rows
 			let reply = await shop.updateItemVersion(itemName);
-            interaction.reply(reply);
+            interaction.editReply(reply);
 		})()
 	},
 };

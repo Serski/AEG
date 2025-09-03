@@ -13,7 +13,8 @@ module.exports = {
             option.setName('quantity')
                 .setDescription('Quantity to store')
                 .setRequired(true)),
-	execute(interaction) {
+	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
                 const numericID = interaction.user.id;
         const item = interaction.options.getString('item');
         const quantity = interaction.options.getInteger('quantity');
@@ -21,9 +22,9 @@ module.exports = {
 		(async () => {
             let replyEmbed = await char.store(String(numericID), item, quantity);
             if (typeof(replyEmbed) == 'string') {
-                await interaction.reply(replyEmbed);
+                await interaction.editReply(replyEmbed);
             } else {
-                await interaction.reply("Stored " + quantity + " " + item + " to storage");
+                await interaction.editReply("Stored " + quantity + " " + item + " to storage");
             }
 		})()
 	},

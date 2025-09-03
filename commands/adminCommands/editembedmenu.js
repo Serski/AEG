@@ -21,6 +21,7 @@ module.exports = {
                     {name: 'Rank', value: 'rank'},
                     {name: 'Guide', value: 'guide'})),
     async execute(interaction) {
+            await interaction.deferReply({ flags: 64 });
         const role = interaction.options.getString('embed');
         const type = interaction.options.getString('type');
         const numericID = interaction.user.id;
@@ -29,9 +30,9 @@ module.exports = {
             //addIncome(roleID, incomeString)
             let reply = await admin.editMapMenu(role, String(numericID), type);
             if (typeof(reply) == 'string') {
-                await interaction.reply(reply);
+                await interaction.editReply(reply);
             } else {
-                await interaction.reply({ embeds: [reply] });
+                await interaction.editReply({ embeds: [reply] });
             }
             // Call the useItem function from the Shop class
         })()

@@ -5,15 +5,16 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('stats')
 		.setDescription('Show player stats'),
-	execute(interaction) {
+	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
                 const numericID = interaction.user.id;
 
                 (async () => {
             let replyEmbed = await char.stats(String(numericID));
             if (typeof(replyEmbed) == 'string') {
-                await interaction.reply({ content: replyEmbed, ephemeral: true });
+                await interaction.editReply({ content: replyEmbed });
             } else {
-                await interaction.reply({ embeds: [replyEmbed], ephemeral: true });
+                await interaction.editReply({ embeds: [replyEmbed] });
             }
                 })()
         },

@@ -20,6 +20,7 @@ module.exports = {
                     {name: 'Rank', value: 'rank'},
                     {name: 'Guide', value: 'guide'})),
 	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
 		try {
             let map = interaction.options.getString('embed');
             let type = interaction.options.getString('type');
@@ -29,7 +30,7 @@ module.exports = {
             map = await admin.addMap(map, guild, type);
 
             // Respons with an ephemeral message saying that map should appear below
-            await interaction.reply({ content: 'Embed menu should appear below', ephemeral: true });
+            await interaction.editReply({ content: 'Embed menu should appear below' });
 
             // Show the map menu
             let reply = await admin.editMapMenu(map, String(numericID), type);
@@ -40,7 +41,7 @@ module.exports = {
             }
         } catch (error) {
             console.error("Failed to add map menu:", error);
-            await interaction.reply({ content: "Failed to add the map. Please try again.", ephemeral: true });
+            await interaction.editReply({ content: "Failed to add the map. Please try again." });
         }
 	},
 };

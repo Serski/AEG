@@ -9,14 +9,15 @@ module.exports = {
         .addIntegerOption(option => option.setName('gold').setDescription('The amount of gold to set').setRequired(true))
         .setDefaultMemberPermissions(0),
     async execute(interaction) {
+            await interaction.deferReply({ flags: 64 });
         const player = interaction.options.getUser('player').id;
         const gold = interaction.options.getInteger('gold');
         const response = await char.setPlayerGold(player, gold);
 
         if (response) {
-            return interaction.reply(`Set gold to ${gold} for ${player}`);
+            return interaction.editReply(`Set gold to ${gold} for ${player}`);
         } else {
-            return interaction.reply('Something went wrong');
+            return interaction.editReply('Something went wrong');
         }
     },
 };

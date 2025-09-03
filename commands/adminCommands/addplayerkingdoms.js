@@ -11,13 +11,14 @@ module.exports = {
                 .setRequired(true))
         .setDefaultMemberPermissions(0),
 	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
 		try {
             const kingdom = interaction.options.getRole('kingdom');
             await admin.addKingdom(kingdom);
-            await interaction.reply({ content: `Added the kingdom ${kingdom} to the list of player kingdoms.`, ephemeral: true });
+            await interaction.editReply({ content: `Added the kingdom ${kingdom} to the list of player kingdoms.` });
         } catch (error) {
             console.error("Failed to add map menu:", error);
-            await interaction.reply({ content: "Failed to add the kingdom. Please try again.", ephemeral: true });
+            await interaction.editReply({ content: "Failed to add the kingdom. Please try again." });
         }
 	},
 };

@@ -20,7 +20,8 @@ module.exports = {
                     {name: 'Lore', value: 'lore'},
                     {name: 'Rank', value: 'rank'},
                     {name: 'Guide', value: 'guide'})),
-	execute(interaction) {
+	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
 		const mapName = interaction.options.getString('embed');
 		const type = interaction.options.getString('type');
 
@@ -28,10 +29,10 @@ module.exports = {
             let returnString = await admin.removeMap(mapName, type);
 
 			if (returnString) {
-				await interaction.reply(returnString);
+				await interaction.editReply(returnString);
 			} else {
 				let capitalType = type.charAt(0).toUpperCase() + type.slice(1);
-				await interaction.reply(`${capitalType} '${mapName}' has been removed.`);
+				await interaction.editReply(`${capitalType} '${mapName}' has been removed.`);
 			}
 			// Call the addItem function from the Shop class
 		})()

@@ -6,8 +6,8 @@ module.exports = {
                 .setName('storage')
                 .setDescription('Show your storage'),
         async execute(interaction) {
+                await interaction.deferReply({ flags: 64 });
                 const numericID = interaction.user.id;
-                await interaction.deferReply({ ephemeral: true });
                 const replyEmbed = await shop.storage(String(numericID));
                 await interaction.editReply({ embeds: [replyEmbed] });
         },

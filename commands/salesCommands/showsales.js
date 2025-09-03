@@ -18,6 +18,7 @@ module.exports = {
                 .setRequired(false)
         ),
     async execute(interaction) {
+            await interaction.deferReply({ flags: 64 });
         let seller = interaction.options.getUser('player');
         let page = interaction.options.getInteger('page');
         if (process.env.DEBUG) console.log(seller);
@@ -33,9 +34,9 @@ module.exports = {
         let replyString = await marketplace.showSales(sellerID, page);
         //if embed, display embed, otherwise display string
         if (typeof (replyString) == 'string') {
-            await interaction.reply(replyString);
+            await interaction.editReply(replyString);
         } else {
-            await interaction.reply({ embeds: [replyString] });
+            await interaction.editReply({ embeds: [replyString] });
         }
     },
 };

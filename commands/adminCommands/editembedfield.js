@@ -18,6 +18,7 @@ module.exports = {
                 .setRequired(false)
         ),
     async execute(interaction) {
+            await interaction.deferReply({ flags: 64 });
         const fieldNumber = interaction.options.getInteger('fieldnumber');
         let newValue;
         if (interaction.options.getString('newvalue') == null) {
@@ -29,9 +30,9 @@ module.exports = {
         const numericID = interaction.user.id;
         let reply = await admin.editMapField(String(numericID), fieldNumber, newValue);
         if (typeof(reply) == 'string') {
-            await interaction.reply(reply);
+            await interaction.editReply(reply);
         } else {
-            await interaction.reply({ embeds: [reply] });
+            await interaction.editReply({ embeds: [reply] });
         }
     }
 };

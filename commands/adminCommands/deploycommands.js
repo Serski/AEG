@@ -9,7 +9,8 @@ module.exports = {
     .setDefaultMemberPermissions(0)
     .setDescription('Deploy map commands'),
   async execute(interaction) {
+          await interaction.deferReply({ flags: 64 });
     deploycommands.loadCommands();
-    await interaction.reply('Command files have been generated.');
+    await interaction.editReply('Command files have been generated.');
   },
 };

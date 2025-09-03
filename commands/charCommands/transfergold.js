@@ -13,17 +13,18 @@ module.exports = {
         .addUserOption(option => option.setName('playergetting').setDescription('The player to give gold to').setRequired(true))
         .addIntegerOption(option => option.setName('amount').setDescription('The amount of gold to give').setRequired(true)),
     async execute(interaction) {
+            await interaction.deferReply({ flags: 64 });
         const playerGiving = interaction.options.getUser('playergiving').id;
         const player = interaction.options.getUser('playergetting').id;
         const amount = interaction.options.getInteger('amount');
         const response = await char.giveGoldToPlayer(playerGiving, player, amount);
 
         if (response == true) {
-            return interaction.reply(`Gave ${clientManager.getEmoji("Gold")} ${amount} to ${player}`);
+            return interaction.editReply(`Gave ${clientManager.getEmoji("Gold")} ${amount} to ${player}`);
         } else if (response == false || !response) {
-            return interaction.reply('Something went wrong');
+            return interaction.editReply('Something went wrong');
         } else {
-            return interaction.reply(response);
+            return interaction.editReply(response);
         }
     },
 };

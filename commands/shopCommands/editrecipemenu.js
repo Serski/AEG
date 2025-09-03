@@ -11,7 +11,8 @@ module.exports = {
 			.setDescription('The recipe name')
 			.setRequired(true)
 		),
-	execute(interaction) {
+	async execute(interaction) {
+	        await interaction.deferReply({ flags: 64 });
                 const recipeName = interaction.options.getString('recipename');
 
                 (async () => {
@@ -19,9 +20,9 @@ module.exports = {
                         const numericID = interaction.user.id;
                         let reply = await shop.editRecipeMenu(recipeName, String(numericID));
                         if (typeof(reply) == 'string') {
-                            await interaction.reply(reply);
+                            await interaction.editReply(reply);
                         } else {
-                            await interaction.reply({ embeds: [reply]});
+                            await interaction.editReply({ embeds: [reply]});
                         }
 		})()
 	},
