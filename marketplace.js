@@ -238,18 +238,20 @@ class marketplace {
   //If the seller is buying their own sale, merely give them back their items; no need to check their money.
   static async buySale(saleID, buyerID) {
     // Load marketplace and shop data
-    let marketData = await dbm.loadCollection('marketplace');
-    let shopData = await dbm.loadCollection('shop');
+    const marketData = await dbm.loadCollection('marketplace');
+    const shopData = await dbm.loadCollection('shop');
 
     // Locate the sale
-    const [foundCategory, foundItemName, sale] = await marketplace.getSale(saleID);
+    const [foundCategory, foundItemName, sale] = await marketplace.getSale(saleID, marketData);
     if (!sale) {
       return "That sale doesn't exist!";
     }
 
-    // Load buyer and seller characters individually
-    let buyerChar = await dbm.loadFile('characters', String(buyerID));
-    let sellerChar = await dbm.loadFile('characters', String(sale.sellerID));
+    // Load buyer and seller characters in parallel
+    const [buyerChar, sellerChar] = await Promise.all([
+      dbm.loadFile('characters', String(buyerID)),
+      dbm.loadFile('characters', String(sale.sellerID))
+    ]);
 
     // If the buyer is the seller, give them back the items
     if (sale.sellerID == buyerID) {
