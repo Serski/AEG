@@ -1736,8 +1736,10 @@ class char {
         } else {
           targetData.inventory[item] = amount;
         }
-        await dbm.saveFile(collectionName, String(giverId), giverData);
-        await dbm.saveFile(collectionName, String(targetId), targetData);
+        await Promise.all([
+          dbm.saveFile(collectionName, String(giverId), giverData),
+          dbm.saveFile(collectionName, String(targetId), targetData)
+        ]);
         return true;
       } else {
         return "You don't have enough of that item!";
@@ -1774,8 +1776,10 @@ class char {
       if (charData.balance >= gold) {
         charData.balance -= gold;
         charData2.balance += gold;
-        await dbm.saveFile(collectionName, String(playerGiving), charData);
-        await dbm.saveFile(collectionName, String(player), charData2);
+        await Promise.all([
+          dbm.saveFile(collectionName, String(playerGiving), charData),
+          dbm.saveFile(collectionName, String(player), charData2)
+        ]);
         return true;
       } else {
         return "You don't have enough gold!";
