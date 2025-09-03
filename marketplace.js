@@ -5,6 +5,7 @@ const clientManager = require('./clientManager'); // Importing the database mana
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 class marketplace {
   static shopDataCache = null;
+  static marketplaceCache = null;
   /**Function for a player to post a sale.
    * Will take the number of items, the item name, and the price they want to sell it for.
    * Will also be passed their user ID
@@ -18,12 +19,13 @@ class marketplace {
     }
     const shopData = marketplace.shopDataCache;
 
-    // Load the character.json and marketplace.json file
+    // Load the character file and marketplace data
     const [charData, marketData] = await Promise.all([
       dbm.loadFile('characters', String(sellerID)),
-      dbm.loadCollection('marketplace')
+      marketplace.marketplaceCache ? Promise.resolve(marketplace.marketplaceCache) : dbm.loadCollection('marketplace')
     ]);
     const mktData = marketData || { idfile: { lastID: 1000 }, marketplace: {} };
+    marketplace.marketplaceCache = mktData;
     // Find the item name using shop.findItemName
     itemName = await shop.findItemName(itemName, shopData);
     if (itemName == "ERROR") {
@@ -59,6 +61,7 @@ class marketplace {
     // Save the character.json file
     await dbm.saveFile('characters', String(sellerID), charData);
     await dbm.saveCollection('marketplace', mktData);
+    marketplace.marketplaceCache = mktData;
     // Create an embed to return on success. Will just say @user listed **numberItems :itemIcon: itemName** to the **/sales** page for <:Gold:1232097113089904710>**price**.
     let embed = new EmbedBuilder();
     embed.setDescription(`<@${sellerID}> listed **${numberItems} ${await shop.getItemIcon(itemName, shopData)} ${itemName}** to the **/sales** page for ${clientManager.getEmoji("Gold")}**${price}**.`);
@@ -70,9 +73,15 @@ class marketplace {
    */
   static async createSalesEmbed(page) {
     page = Number(page);
-    // Load the marketplace.json file
-    let marketData = await dbm.loadCollection('marketplace');
-    let shopData = await dbm.loadCollection('shop');
+    // Load cached marketplace and shop data
+    if (!marketplace.marketplaceCache) {
+      marketplace.marketplaceCache = await dbm.loadCollection('marketplace');
+    }
+    const marketData = marketplace.marketplaceCache;
+    if (!marketplace.shopDataCache) {
+      marketplace.shopDataCache = await dbm.loadCollection('shop');
+    }
+    const shopData = marketplace.shopDataCache;
 
     // Max items allowed per page
     const maxItemsPerPage = 25;
@@ -186,9 +195,15 @@ class marketplace {
 
   //Create a one page sales embed of just the sales for one player
   static async showSales(sellerID, page) {
-    // Load the marketplace.json file
-    let marketData = await dbm.loadCollection('marketplace');
-    let shopData = await dbm.loadCollection('shop');
+    // Load cached marketplace and shop data
+    if (!marketplace.marketplaceCache) {
+      marketplace.marketplaceCache = await dbm.loadCollection('marketplace');
+    }
+    const marketData = marketplace.marketplaceCache;
+    if (!marketplace.shopDataCache) {
+      marketplace.shopDataCache = await dbm.loadCollection('shop');
+    }
+    const shopData = marketplace.shopDataCache;
     // Create an embed to return on success. Will just say @user has listed **numberItems :itemIcon: itemName** for <:Gold:1232097113089904710>**price**.
     let embed = new EmbedBuilder();
     const playerUser = await clientManager.getUser(sellerID);
@@ -237,9 +252,15 @@ class marketplace {
   //Buy a sale. Send the money from the buyer to the seller, and give the buyer the items.
   //If the seller is buying their own sale, merely give them back their items; no need to check their money.
   static async buySale(saleID, buyerID) {
-    // Load marketplace and shop data
-    const marketData = await dbm.loadCollection('marketplace');
-    const shopData = await dbm.loadCollection('shop');
+    // Load cached marketplace and shop data
+    if (!marketplace.marketplaceCache) {
+      marketplace.marketplaceCache = await dbm.loadCollection('marketplace');
+    }
+    const marketData = marketplace.marketplaceCache;
+    if (!marketplace.shopDataCache) {
+      marketplace.shopDataCache = await dbm.loadCollection('shop');
+    }
+    const shopData = marketplace.shopDataCache;
 
     // Locate the sale
     const [foundCategory, foundItemName, sale] = await marketplace.getSale(saleID, marketData);
@@ -260,6 +281,7 @@ class marketplace {
       delete marketData.marketplace[foundCategory][foundItemName][saleID];
       await dbm.saveFile('characters', String(buyerID), buyerChar);
       await dbm.saveCollection('marketplace', marketData);
+      marketplace.marketplaceCache = marketData;
       let embed = new EmbedBuilder();
       embed.setDescription(`<@${buyerID}> bought **${sale.number} ${await shop.getItemIcon(foundItemName, shopData)} ${foundItemName}** back from themselves. It was listed for ${clientManager.getEmoji("Gold")}**${sale.price}**.`);
       return embed;
@@ -285,6 +307,7 @@ class marketplace {
     await dbm.saveFile('characters', String(buyerID), buyerChar);
     await dbm.saveFile('characters', String(sale.sellerID), sellerChar);
     await dbm.saveCollection('marketplace', marketData);
+    marketplace.marketplaceCache = marketData;
 
     let embed = new EmbedBuilder();
     embed.setDescription(`<@${buyerID}> bought **${sale.number} ${await shop.getItemIcon(foundItemName, shopData)} ${foundItemName}** from <@${sale.sellerID}> for ${clientManager.getEmoji("Gold")}**${sale.price}**.`);
@@ -293,7 +316,10 @@ class marketplace {
 
   //Inspect a sale. Will take the saleID and return an embed with the sale information
   static async inspectSale(saleID) {
-    let shopData = await dbm.loadCollection('shop');
+    if (!marketplace.shopDataCache) {
+      marketplace.shopDataCache = await dbm.loadCollection('shop');
+    }
+    const shopData = marketplace.shopDataCache;
     // Search through marketData for the saleID
     const [itemCategory, itemName, sale] = await marketplace.getSale(saleID);
     // If the saleID doesn't exist, return an error
@@ -314,7 +340,10 @@ class marketplace {
   //Get itemcategory, itemname and sale from saleID
   static async getSale(saleID, marketData = null) {
     // Load marketplace data if not provided
-    const data = marketData ?? await dbm.loadCollection('marketplace');
+    const data = marketData
+      ?? marketplace.marketplaceCache
+      ?? await dbm.loadCollection('marketplace');
+    marketplace.marketplaceCache = data;
     // Search through data for the saleID
     let sale;
     let itemName;
@@ -342,6 +371,12 @@ class marketplace {
       return "That sale doesn't exist!";
     }
     return [itemCategory, itemName, sale];
+  }
+
+  //Invalidate cached collections
+  static invalidateCaches() {
+    marketplace.marketplaceCache = null;
+    marketplace.shopDataCache = null;
   }
 }
 
