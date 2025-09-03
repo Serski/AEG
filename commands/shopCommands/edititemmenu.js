@@ -16,7 +16,8 @@ module.exports = {
         await interaction.deferReply();
 
         // shop.editItemMenu returns an array with the first element being the replyEmbed and the second element being the rows
-        const reply = await shop.editItemMenu(itemName, 1, interaction.user.tag);
+        const numericID = interaction.user.id;
+        const reply = await shop.editItemMenu(itemName, 1, numericID);
         if (typeof reply === 'string') {
             await interaction.editReply(reply);
         } else {

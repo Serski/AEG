@@ -23,7 +23,8 @@ module.exports = {
         await interaction.reply({ content: 'Edit recipe menu should appear below', ephemeral: true });
 
         // Show the edit recipe menu
-        let reply = await shop.editRecipeMenu(recipeName, interaction.user.tag);
+        const numericID = interaction.user.id;
+        let reply = await shop.editRecipeMenu(recipeName, numericID);
         if (typeof(reply) == 'string') {
             await interaction.followUp(reply);
         } else {

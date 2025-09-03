@@ -20,8 +20,8 @@ module.exports = {
     async execute(interaction) {
         const fieldNumber = interaction.options.getInteger('fieldnumber');
         const newValue = interaction.options.getString('newvalue');
-
-        let reply = await shop.editRecipeField(interaction.user.tag, fieldNumber, newValue);
+        const numericID = interaction.user.id;
+        let reply = await shop.editRecipeField(numericID, fieldNumber, newValue);
         await interaction.reply(reply);
     }
 };

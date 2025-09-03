@@ -2,7 +2,6 @@
 
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const marketplace = require('../../marketplace');
-const dataGetters = require('../../dataGetters');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -29,11 +28,9 @@ module.exports = {
             page = 1;
         }
 
-        player = await dataGetters.getCharFromNumericID(player.id);
+        const playerID = player.id;
 
-        if (process.env.DEBUG) console.log(player);
-
-        let replyString = await marketplace.showSales(player, page);
+        let replyString = await marketplace.showSales(playerID, page);
         //if embed, display embed, otherwise display string
         if (typeof (replyString) == 'string') {
             await interaction.reply(replyString);

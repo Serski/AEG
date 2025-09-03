@@ -22,8 +22,8 @@ module.exports = {
         const newValue = interaction.options.getString('newvalue');
 
         if (process.env.DEBUG) console.log('new value: ' + newValue);
-
-        let reply = await shop.editItemField(interaction.user.tag, fieldNumber, newValue);
+        const numericID = interaction.user.id;
+        let reply = await shop.editItemField(numericID, fieldNumber, newValue);
         await interaction.reply(reply);
     }
 };
