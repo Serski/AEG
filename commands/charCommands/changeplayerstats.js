@@ -16,7 +16,7 @@ module.exports = {
         .addIntegerOption(option => option.setName('value').setDescription('The value to change stat by').setRequired(true))
         .setDefaultMemberPermissions(0),
     async execute(interaction) {
-        const player = interaction.options.getUser('player').toString();
+        const player = interaction.options.getUser('player').id;
         const stat = interaction.options.getString('stat');
         const value = interaction.options.getInteger('value');
         

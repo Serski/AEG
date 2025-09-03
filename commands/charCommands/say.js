@@ -14,7 +14,7 @@ module.exports = {
         const message = interaction.options.getString('message');
 
 		(async () => {
-            let reply = await char.say(interaction.user.tag, message, interaction.channel)
+            let reply = await char.say(interaction.user.id, message, interaction.channel)
             if (typeof(reply) == 'string') {
                 await interaction.reply({ content: reply, ephemeral: true });
             } else {

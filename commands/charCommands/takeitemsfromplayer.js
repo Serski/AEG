@@ -12,7 +12,7 @@ module.exports = {
         .addStringOption(option => option.setName('item').setDescription('The item to take').setRequired(true))
         .addIntegerOption(option => option.setName('amount').setDescription('The amount of items to take').setRequired(true)),
     async execute(interaction) {
-        const player = interaction.options.getUser('player').toString();
+        const player = interaction.options.getUser('player').id;
         const item = interaction.options.getString('item');
         const amount = interaction.options.getInteger('amount');
         const response = await char.addItemToPlayer(player, item, -amount);

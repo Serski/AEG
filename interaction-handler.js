@@ -113,7 +113,6 @@ addItem = async (interaction) => {
 
 newChar = async (interaction) => {
   // Get the data entered by the user
-  const userID = interaction.user.tag;
   const numericID = interaction.user.id;
   const charName = interaction.fields.getTextInputValue('charname');
   const charBio = interaction.fields.getTextInputValue('charbio');
@@ -148,7 +147,7 @@ newChar = async (interaction) => {
 
   // Call the newChar function from the char class with the info
   if (charName && charBio) {
-    char.newChar(userID, charName, charBio, numericID);
+    char.newChar(numericID, charName, charBio);
     await interaction.reply(`Character '${charName}' has been created.`);
   } else {
     // Handle missing information

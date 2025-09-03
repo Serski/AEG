@@ -6,7 +6,7 @@ module.exports = {
 		.setName('bank')
 		.setDescription('Show bank'),
 	async execute(interaction) {
-		const charID = interaction.user.tag;
+                const charID = interaction.user.id;
 		await interaction.deferReply({ ephemeral: true });
 		const replyEmbed = await char.bank(charID);
 		if (typeof(replyEmbed) == 'string') {

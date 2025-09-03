@@ -10,7 +10,7 @@ module.exports = {
                 .setDescription('Quantity to deposit')
                 .setRequired(true)),
 	execute(interaction) {
-		const charID = interaction.user.tag;
+                const charID = interaction.user.id;
         const quantity = interaction.options.getInteger('quantity');
 
 		(async () => {

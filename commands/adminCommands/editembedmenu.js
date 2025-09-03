@@ -26,7 +26,7 @@ module.exports = {
 
         (async () => {
             //addIncome(roleID, incomeString)
-            let reply = await admin.editMapMenu(role, interaction.user.tag, type);
+            let reply = await admin.editMapMenu(role, interaction.user.id, type);
             if (typeof(reply) == 'string') {
                 await interaction.reply(reply);
             } else {

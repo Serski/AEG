@@ -10,7 +10,7 @@ module.exports = {
         .setDefaultMemberPermissions(0)
         .addUserOption(option => option.setName('player').setDescription('The player to warn').setRequired(true)),
     async execute(interaction) {
-        const player = interaction.options.getUser('player').tag;
+        const player = interaction.options.getUser('player').id;
         const response = await char.warn(player);
 
         return interaction.reply(response);

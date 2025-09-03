@@ -9,7 +9,7 @@ module.exports = {
         .addIntegerOption(option => option.setName('gold').setDescription('The amount of gold to set').setRequired(true))
         .setDefaultMemberPermissions(0),
     async execute(interaction) {
-        const player = interaction.options.getUser('player').toString();
+        const player = interaction.options.getUser('player').id;
         const gold = interaction.options.getInteger('gold');
         const response = await char.addPlayerGold(player, gold);
 
