@@ -59,6 +59,8 @@ class marketplace {
       "price": price,
       "number": numberItems
     }
+    // Track sale location for faster lookups
+    marketplace.saleIndex[itemID] = { category: itemCategory, itemName };
     // Save the character.json file
     await dbm.saveFile('characters', String(sellerID), charData);
     await dbm.saveCollection('marketplace', mktData);
@@ -257,10 +259,20 @@ class marketplace {
     marketplace.marketplaceCache = marketData;
     marketplace.shopDataCache = shopData;
 
-    // Locate the sale
-    const [foundCategory, foundItemName, sale] = await marketplace.getSale(saleID, marketData);
+    // Locate the sale using the index first
+    let foundCategory, foundItemName, sale;
+    const indexEntry = marketplace.saleIndex[saleID];
+    if (indexEntry) {
+      foundCategory = indexEntry.category;
+      foundItemName = indexEntry.itemName;
+      sale = marketData.marketplace?.[foundCategory]?.[foundItemName]?.[saleID];
+    }
     if (!sale) {
-      return "That sale doesn't exist!";
+      const res = await marketplace.getSale(saleID, marketData);
+      if (res === "That sale doesn't exist!") {
+        return res;
+      }
+      [foundCategory, foundItemName, sale] = res;
     }
 
     // Load buyer and seller characters in parallel
@@ -274,6 +286,7 @@ class marketplace {
       buyerChar.inventory[foundItemName] = buyerChar.inventory[foundItemName] || 0;
       buyerChar.inventory[foundItemName] += sale.number;
       delete marketData.marketplace[foundCategory][foundItemName][saleID];
+      delete marketplace.saleIndex[saleID];
       await dbm.saveFile('characters', String(buyerID), buyerChar);
       await dbm.saveCollection('marketplace', marketData);
       marketplace.marketplaceCache = marketData;
@@ -297,6 +310,7 @@ class marketplace {
 
     // Remove the sale from the marketplace
     delete marketData.marketplace[foundCategory][foundItemName][saleID];
+    delete marketplace.saleIndex[saleID];
 
     // Save updated character files and marketplace
     await dbm.saveFile('characters', String(buyerID), buyerChar);
@@ -339,39 +353,42 @@ class marketplace {
       ?? marketplace.marketplaceCache
       ?? await dbm.loadCollection('marketplace');
     marketplace.marketplaceCache = data;
-    // Search through data for the saleID
-    let sale;
-    let itemName;
-    let itemCategory;
+    // Use the saleIndex if possible
+    let entry = marketplace.saleIndex[saleID];
+    if (entry) {
+      const sale = data.marketplace?.[entry.category]?.[entry.itemName]?.[saleID];
+      if (sale) {
+        return [entry.category, entry.itemName, sale];
+      }
+    }
+
+    // Rebuild the index if the sale wasn't found
+    marketplace.saleIndex = {};
     for (const category in data.marketplace) {
       const categoryItems = data.marketplace[category];
       for (const item in categoryItems) {
         const sales = categoryItems[item];
-        if (sales[saleID] != undefined) {
-          sale = sales[saleID];
-          itemName = item;
-          itemCategory = category;
-          break;
-        }
-        if (sale) {
-          break;
+        for (const id in sales) {
+          marketplace.saleIndex[id] = { category, itemName: item };
         }
       }
+    }
+
+    entry = marketplace.saleIndex[saleID];
+    if (entry) {
+      const sale = data.marketplace?.[entry.category]?.[entry.itemName]?.[saleID];
       if (sale) {
-        break;
+        return [entry.category, entry.itemName, sale];
       }
     }
-    // If the saleID doesn't exist, return an error
-    if (!sale) {
-      return "That sale doesn't exist!";
-    }
-    return [itemCategory, itemName, sale];
+    return "That sale doesn't exist!";
   }
 
   //Invalidate cached collections
   static invalidateCaches() {
     marketplace.marketplaceCache = null;
     marketplace.shopDataCache = null;
+    marketplace.saleIndex = {};
   }
 }
 
