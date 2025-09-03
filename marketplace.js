@@ -15,17 +15,11 @@ class marketplace {
    * Items will be added to the marketplace according to their item name and category- i.e. all iron swords will be next to each other, and the iron swords will be next to steel swords
    * */ 
   static async postSale(numberItems, itemName, price, sellerID) {
-    if (!marketplace.shopDataCache) {
-      marketplace.shopDataCache = await dbm.loadCollection('shop');
-    }
     const shopData = marketplace.shopDataCache;
 
-    // Load the character file and marketplace data
-    const [charData, marketData] = await Promise.all([
-      dbm.loadFile('characters', String(sellerID)),
-      marketplace.marketplaceCache ? Promise.resolve(marketplace.marketplaceCache) : dbm.loadCollection('marketplace')
-    ]);
-    const mktData = marketData || { idfile: { lastID: 1000 }, marketplace: {} };
+    // Load the character file
+    const charData = await dbm.loadFile('characters', String(sellerID));
+    const mktData = marketplace.marketplaceCache || { idfile: { lastID: 1000 }, marketplace: {} };
     marketplace.marketplaceCache = mktData;
     // Find the item name using shop.findItemName
     itemName = await shop.findItemName(itemName, shopData);
@@ -59,12 +53,12 @@ class marketplace {
       "price": price,
       "number": numberItems
     }
-    // Track sale location for faster lookups
-    marketplace.saleIndex[itemID] = { category: itemCategory, itemName };
-    // Save the character.json file
+    // Save the character.json file and update marketplace data
     await dbm.saveFile('characters', String(sellerID), charData);
     await dbm.saveCollection('marketplace', mktData);
     marketplace.marketplaceCache = mktData;
+    // Track sale location for faster lookups
+    marketplace.saleIndex[itemID] = { category: itemCategory, itemName };
     // Create an embed to return on success. Will just say @user listed **numberItems :itemIcon: itemName** to the **/sales** page for <:Gold:1232097113089904710>**price**.
     let embed = new EmbedBuilder();
     embed.setDescription(`<@${sellerID}> listed **${numberItems} ${await shop.getItemIcon(itemName, shopData)} ${itemName}** to the **/sales** page for ${clientManager.getEmoji("Gold")}**${price}**.`);
@@ -251,28 +245,18 @@ class marketplace {
   //Buy a sale. Send the money from the buyer to the seller, and give the buyer the items.
   //If the seller is buying their own sale, merely give them back their items; no need to check their money.
   static async buySale(saleID, buyerID) {
-    // Load cached marketplace and shop data in parallel
-    const [marketData, shopData] = await Promise.all([
-      marketplace.marketplaceCache ?? dbm.loadCollection('marketplace'),
-      marketplace.shopDataCache ?? dbm.loadCollection('shop')
-    ]);
-    marketplace.marketplaceCache = marketData;
-    marketplace.shopDataCache = shopData;
+    const marketData = marketplace.marketplaceCache;
+    const shopData = marketplace.shopDataCache;
 
-    // Locate the sale using the index first
-    let foundCategory, foundItemName, sale;
+    // Locate the sale using the index
     const indexEntry = marketplace.saleIndex[saleID];
-    if (indexEntry) {
-      foundCategory = indexEntry.category;
-      foundItemName = indexEntry.itemName;
-      sale = marketData.marketplace?.[foundCategory]?.[foundItemName]?.[saleID];
+    if (!indexEntry) {
+      return "That sale doesn't exist!";
     }
+    const { category: foundCategory, itemName: foundItemName } = indexEntry;
+    const sale = marketData.marketplace?.[foundCategory]?.[foundItemName]?.[saleID];
     if (!sale) {
-      const res = await marketplace.getSale(saleID, marketData);
-      if (res === "That sale doesn't exist!") {
-        return res;
-      }
-      [foundCategory, foundItemName, sale] = res;
+      return "That sale doesn't exist!";
     }
 
     // Load buyer and seller characters in parallel
