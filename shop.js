@@ -22,33 +22,39 @@ class shop {
     ];
 
   static shopCache = null;
+  static itemNameIndex = {};
+
+  static buildItemNameIndex() {
+    this.itemNameIndex = {};
+    if (this.shopCache) {
+      for (const key of Object.keys(this.shopCache)) {
+        this.itemNameIndex[key.toLowerCase()] = key;
+      }
+    }
+  }
 
   static async getShopData() {
     if (!this.shopCache) {
       this.shopCache = await dbm.loadCollection('shop');
+      this.buildItemNameIndex();
     }
     return this.shopCache;
   }
 
   static async refreshShopCache() {
     this.shopCache = await dbm.loadCollection('shop');
+    this.buildItemNameIndex();
     return this.shopCache;
   }
 
   static clearShopCache() {
     this.shopCache = null;
+    this.itemNameIndex = {};
   }
 
-  // Function to find an item by name in the shop
-  //THIS IS INEFFICIENT BECAUSE IT MEANS CALLING IT MEANS TWO CALLS TO THE DATABASE- FIX LATER
-  static async findItemName(itemName, data) {
-    let dataKeys = Object.keys(data);
-    for (let i = 0; i < dataKeys.length; i++) {
-      if (dataKeys[i].toLowerCase() == itemName.toLowerCase()) {
-        return dataKeys[i];
-      }
-    }
-    return "ERROR";
+  // Function to find an item by name in the shop using the prebuilt index
+  static async findItemName(itemName) {
+    return this.itemNameIndex[itemName.toLowerCase()] || "ERROR";
   }
 
   static async convertToShopMap(rawShopLayoutData) {
@@ -100,7 +106,7 @@ class shop {
       }
     }
     await dbm.saveFile('shop', itemName, itemData);
-    await this.refreshShopCache();
+    await this.refreshShopCache(); // Refresh cache and rebuild item index
   }
 
   static async addRecipe(recipeName) {
