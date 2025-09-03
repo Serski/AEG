@@ -1552,7 +1552,7 @@ class char {
 
   static async store(player, item, amount) {
     let collectionName = 'characters';
-    let shopData = await dbm.loadCollection('shop');
+    const shopData = await shop.getShopData();
     item = await shop.findItemName(item, shopData);
     let charData;
     [player, charData] = await this.findPlayerData(player);
@@ -1569,6 +1569,9 @@ class char {
       }
       if (!charData.storage) {
         charData.storage = {};
+      }
+      if (amount <= 0) {
+        return "Amount must be greater than 0";
       }
       if (charData.inventory[item] && charData.inventory[item] >= amount) {
         if (charData.storage[item]) {
@@ -1587,7 +1590,7 @@ class char {
 
   static async grab(player, item, amount) {
     let collectionName = 'characters';
-    let shopData = await dbm.loadCollection('shop');
+    const shopData = await shop.getShopData();
     item = await shop.findItemName(item, shopData);
     let charData;
     [player, charData] = await this.findPlayerData(player);
@@ -1607,6 +1610,9 @@ class char {
       }
       if (!charData.storage[item]) {
         charData.storage[item] = 0;
+      }
+      if (amount <= 0) {
+        return "Amount must be greater than 0";
       }
       if (charData.storage[item] && charData.storage[item] >= amount) {
         if (charData.inventory[item]) {
