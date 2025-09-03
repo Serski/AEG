@@ -1,4 +1,5 @@
 const dbm = require('./database-manager'); // Importing the database manager
+const keys = require('./keys');
 const shop = require('./shop');
 const clientManager = require('./clientManager');
 const axios = require('axios');
@@ -331,7 +332,7 @@ class char {
     // Load the data
     let charData = await dbm.loadFile(collectionName, String(numericID));
     if (char.incomeListCache === null) {
-      char.incomeListCache = await dbm.loadFile('keys', 'incomeList');
+      char.incomeListCache = await keys.load('incomeList');
     }
     let incomeListFromRoles = char.incomeListCache;
 

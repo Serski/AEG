@@ -1,4 +1,5 @@
 const dbm = require('./database-manager'); // Importing the database manager
+const keys = require('./keys');
 const char = require('./char');
 const axios = require('axios');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, createWebhook, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
@@ -12,7 +13,7 @@ const mapOptions = ["Name", "About", "Channels", "Image", "Emoji"]
 class Admin {
 
   static async initShireSelect(channel, kingdom) {
-    let kingdoms = await dbm.loadFile("keys", "kingdoms");
+    let kingdoms = await keys.load("kingdoms");
     //Capitalize the first letter of the kingdom
     kingdom = kingdom.charAt(0).toUpperCase() + kingdom.slice(1);
     let shires = kingdoms[kingdom].shires;
@@ -90,7 +91,7 @@ class Admin {
   }
 
   static async initTradeNodeSelect(channel) {
-    let tradeNodes = await dbm.loadFile("keys", "tradeNodes");
+    let tradeNodes = await keys.load("tradeNodes");
     let shopData = await dbm.loadCollection("shop");
     //TradeNodes is a map of trade node names to trade node objects, where each trade node object has a name, and list of items that can be traded there, as well as a role code for the trade node. The role code may be blank, in which case it must be found.
     //Ex. trade node: " - <polis emoji> North Sea Waters - <Item1> <Item1Emoji>, <Item2> <Item2Emoji>"
@@ -136,7 +137,7 @@ class Admin {
   }
 
   static async initResourceSelect(channel) {
-    let resources = await dbm.loadFile("keys", "resources");
+    let resources = await keys.load("resources");
     //Resources is a map of resource names to resource objects, where each resource object has a name, emoji, political stance and motto
     let resourceNames = Object.keys(resources).map(key => "- " + resources[key].emoji + " " + resources[key].name + " - " + resources[key].description).join("\n");
     //Send an embed with the title Resources of the Realm and the text The following resources are available to join: and than a list of the resources. There will also be a menu you can click to choose which resource. The resources will come out of the resources.json file.
@@ -236,7 +237,7 @@ When selected grants the:
   }
 
   static async initPartySelect(channel) {
-    let parties = await dbm.loadFile("keys", "parties");
+    let parties = await keys.load("parties");
     //Parties is a map of party names to party objects, where each party object has a name, emoji, political stance, roleID, motto and banner. All of that is irrelevant for this one, as we're just using the banner with a button underneath saying "Join [partyname]" for each party, i.e. multiple embeds and buttons
 
     for (const party in parties) {
@@ -260,7 +261,7 @@ When selected grants the:
 
   static async addShire(shireName, resource, guild) {
     if (process.env.DEBUG) console.log("Adding shire " + shireName + " with resource " + resource);
-    let shires = await dbm.loadFile("keys", "shires");
+    let shires = await keys.load("shires");
     let shopData = await dbm.loadCollection("shop");
     resource = await shop.findItemName(resource, shopData);
     if (resource == "ERROR") {
@@ -299,7 +300,7 @@ When selected grants the:
   //addMap adds a new map to data, should be similar to addRecipe NOT to addShire
   static async addMap(mapName, guild, mapType = "map") {
     // Load the maps collection
-    let data = await dbm.loadFile('keys', mapType + 's');
+    let data = await keys.load(mapType + 's');
     let mapNames = Object.keys(data);
     let i = 1;
     let newMapName = mapName;
@@ -330,7 +331,7 @@ When selected grants the:
 
   static async editMapMenu(mapName, numericID, mapType = "map") {
     // Load the map data
-    let mapData = await dbm.loadFile('keys', mapType + 's');
+    let mapData = await keys.load(mapType + 's');
   
     if (mapData[mapName] == undefined) {
       for (let key in mapData) {
@@ -383,7 +384,7 @@ When selected grants the:
 
   static async removeMap(mapName, mapType = "map") {
     // Load the maps collection
-    let data = await dbm.loadFile('keys', mapType + 's');
+    let data = await keys.load(mapType + 's');
     if (data[mapName] == undefined) {
       return "Map not found! Must match the exact name of the map, case sensitive."
     }
@@ -401,7 +402,7 @@ When selected grants the:
     let infoSection = interaction.customId.replace("editmapaboutmodal", "");
     let mapNameNoSpaces = infoSection.split("||")[0];
     let mapType = infoSection.split("||")[1];
-    let maps = await dbm.loadFile('keys', mapType + 's');
+    let maps = await keys.load(mapType + 's');
     let mapName = Object.keys(maps).find(key => key.replace(/ /g, '').toLowerCase() == mapNameNoSpaces);
     if (mapName == undefined) {
       interaction.reply("Map not found!");
@@ -421,7 +422,7 @@ When selected grants the:
     if (!charData.editingFields || !charData.editingFields["Map Edited"] || !charData.editingFields["Map Type Edited"]) {
       return "You must use /editmapmenu first to select a map to edit";
     }
-    let data = await dbm.loadFile('keys', charData.editingFields["Map Type Edited"] + 's');
+    let data = await keys.load(charData.editingFields["Map Type Edited"] + 's');
     let mapName = charData.editingFields["Map Edited"];
     let mapType = charData.editingFields["Map Type Edited"];
     if (data[mapName] == undefined) {
@@ -478,7 +479,7 @@ When selected grants the:
   }
 
   static async allMaps() {
-    let maps = await dbm.loadFile("keys", "maps");
+    let maps = await keys.load("maps");
     //Create an embed with the title ":map: All Maps", and than the description is a list of all maps in the form <Emoji> **<MapName>**
     let mapNames = Object.keys(maps).map(key => maps[key].mapOptions.Emoji + " **" + key + "**").join("\n");
     let embed = new EmbedBuilder()
@@ -489,7 +490,7 @@ When selected grants the:
   }
 
   static async allGuides() {
-    let guides = await dbm.loadFile("keys", "guides");
+    let guides = await keys.load("guides");
     let mapNames = Object.keys(guides).map(key => guides[key].mapOptions.Emoji + " **" + key + "**").join("\n");
     let embed = new EmbedBuilder()
       .setTitle("All Guides")
@@ -499,7 +500,7 @@ When selected grants the:
   }
 
   static async allLores() {
-    let lores = await dbm.loadFile("keys", "lores");
+    let lores = await keys.load("lores");
     let mapNames = Object.keys(lores).map(key => lores[key].mapOptions.Emoji + " **" + key + "**").join("\n");
     //Iterate over each value, log emoji + " " + key
     for (const key in lores) {
@@ -513,7 +514,7 @@ When selected grants the:
   }
 
   static async allRanks() {
-    let ranks = await dbm.loadFile("keys", "ranks");
+    let ranks = await keys.load("ranks");
     let mapNames = Object.keys(ranks).map(key => ranks[key].mapOptions.Emoji + " **" + key + "**").join("\n");
     let embed = new EmbedBuilder()
       .setTitle("All Ranks")
@@ -523,7 +524,7 @@ When selected grants the:
   }
 
   static async map(mapName, channelId, type = "map") {
-    let maps = await dbm.loadFile("keys", type + "s");
+    let maps = await keys.load(type + "s");
     let map = maps[mapName];
     while (map == undefined) {
       for (const key in maps) {
@@ -570,7 +571,7 @@ When selected grants the:
   static async selectShire(interaction) {
     const selectedShire = interaction.values[0].split("||")[1];
     const selectedKingdom = interaction.values[0].split("||")[0];
-    let kingdoms = await dbm.loadFile("keys", "kingdoms");
+    let kingdoms = await keys.load("kingdoms");
     let shires = kingdoms[selectedKingdom].shires;
     let shire = shires[selectedShire];
 
@@ -593,7 +594,7 @@ When selected grants the:
       }
     }
 
-    let playerKingdoms = await dbm.loadFile("keys", "playerKingdoms");
+    let playerKingdoms = await keys.load("playerKingdoms");
     playerKingdoms = playerKingdoms.list;
 
     if (process.env.DEBUG) console.log(playerKingdoms);
@@ -647,7 +648,7 @@ When selected grants the:
 
   static async selectTradeNode(interaction) {
     const selectedTradeNode = interaction.values[0];
-    let tradeNodes = await dbm.loadFile("keys", "tradeNodes");
+    let tradeNodes = await keys.load("tradeNodes");
     let tradeNode = tradeNodes[selectedTradeNode];
 
     let guild = interaction.guild;
@@ -687,7 +688,7 @@ When selected grants the:
 
   static async selectResource(interaction) {
     const selectedResource = interaction.values[0];
-    let resources = await dbm.loadFile("keys", "resources");
+    let resources = await keys.load("resources");
     let resource = resources[selectedResource];
 
     let guild = interaction.guild;
@@ -778,7 +779,7 @@ When selected grants the:
 
   static async selectParty(interaction) {
     const selectedParty = interaction.customId.replace("partySelect", "");
-    let parties = await dbm.loadFile("keys", "parties");
+    let parties = await keys.load("parties");
     let party = parties[selectedParty];
 
     let guild = interaction.guild;
@@ -816,7 +817,7 @@ When selected grants the:
 
   static async addKingdom(kingdomRole) {
     //Add role ID to the kingdom list in keys/playerKingdoms . list
-    let kingdoms = await dbm.loadFile("keys", "playerKingdoms");
+    let kingdoms = await keys.load("playerKingdoms");
     let roleID = kingdomRole.id;
     
     let list = kingdoms.list;
@@ -832,7 +833,7 @@ When selected grants the:
 
   static async listKingdoms() {
     //List all kingdoms in keys/playerKingdoms . list. Arrange them as proper roles, using discord formatting so they show properly
-    let kingdoms = await dbm.loadFile("keys", "playerKingdoms");
+    let kingdoms = await keys.load("playerKingdoms");
     let list = kingdoms.list;
     let kingdomNames = "";
     for (const roleID of list) {
@@ -944,7 +945,7 @@ When selected grants the:
 
   static async commandHelp(commandName) {
     //Send an embed with the title, description, options and "help" field of the command. Options should be horizontally aligned. Read from keys/commandList in the database.
-    let commandList = await dbm.loadFile("keys", "commandList");
+    let commandList = await keys.load("commandList");
     let command = commandList[commandName];
     if (command == undefined) {
       for (const cmd in commandList) {
@@ -980,7 +981,7 @@ When selected grants the:
     let roleName = role.name;
 
     //Add an income to keys/incomeList
-    let incomeList = await dbm.loadFile("keys", "incomeList") || {};
+    let incomeList = await keys.load("incomeList") || {};
     let shopData = await dbm.loadCollection("shop");
     //income string is either a number, or a phrase such as 10 Wood or 10 Package Horse.
     //Must be used to create a field with a name, usually based on the role name, and than a map of various values, including goldGiven, itemGiven and itemAmount. Will also have a list of roles that have this income under "Roles"
@@ -1015,7 +1016,7 @@ When selected grants the:
 
   static async allIncomes(page = 1) {
     let maxLength = 10;
-    let incomeList = await dbm.loadFile("keys", "incomeList") || {};
+    let incomeList = await keys.load("incomeList") || {};
     if (Object.keys(incomeList).length === 0) {
       return "No incomes found";
     }
@@ -1112,7 +1113,7 @@ When selected grants the:
   }
 
   static async editIncomeMenu(income, numericID) {
-    let incomeList = await dbm.loadFile("keys", "incomeList");
+    let incomeList = await keys.load("incomeList");
     let incomeValue = incomeList[income];
     if (incomeValue == undefined) {
       for (const incomeName in incomeList) {
@@ -1188,7 +1189,7 @@ When selected grants the:
     let userData = await dbm.loadFile("characters", String(numericID));
     let editingFields = userData.editingFields;
     let income = editingFields["Income Edited"];
-    let incomeList = await dbm.loadFile("keys", "incomeList");
+    let incomeList = await keys.load("incomeList");
     let incomeValue = incomeList[income];
     let shopData = await dbm.loadCollection("shop");
     if (incomeValue == undefined) {

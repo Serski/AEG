@@ -9,6 +9,8 @@ const dbm = require('./database-manager');
 const admin = require('./admin');
 const shop = require('./shop');
 const marketplace = require('./marketplace');
+// Preload frequently used key data
+require('./keys');
 const client = new Client({ 
     intents: [
         GatewayIntentBits.Guilds,

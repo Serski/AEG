@@ -1,4 +1,5 @@
 const dbm = require('./database-manager'); // Importing the database manager
+const keys = require('./keys');
 const char = require('./char');
 const Discord = require('discord.js');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
@@ -740,7 +741,7 @@ class shop {
   }
 
   static async removeIncome(incomeName) {
-    let incomes = await dbm.loadFile('keys', 'incomeList');
+    let incomes = await keys.load('incomeList');
     if (!incomes[incomeName]) {
       return "Income not found! You must retype the income name exactly as it appears to delete it.";
     }
