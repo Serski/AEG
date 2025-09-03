@@ -4,6 +4,7 @@ const char = require('./char'); // Importing the database manager
 const clientManager = require('./clientManager'); // Importing the database manager
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 class marketplace {
+  static shopDataCache = null;
   /**Function for a player to post a sale.
    * Will take the number of items, the item name, and the price they want to sell it for.
    * Will also be passed their user ID
@@ -12,10 +13,17 @@ class marketplace {
    * Items will be added to the marketplace according to their item name and category- i.e. all iron swords will be next to each other, and the iron swords will be next to steel swords
    * */ 
   static async postSale(numberItems, itemName, price, sellerID) {
+    if (!marketplace.shopDataCache) {
+      marketplace.shopDataCache = await dbm.loadCollection('shop');
+    }
+    const shopData = marketplace.shopDataCache;
+
     // Load the character.json and marketplace.json file
-    let charData = await dbm.loadFile('characters', String(sellerID));
-    let marketData = await dbm.loadCollection('marketplace');
-    let shopData = await dbm.loadCollection('shop');
+    const [charData, marketData] = await Promise.all([
+      dbm.loadFile('characters', String(sellerID)),
+      dbm.loadCollection('marketplace')
+    ]);
+    const mktData = marketData || { idfile: { lastID: 1000 }, marketplace: {} };
     // Find the item name using shop.findItemName
     itemName = await shop.findItemName(itemName, shopData);
     if (itemName == "ERROR") {
@@ -33,25 +41,24 @@ class marketplace {
     // Take the items from their inventory
     charData.inventory[itemName] -= numberItems;
     // Add them to the marketplace under a created unique ID, one greater than the last. The last will be under lastID in marketplace.json
-    marketData = marketData || { idfile: {lastID: 1000}, marketplace: {} };
-    marketData.idfile = marketData.idfile || {};
-    marketData.idfile.lastID = marketData.idfile.lastID || 1000;
-    let itemID = marketData.idfile.lastID + 1;
-    marketData.idfile.lastID = itemID;
+    mktData.idfile = mktData.idfile || {};
+    mktData.idfile.lastID = mktData.idfile.lastID || 1000;
+    let itemID = mktData.idfile.lastID + 1;
+    mktData.idfile.lastID = itemID;
     // Add the item to the marketplace according to its item name and category. Category can be found in shop.getItemCategory
-    let itemCategory = await shop.getItemCategory(itemName);
-    marketData.marketplace = marketData.marketplace || {};
-    marketData.marketplace[itemCategory] = marketData.marketplace[itemCategory] || {};
-    marketData.marketplace[itemCategory][itemName] = marketData.marketplace[itemCategory][itemName] || {};
+    const itemCategory = await shop.getItemCategory(itemName, shopData);
+    mktData.marketplace = mktData.marketplace || {};
+    mktData.marketplace[itemCategory] = mktData.marketplace[itemCategory] || {};
+    mktData.marketplace[itemCategory][itemName] = mktData.marketplace[itemCategory][itemName] || {};
 
-    marketData.marketplace[itemCategory][itemName][itemID] = {
+    mktData.marketplace[itemCategory][itemName][itemID] = {
       "sellerID": String(sellerID),
       "price": price,
       "number": numberItems
     }
     // Save the character.json file
     await dbm.saveFile('characters', String(sellerID), charData);
-    await dbm.saveCollection('marketplace', marketData);
+    await dbm.saveCollection('marketplace', mktData);
     // Create an embed to return on success. Will just say @user listed **numberItems :itemIcon: itemName** to the **/sales** page for <:Gold:1232097113089904710>**price**.
     let embed = new EmbedBuilder();
     embed.setDescription(`<@${sellerID}> listed **${numberItems} ${await shop.getItemIcon(itemName, shopData)} ${itemName}** to the **/sales** page for ${clientManager.getEmoji("Gold")}**${price}**.`);
