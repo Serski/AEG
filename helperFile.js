@@ -1,4 +1,5 @@
 const dbm = require('./database-manager');
+const keys = require('./keys');
 const clientManager = require('./clientManager');
 
 // Load the shop collection, add the "Need None Of Roles" field to each document's usageOptions, and save the collection back to the database
@@ -19,7 +20,7 @@ async function addNeedNoneOfRolesToShop() {
 }
 
 async function loadResourcesJSON() {
-    const resources = await dbm.loadFile('keys', 'resources');
+    const resources = await keys.load('resources');
     
     //Save as json
     const fs = require('fs');
@@ -37,7 +38,7 @@ async function saveResourcesJSON() {
 }
 
 async function getResourceEmojis() {
-    const resources = await dbm.loadFile('keys', 'resources');
+    const resources = await keys.load('resources');
     
     for (let resource in resources) {
         let emoji = clientManager.getEmoji(resource);
@@ -67,7 +68,7 @@ async function healthToLegitimacy() {
 //export getResourceEmojis;
 
 async function addShireToShireNames() {
-    const kingdoms = await dbm.loadFile('keys', 'kingdoms');
+    const kingdoms = await keys.load('kingdoms');
 
     //Each kingdom has a shires field, which is a map of shire names to shire objects. Shire objects have a name field that should add "shire" to the shire name
     for (let kingdom in kingdoms) {

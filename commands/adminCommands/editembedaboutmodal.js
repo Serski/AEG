@@ -2,6 +2,7 @@ const { SlashCommandBuilder, ActionRowBuilder, ModalBuilder, TextInputBuilder, T
 const admin = require('../../admin'); // Importing the database manager
 const char = require('../../char');
 const dbm = require ('../../database-manager');
+const keys = require('../../keys');
 
 ///editfield <field number> <new value>
 module.exports = {
@@ -17,7 +18,7 @@ module.exports = {
             let mapName = userData.editingFields["Map Edited"];
             let mapTypeEdited = userData.editingFields["Map Type Edited"];
             
-            let maps = await dbm.loadFile('keys', mapTypeEdited);
+            let maps = await keys.load(mapTypeEdited);
 
             let mapAbout = maps[mapName].mapOptions.about;
             if (mapAbout == null || mapAbout == undefined) {
