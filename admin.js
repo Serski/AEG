@@ -92,7 +92,7 @@ class Admin {
 
   static async initTradeNodeSelect(channel) {
     let tradeNodes = await keys.load("tradeNodes");
-    let shopData = await dbm.loadCollection("shop");
+    let shopData = await shop.getShopData();
     //TradeNodes is a map of trade node names to trade node objects, where each trade node object has a name, and list of items that can be traded there, as well as a role code for the trade node. The role code may be blank, in which case it must be found.
     //Ex. trade node: " - <polis emoji> North Sea Waters - <Item1> <Item1Emoji>, <Item2> <Item2Emoji>"
 
@@ -262,7 +262,7 @@ When selected grants the:
   static async addShire(shireName, resource, guild) {
     if (process.env.DEBUG) console.log("Adding shire " + shireName + " with resource " + resource);
     let shires = await keys.load("shires");
-    let shopData = await dbm.loadCollection("shop");
+    let shopData = await shop.getShopData();
     resource = await shop.findItemName(resource, shopData);
     if (resource == "ERROR") {
       return "Item not found";
@@ -982,7 +982,7 @@ When selected grants the:
 
     //Add an income to keys/incomeList
     let incomeList = await keys.load("incomeList") || {};
-    let shopData = await dbm.loadCollection("shop");
+    let shopData = await shop.getShopData();
     //income string is either a number, or a phrase such as 10 Wood or 10 Package Horse.
     //Must be used to create a field with a name, usually based on the role name, and than a map of various values, including goldGiven, itemGiven and itemAmount. Will also have a list of roles that have this income under "Roles"
     let income = {
@@ -1020,7 +1020,7 @@ When selected grants the:
     if (Object.keys(incomeList).length === 0) {
       return "No incomes found";
     }
-    let shopData = await dbm.loadCollection("shop");
+    let shopData = await shop.getShopData();
 
     let goldList = [];
     let itemList = [];
@@ -1191,7 +1191,7 @@ When selected grants the:
     let income = editingFields["Income Edited"];
     let incomeList = await keys.load("incomeList");
     let incomeValue = incomeList[income];
-    let shopData = await dbm.loadCollection("shop");
+    let shopData = await shop.getShopData();
     if (incomeValue == undefined) {
       return "Income not found";
     }

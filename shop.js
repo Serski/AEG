@@ -1593,7 +1593,7 @@ class shop {
   }
 
   static async shopLayout(categoryToEdit, layoutString) {
-    let shopData = await dbm.loadCollection("shop");
+    let shopData = await this.getShopData();
     if (categoryToEdit === "GENERAL") {
       let shopMap = {};
       let currCategory = null;
