@@ -25,10 +25,10 @@ module.exports = {
         const itemName = interaction.options.getString('itemname');
         const quantity = interaction.options.getInteger('quantity');
         const price = interaction.options.getInteger('price');
-        const numericID = interaction.user.id;
+        const sellerID = interaction.user.id;
 
         (async () => {
-            let reply = await marketplace.postSale(quantity, itemName, price, numericID)
+            let reply = await marketplace.postSale(quantity, itemName, price, sellerID);
             if (typeof (reply) == 'string') {
                 await interaction.reply(reply);
             } else {

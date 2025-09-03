@@ -11,9 +11,9 @@ class marketplace {
    * If they do, it will take the items from their inventory and add them to the marketplace under a created unique ID
    * Items will be added to the marketplace according to their item name and category- i.e. all iron swords will be next to each other, and the iron swords will be next to steel swords
    * */ 
-  static async postSale(numberItems, itemName, price, userID) {
+  static async postSale(numberItems, itemName, price, sellerID) {
     // Load the character.json and marketplace.json file
-    let charData = await dbm.loadFile('characters', String(userID));
+    let charData = await dbm.loadFile('characters', String(sellerID));
     let marketData = await dbm.loadCollection('marketplace');
     let shopData = await dbm.loadCollection('shop');
     // Find the item name using shop.findItemName
@@ -45,16 +45,16 @@ class marketplace {
     marketData.marketplace[itemCategory][itemName] = marketData.marketplace[itemCategory][itemName] || {};
 
     marketData.marketplace[itemCategory][itemName][itemID] = {
-      "sellerID": String(userID),
+      "sellerID": String(sellerID),
       "price": price,
       "number": numberItems
     }
     // Save the character.json file
-    await dbm.saveFile('characters', String(userID), charData);
+    await dbm.saveFile('characters', String(sellerID), charData);
     await dbm.saveCollection('marketplace', marketData);
     // Create an embed to return on success. Will just say @user listed **numberItems :itemIcon: itemName** to the **/sales** page for <:Gold:1232097113089904710>**price**.
     let embed = new EmbedBuilder();
-    embed.setDescription(`<@${userID}> listed **${numberItems} ${await shop.getItemIcon(itemName, shopData)} ${itemName}** to the **/sales** page for ${clientManager.getEmoji("Gold")}**${price}**.`);
+    embed.setDescription(`<@${sellerID}> listed **${numberItems} ${await shop.getItemIcon(itemName, shopData)} ${itemName}** to the **/sales** page for ${clientManager.getEmoji("Gold")}**${price}**.`);
     return embed;
   }
 
@@ -178,14 +178,14 @@ class marketplace {
  
 
   //Create a one page sales embed of just the sales for one player
-  static async showSales(playerID, page) {
+  static async showSales(sellerID, page) {
     // Load the marketplace.json file
     let marketData = await dbm.loadCollection('marketplace');
     let shopData = await dbm.loadCollection('shop');
     // Create an embed to return on success. Will just say @user has listed **numberItems :itemIcon: itemName** for <:Gold:1232097113089904710>**price**.
     let embed = new EmbedBuilder();
-    const playerUser = await clientManager.getUser(playerID);
-    const playerTag = playerUser ? playerUser.user.tag : playerID;
+    const playerUser = await clientManager.getUser(sellerID);
+    const playerTag = playerUser ? playerUser.user.tag : sellerID;
     embed.setTitle(`${playerTag}'s Sales`);
     embed.setColor(0x36393e);
     let descriptionText = '';
@@ -196,7 +196,7 @@ class marketplace {
         const sales = categoryItems[itemName];
         for (const saleID in sales) {
           const sale = sales[saleID];
-          if (sale.sellerID == playerID) {
+          if (sale.sellerID == sellerID) {
             const number = sale.number;
             const item = itemName;
             const icon = await shop.getItemIcon(itemName, shopData);
@@ -227,64 +227,58 @@ class marketplace {
     return embed;
   }
 
-  //Buy a sale. Send the money from the buyer to the seller, and give the buyer the items. If the seller is buying their own sale, merely give them back their items, no need to check their money- this functionality will exist for accidental sales
-  static async buySale(saleID, userID) {
-    // Load the character.json and marketplace.json file
-    let charData = await dbm.loadCollection('characters');
+  //Buy a sale. Send the money from the buyer to the seller, and give the buyer the items.
+  //If the seller is buying their own sale, merely give them back their items; no need to check their money.
+  static async buySale(saleID, buyerID) {
+    // Load marketplace and shop data
     let marketData = await dbm.loadCollection('marketplace');
     let shopData = await dbm.loadCollection('shop');
-    // Search through marketData for the saleID
+
+    // Locate the sale
     const [foundCategory, foundItemName, sale] = await marketplace.getSale(saleID);
-    // If the saleID doesn't exist, return an error
     if (!sale) {
       return "That sale doesn't exist!";
     }
-    if (process.env.DEBUG) console.log(charData);
-    // If the buyer is the seller, merely give them back their items, no need to check their money- this functionality will exist for accidental sales
-    if (sale.sellerID == userID) {
-      // Give the buyer the items
-      if (!charData[String(userID)].inventory[foundItemName]) {
-        charData[String(userID)].inventory[foundItemName] = 0;
-      }
-      charData[String(userID)].inventory[foundItemName] += sale.number;
-      // Remove the sale from the marketplace
+
+    // Load buyer and seller characters individually
+    let buyerChar = await dbm.loadFile('characters', String(buyerID));
+    let sellerChar = await dbm.loadFile('characters', String(sale.sellerID));
+
+    // If the buyer is the seller, give them back the items
+    if (sale.sellerID == buyerID) {
+      buyerChar.inventory[foundItemName] = buyerChar.inventory[foundItemName] || 0;
+      buyerChar.inventory[foundItemName] += sale.number;
       delete marketData.marketplace[foundCategory][foundItemName][saleID];
-      // Save the character.json file
-      await dbm.saveCollection('characters', charData);
-      // Save the marketplace.json file
+      await dbm.saveFile('characters', String(buyerID), buyerChar);
       await dbm.saveCollection('marketplace', marketData);
-      // Create an embed to return on success. Will just say @user bought **numberItems :itemIcon: itemName** from @seller for <:Gold:1232097113089904710>**price**.
       let embed = new EmbedBuilder();
-      embed.setDescription(`<@${userID}> bought **${sale.number} ${await shop.getItemIcon(foundItemName, shopData)} ${foundItemName}** back from themselves. It was listed for ${clientManager.getEmoji("Gold")}**${sale.price}**.`);
+      embed.setDescription(`<@${buyerID}> bought **${sale.number} ${await shop.getItemIcon(foundItemName, shopData)} ${foundItemName}** back from themselves. It was listed for ${clientManager.getEmoji("Gold")}**${sale.price}**.`);
       return embed;
     }
 
-    // Check if the buyer has enough money
-    if (charData[String(userID)].balance < sale.price) {
+    // Ensure the buyer has enough money
+    if (buyerChar.balance < sale.price) {
       return "You don't have enough money to buy that!";
     }
-    // Take the money from the buyer
-    charData[String(userID)].balance -= sale.price;
-    // Give the money to the seller
-    charData[sale.sellerID].balance += sale.price;
 
-    if (!charData[String(userID)].inventory[foundItemName]) {
-      charData[String(userID)].inventory[foundItemName] = 0;
-    }
+    // Exchange currency
+    buyerChar.balance -= sale.price;
+    sellerChar.balance += sale.price;
 
-    // Give the buyer the items
-    charData[String(userID)].inventory[foundItemName] += Number(sale.number);
+    // Transfer items
+    buyerChar.inventory[foundItemName] = buyerChar.inventory[foundItemName] || 0;
+    buyerChar.inventory[foundItemName] += Number(sale.number);
+
     // Remove the sale from the marketplace
     delete marketData.marketplace[foundCategory][foundItemName][saleID];
-    // Save the character.json file
-    await dbm.saveCollection('characters', charData);
-    // Save the marketplace.json file
+
+    // Save updated character files and marketplace
+    await dbm.saveFile('characters', String(buyerID), buyerChar);
+    await dbm.saveFile('characters', String(sale.sellerID), sellerChar);
     await dbm.saveCollection('marketplace', marketData);
 
-    if (process.env.DEBUG) console.log(charData);
-    // Create an embed to return on success. Will just say @user bought **numberItems :itemIcon: itemName** from @seller for <:Gold:1232097113089904710>**price**.
     let embed = new EmbedBuilder();
-    embed.setDescription(`<@${userID}> bought **${sale.number} ${await shop.getItemIcon(foundItemName, shopData)} ${foundItemName}** from <@${sale.sellerID}> for ${clientManager.getEmoji("Gold")}**${sale.price}**.`);
+    embed.setDescription(`<@${buyerID}> bought **${sale.number} ${await shop.getItemIcon(foundItemName, shopData)} ${foundItemName}** from <@${sale.sellerID}> for ${clientManager.getEmoji("Gold")}**${sale.price}**.`);
     return embed;
   }
 
