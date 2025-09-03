@@ -73,15 +73,13 @@ class marketplace {
    */
   static async createSalesEmbed(page) {
     page = Number(page);
-    // Load cached marketplace and shop data
-    if (!marketplace.marketplaceCache) {
-      marketplace.marketplaceCache = await dbm.loadCollection('marketplace');
-    }
-    const marketData = marketplace.marketplaceCache;
-    if (!marketplace.shopDataCache) {
-      marketplace.shopDataCache = await dbm.loadCollection('shop');
-    }
-    const shopData = marketplace.shopDataCache;
+    // Load cached marketplace and shop data in parallel
+    const [marketData, shopData] = await Promise.all([
+      marketplace.marketplaceCache ?? dbm.loadCollection('marketplace'),
+      marketplace.shopDataCache ?? dbm.loadCollection('shop')
+    ]);
+    marketplace.marketplaceCache = marketData;
+    marketplace.shopDataCache = shopData;
 
     // Max items allowed per page
     const maxItemsPerPage = 25;
@@ -195,15 +193,13 @@ class marketplace {
 
   //Create a one page sales embed of just the sales for one player
   static async showSales(sellerID, page) {
-    // Load cached marketplace and shop data
-    if (!marketplace.marketplaceCache) {
-      marketplace.marketplaceCache = await dbm.loadCollection('marketplace');
-    }
-    const marketData = marketplace.marketplaceCache;
-    if (!marketplace.shopDataCache) {
-      marketplace.shopDataCache = await dbm.loadCollection('shop');
-    }
-    const shopData = marketplace.shopDataCache;
+    // Load cached marketplace and shop data in parallel
+    const [marketData, shopData] = await Promise.all([
+      marketplace.marketplaceCache ?? dbm.loadCollection('marketplace'),
+      marketplace.shopDataCache ?? dbm.loadCollection('shop')
+    ]);
+    marketplace.marketplaceCache = marketData;
+    marketplace.shopDataCache = shopData;
     // Create an embed to return on success. Will just say @user has listed **numberItems :itemIcon: itemName** for <:Gold:1232097113089904710>**price**.
     let embed = new EmbedBuilder();
     const playerUser = await clientManager.getUser(sellerID);
@@ -252,15 +248,13 @@ class marketplace {
   //Buy a sale. Send the money from the buyer to the seller, and give the buyer the items.
   //If the seller is buying their own sale, merely give them back their items; no need to check their money.
   static async buySale(saleID, buyerID) {
-    // Load cached marketplace and shop data
-    if (!marketplace.marketplaceCache) {
-      marketplace.marketplaceCache = await dbm.loadCollection('marketplace');
-    }
-    const marketData = marketplace.marketplaceCache;
-    if (!marketplace.shopDataCache) {
-      marketplace.shopDataCache = await dbm.loadCollection('shop');
-    }
-    const shopData = marketplace.shopDataCache;
+    // Load cached marketplace and shop data in parallel
+    const [marketData, shopData] = await Promise.all([
+      marketplace.marketplaceCache ?? dbm.loadCollection('marketplace'),
+      marketplace.shopDataCache ?? dbm.loadCollection('shop')
+    ]);
+    marketplace.marketplaceCache = marketData;
+    marketplace.shopDataCache = shopData;
 
     // Locate the sale
     const [foundCategory, foundItemName, sale] = await marketplace.getSale(saleID, marketData);
