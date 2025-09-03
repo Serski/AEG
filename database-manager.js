@@ -44,17 +44,24 @@ function formatTable(name) {
   return name.replace(/[^a-zA-Z0-9_]/g, '');
 }
 
+// Track which tables have already been ensured to avoid repeated round-trips
+const ensuredTables = new Set();
+
 async function ensureTable(table) {
   await pgReady;
   if (!usingPg) return;
-  await pgClient.query(`CREATE TABLE IF NOT EXISTS ${table} (id TEXT PRIMARY KEY, data JSONB)`);
+  if (ensuredTables.has(table)) return;
+  await pgClient.query(
+    `CREATE TABLE IF NOT EXISTS ${table} (id TEXT PRIMARY KEY, data JSONB)`
+  );
+  ensuredTables.add(table);
 }
 
 async function saveCollection(collectionName, data) {
   await pgReady;
   if (usingPg) {
     const table = formatTable(collectionName);
-    await ensureTable(table); // ensure table exists before transaction
+    if (!ensuredTables.has(table)) await ensureTable(table); // ensure table exists before transaction
     await pgClient.query('BEGIN');
     await pgClient.query(`DELETE FROM ${table}`);
     for (const [id, value] of Object.entries(data)) {
@@ -99,7 +106,7 @@ async function loadCollection(collectionName) {
   await pgReady;
   if (usingPg) {
     const table = formatTable(collectionName);
-    await ensureTable(table);
+    if (!ensuredTables.has(table)) await ensureTable(table);
     const res = await pgClient.query(`SELECT id, data FROM ${table}`);
     const data = {};
     for (const row of res.rows) {
@@ -160,7 +167,7 @@ async function saveFile(collectionName, docId, data) {
   if (usingPg) {
     await pgReady;
     const table = formatTable(collectionName);
-    await ensureTable(table);
+    if (!ensuredTables.has(table)) await ensureTable(table);
     await pgClient.query(
       `INSERT INTO ${table} (id, data) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`,
       [docId, data]
@@ -179,7 +186,7 @@ async function loadFile(collectionName, docId) {
   if (usingPg) {
     await pgReady;
     const table = formatTable(collectionName);
-    await ensureTable(table);
+    if (!ensuredTables.has(table)) await ensureTable(table);
     const res = await pgClient.query(`SELECT data FROM ${table} WHERE id = $1`, [docId]);
     return res.rows[0] ? res.rows[0].data : undefined;
   } else {
@@ -217,7 +224,7 @@ async function docDelete(collectionName, docName) {
   if (usingPg) {
     await pgReady;
     const table = formatTable(collectionName);
-    await ensureTable(table);
+    if (!ensuredTables.has(table)) await ensureTable(table);
     await pgClient.query(`DELETE FROM ${table} WHERE id = $1`, [docName]);
   } else {
     const dirPath = path.join(storageDir, collectionName);
@@ -243,7 +250,7 @@ async function fieldDelete(collectionName, docName, deleteField) {
   if (usingPg) {
     await pgReady;
     const table = formatTable(collectionName);
-    await ensureTable(table);
+    if (!ensuredTables.has(table)) await ensureTable(table);
     await pgClient.query(`UPDATE ${table} SET data = data - $2 WHERE id = $1`, [docName, deleteField]);
   } else {
     const doc = await loadFile(collectionName, docName);
