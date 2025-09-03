@@ -10,40 +10,33 @@ class char {
   static charCache = new Map();
   static async warn(numericID) {
     if (process.env.DEBUG) console.log(numericID);
-    let collectionName = 'characters';
-    let charData = await dbm.loadFile(collectionName, String(numericID));
-    if (charData) {
-      if (!charData.warns) {
-        charData.warns = 0;
-      }
-      charData.warns++;
-      await this.updatePlayer(numericID, charData);
-      return "Player has been warned. They now have " + charData.warns + " warnings.";
-    } else {
+    let [playerID, charData] = await this.findPlayerData(numericID);
+    if (!playerID) {
       return "Player not found";
     }
+    if (!charData.warns) {
+      charData.warns = 0;
+    }
+    charData.warns++;
+    await this.updatePlayer(playerID, charData);
+    return "Player has been warned. They now have " + charData.warns + " warnings.";
   }
 
   static async checkWarns(numericID) {
-    let collectionName = 'characters';
-    let charData = await dbm.loadFile(collectionName, String(numericID));
-    if (charData) {
-      if (!charData.warns) {
-        charData.warns = 0;
-      }
-      return "Player has " + charData.warns + " warnings.";
-    } else {
+    let [playerID, charData] = await this.findPlayerData(numericID);
+    if (!playerID) {
       return "Player not found";
     }
+    if (!charData.warns) {
+      charData.warns = 0;
+    }
+    return "Player has " + charData.warns + " warnings.";
   }
 
   // Function to add items
   static async newChar(numericID, charName, charBio, docID = numericID) {
-    // Set the collection name
-    let collectionName = 'characters';
-
-    // Load the player's character data (if it exists)
-    let charData = await dbm.loadFile(collectionName, String(docID));
+    const id = String(docID);
+    let [, charData] = await this.findPlayerData(id);
 
     if (charData) {
       // If the character already exists, update the fields
@@ -72,18 +65,16 @@ class char {
     }
 
     // Save the character data
-    await this.updatePlayer(docID, charData);
+    await this.updatePlayer(id, charData);
   }
 
   //returns player name and bio from playerID
   static async editCharPlaceholders(numericID) {
-    let collectionName = 'characters';
-    let charData = await dbm.loadFile(collectionName, String(numericID));
-    if (charData) {
-      return [charData.name, charData.bio];
-    } else {
+    let [playerID, charData] = await this.findPlayerData(numericID);
+    if (!playerID) {
       return "ERROR";
     }
+    return [charData.name, charData.bio];
   }
 
   //Setavatar using new saveFile and loadFile
@@ -94,13 +85,12 @@ class char {
 
       // Check if the response status code indicates success (e.g., 200)
       if (response.status === 200) {
-        let collectionName = 'characters';
-        let charData = await dbm.loadFile(collectionName, String(numericID));
-
+        let [playerID, charData] = await this.findPlayerData(numericID);
+        if (!playerID) {
+          return "Player not found";
+        }
         charData.icon = avatarURL;
-
-        await this.updatePlayer(numericID, charData);
-
+        await this.updatePlayer(playerID, charData);
         return "Avatar has been set";
       } else {
         return "Error: Avatar URL is not valid (HTTP status code " + response.status + ").";
@@ -112,46 +102,36 @@ class char {
 
   //New commands using saveFile, saveCollection, loadFile and loadCollection
   static async balance(numericID) {
-    let collectionName = 'characters';
-    let charData = await dbm.loadFile(collectionName, String(numericID));
-    if (charData) {
-      const charEmbed = {
-        color: 0x36393e,
-        author: {
-          name: charData.name,
-          icon_url: charData.icon ? charData.icon : 'https://cdn.discordapp.com/attachments/1393917452731289680/1411714755042869268/AEGIR_SMALL_copy.png?ex=68b5a951&is=68b457d1&hm=36aea50e9270da5b5b7d65cf9364ce946e1a05ebc2aa0ed44bf76e80470673f2',
-        },
-        description: clientManager.getEmoji("Gold") + " **" + charData.balance + "**",
-      };
-      return charEmbed;
-    } else {
+    let [playerID, charData] = await this.findPlayerData(numericID);
+    if (!playerID) {
       return "You haven't made a character! Use /newchar first";
     }
+    const charEmbed = {
+      color: 0x36393e,
+      author: {
+        name: charData.name,
+        icon_url: charData.icon ? charData.icon : 'https://cdn.discordapp.com/attachments/1393917452731289680/1411714755042869268/AEGIR_SMALL_copy.png?ex=68b5a951&is=68b457d1&hm=36aea50e9270da5b5b7d65cf9364ce946e1a05ebc2aa0ed44bf76e80470673f2',
+      },
+      description: clientManager.getEmoji("Gold") + " **" + charData.balance + "**",
+    };
+    return charEmbed;
   }
 
   static async stats(numericID) {
-    let collectionName = 'characters';
-    let charData;
-    try {
-      charData = await dbm.loadFile(collectionName, String(numericID));
-    } catch (error) {
-      console.error(error);
+    let [playerID, charData] = await this.findPlayerData(numericID);
+    if (!playerID) {
       return "Character not found- use /newchar first";
     }
-    if (charData) {
-      const charEmbed = {
-        color: 0x36393e,
-        author: {
-          name: charData.name,
-          icon_url: charData.icon ? charData.icon : 'https://cdn.discordapp.com/attachments/1393917452731289680/1411714755042869268/AEGIR_SMALL_copy.png?ex=68b5a951&is=68b457d1&hm=36aea50e9270da5b5b7d65cf9364ce946e1a05ebc2aa0ed44bf76e80470673f2',
-        },
-        description: await this.getStatsBlock(charData, String(numericID)),
-      };
+    const charEmbed = {
+      color: 0x36393e,
+      author: {
+        name: charData.name,
+        icon_url: charData.icon ? charData.icon : 'https://cdn.discordapp.com/attachments/1393917452731289680/1411714755042869268/AEGIR_SMALL_copy.png?ex=68b5a951&is=68b457d1&hm=36aea50e9270da5b5b7d65cf9364ce946e1a05ebc2aa0ed44bf76e80470673f2',
+      },
+      description: await this.getStatsBlock(charData, String(numericID)),
+    };
 
-      return charEmbed;
-    } else {
-      return "You haven't made a character! Use /newchar first";
-    }
+    return charEmbed;
   }
 
   static async balanceAll(pageNumber) {
