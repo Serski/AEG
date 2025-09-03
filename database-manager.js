@@ -32,6 +32,7 @@ if (!fs.existsSync(storageDir)) {
 // Simple in-memory cache to avoid repeatedly reading the same JSON files
 // Structure: { [collectionName]: Map<docId, data> }
 const collectionCache = new Map();
+const fullyLoadedCollections = new Set();
 
 function getCache(collectionName) {
   if (!collectionCache.has(collectionName)) {
@@ -68,6 +69,12 @@ async function saveCollection(collectionName, data) {
       await pgClient.query(`INSERT INTO ${table} (id, data) VALUES ($1, $2)`, [id, value]);
     }
     await pgClient.query('COMMIT');
+    const cache = getCache(collectionName);
+    cache.clear();
+    for (const [id, value] of Object.entries(data)) {
+      cache.set(id, value);
+    }
+    fullyLoadedCollections.add(collectionName);
   } else {
     const dirPath = path.join(storageDir, collectionName);
     const useDir = fs.existsSync(dirPath);
@@ -90,6 +97,7 @@ async function saveCollection(collectionName, data) {
         await fs.promises.unlink(path.join(dirPath, `${id}.json`)).catch(() => {});
         cache.delete(id);
       }
+      fullyLoadedCollections.add(collectionName);
     } else {
       const filePath = path.join(storageDir, `${collectionName}.json`);
       await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
@@ -98,20 +106,28 @@ async function saveCollection(collectionName, data) {
       for (const [id, value] of Object.entries(data)) {
         cache.set(id, value);
       }
+      fullyLoadedCollections.add(collectionName);
     }
   }
 }
 
-async function loadCollection(collectionName) {
+async function loadCollection(collectionName, forceRefresh = false) {
   await pgReady;
+  const cache = getCache(collectionName);
+  if (!forceRefresh && fullyLoadedCollections.has(collectionName)) {
+    return Object.fromEntries(cache);
+  }
   if (usingPg) {
     const table = formatTable(collectionName);
     if (!ensuredTables.has(table)) await ensureTable(table);
     const res = await pgClient.query(`SELECT id, data FROM ${table}`);
     const data = {};
+    cache.clear();
     for (const row of res.rows) {
       data[row.id] = row.data;
+      cache.set(row.id, row.data);
     }
+    fullyLoadedCollections.add(collectionName);
     return data;
   } else {
     const dirPath = path.join(storageDir, collectionName);
@@ -120,7 +136,6 @@ async function loadCollection(collectionName) {
       if (stat.isDirectory()) {
         const files = await fs.promises.readdir(dirPath);
         const data = {};
-        const cache = getCache(collectionName);
         cache.clear();
         for (const file of files) {
           if (!file.endsWith('.json')) continue;
@@ -130,6 +145,7 @@ async function loadCollection(collectionName) {
           data[id] = parsed;
           cache.set(id, parsed);
         }
+        fullyLoadedCollections.add(collectionName);
         return data;
       }
     } catch (err) {
@@ -139,14 +155,16 @@ async function loadCollection(collectionName) {
     try {
       const content = await fs.promises.readFile(filePath, 'utf8');
       const parsed = JSON.parse(content);
-      const cache = getCache(collectionName);
       cache.clear();
       for (const [id, value] of Object.entries(parsed)) {
         cache.set(id, value);
       }
+      fullyLoadedCollections.add(collectionName);
       return parsed;
     } catch (err) {
       if (err.code === 'ENOENT') {
+        cache.clear();
+        fullyLoadedCollections.add(collectionName);
         return {};
       }
       throw err;
@@ -172,6 +190,8 @@ async function saveFile(collectionName, docId, data) {
       `INSERT INTO ${table} (id, data) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`,
       [docId, data]
     );
+    const cache = getCache(collectionName);
+    cache.set(docId, data);
   } else {
     const dirPath = path.join(storageDir, collectionName);
     await fs.promises.mkdir(dirPath, { recursive: true });
@@ -182,16 +202,24 @@ async function saveFile(collectionName, docId, data) {
   }
 }
 
-async function loadFile(collectionName, docId) {
+async function loadFile(collectionName, docId, forceRefresh = false) {
+  const cache = getCache(collectionName);
+  if (!forceRefresh && cache.has(docId)) return cache.get(docId);
+  if (!forceRefresh && fullyLoadedCollections.has(collectionName)) return undefined;
   if (usingPg) {
     await pgReady;
     const table = formatTable(collectionName);
     if (!ensuredTables.has(table)) await ensureTable(table);
     const res = await pgClient.query(`SELECT data FROM ${table} WHERE id = $1`, [docId]);
-    return res.rows[0] ? res.rows[0].data : undefined;
+    const row = res.rows[0];
+    if (row) {
+      cache.set(docId, row.data);
+      return row.data;
+    } else {
+      cache.delete(docId);
+      return undefined;
+    }
   } else {
-    const cache = getCache(collectionName);
-    if (cache.has(docId)) return cache.get(docId);
     const dirPath = path.join(storageDir, collectionName);
     const filePath = path.join(dirPath, `${docId}.json`);
     try {
@@ -209,6 +237,7 @@ async function loadFile(collectionName, docId) {
             cache.set(docId, parsed[docId]);
             return parsed[docId];
           }
+          cache.delete(docId);
           return undefined;
         } catch (err2) {
           if (err2.code === 'ENOENT') return undefined;
@@ -226,6 +255,7 @@ async function docDelete(collectionName, docName) {
     const table = formatTable(collectionName);
     if (!ensuredTables.has(table)) await ensureTable(table);
     await pgClient.query(`DELETE FROM ${table} WHERE id = $1`, [docName]);
+    getCache(collectionName).delete(docName);
   } else {
     const dirPath = path.join(storageDir, collectionName);
     const filePath = path.join(dirPath, `${docName}.json`);
@@ -252,6 +282,12 @@ async function fieldDelete(collectionName, docName, deleteField) {
     const table = formatTable(collectionName);
     if (!ensuredTables.has(table)) await ensureTable(table);
     await pgClient.query(`UPDATE ${table} SET data = data - $2 WHERE id = $1`, [docName, deleteField]);
+    const cache = getCache(collectionName);
+    if (cache.has(docName)) {
+      const doc = cache.get(docName);
+      delete doc[deleteField];
+      cache.set(docName, doc);
+    }
   } else {
     const doc = await loadFile(collectionName, docName);
     if (doc && Object.prototype.hasOwnProperty.call(doc, deleteField)) {
