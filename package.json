@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node bot.js",
     "deploy:commands": "node deploy-commands.js",
-    "seed:once": "node seeds/seedOnBoot.js"
+    "seed:once": "node seeds/seedOnBoot.js",
+    "test": "node --test"
   },
   "dependencies": {
     "axios": "^1.5.1",
