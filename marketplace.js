@@ -19,18 +19,22 @@ class marketplace {
       return marketplace.marketplaceCache;
     }
     const rows = await dbm.loadCollection('marketplace');
-    const mktData = { idfile: {}, marketplace: {} };
-    const index = {};
-    for (const [id, row] of Object.entries(rows)) {
-      if (id === 'idfile') {
-        mktData.idfile = row;
-        continue;
-      }
+    const { idfile = {}, ...salesRows } = rows;
+    const mktData = { idfile, marketplace: {} };
+    let index = idfile.saleIndex ? idfile.saleIndex : {};
+    const hasPersistedIndex = Boolean(idfile.saleIndex);
+    for (const [id, row] of Object.entries(salesRows)) {
       const { category, itemName, ...sale } = row;
       mktData.marketplace[category] = mktData.marketplace[category] || {};
       mktData.marketplace[category][itemName] = mktData.marketplace[category][itemName] || {};
       mktData.marketplace[category][itemName][id] = sale;
-      index[id] = { category, itemName };
+      if (!hasPersistedIndex) {
+        index[id] = { category, itemName };
+      }
+    }
+    if (!hasPersistedIndex) {
+      mktData.idfile.saleIndex = index;
+      await dbm.updateCollectionRecord('marketplace', 'idfile', mktData.idfile);
     }
     marketplace.marketplaceCache = mktData;
     marketplace.saleIndex = index;
@@ -75,6 +79,8 @@ class marketplace {
     mktData.idfile.lastID = saleID;
     // Add the item to the marketplace according to its item name and category. Category can be found in shop.getItemCategory
     const itemCategory = await shop.getItemCategory(itemName, shopData);
+    mktData.idfile.saleIndex = mktData.idfile.saleIndex || {};
+    mktData.idfile.saleIndex[saleID] = { category: itemCategory, itemName };
     mktData.marketplace = mktData.marketplace || {};
     mktData.marketplace[itemCategory] = mktData.marketplace[itemCategory] || {};
     mktData.marketplace[itemCategory][itemName] = mktData.marketplace[itemCategory][itemName] || {};
@@ -303,11 +309,15 @@ class marketplace {
       buyerChar.inventory[foundItemName] += sale.number;
       delete marketData.marketplace[foundCategory][foundItemName][saleID];
       delete marketplace.saleIndex[saleID];
+      if (marketData.idfile && marketData.idfile.saleIndex) {
+        delete marketData.idfile.saleIndex[saleID];
+      }
       // Persist buyer file and drop the single sale record instead of rewriting
       // the entire marketplace collection.
       await Promise.all([
         char.updatePlayer(buyerIDStr, buyerChar),
-        dbm.removeCollectionRecord('marketplace', String(saleID))
+        dbm.removeCollectionRecord('marketplace', String(saleID)),
+        dbm.updateCollectionRecord('marketplace', 'idfile', marketData.idfile)
       ]);
       marketplace.marketplaceCache = marketData;
       let embed = new EmbedBuilder();
@@ -331,13 +341,17 @@ class marketplace {
     // Remove the sale from the marketplace and index
     delete marketData.marketplace[foundCategory][foundItemName][saleID];
     delete marketplace.saleIndex[saleID];
+    if (marketData.idfile && marketData.idfile.saleIndex) {
+      delete marketData.idfile.saleIndex[saleID];
+    }
 
     // Incrementally persist changes: update both character files and delete just
     // the sold listing record from storage.
     await Promise.all([
       char.updatePlayer(buyerIDStr, buyerChar),
       char.updatePlayer(sellerIDStr, sellerChar),
-      dbm.removeCollectionRecord('marketplace', String(saleID))
+      dbm.removeCollectionRecord('marketplace', String(saleID)),
+      dbm.updateCollectionRecord('marketplace', 'idfile', marketData.idfile)
     ]);
     // Update in-memory cache after targeted deletion
     marketplace.marketplaceCache = marketData;
