@@ -369,38 +369,21 @@ class marketplace {
 
   //Get itemcategory, itemname and sale from saleID
   static async getSale(saleID, marketData = null) {
-    // Load marketplace data if not provided
-    const data = marketData ?? await marketplace.loadMarketplace();
-    marketplace.marketplaceCache = data;
-    // Use the saleIndex if possible
-    let entry = marketplace.saleIndex[saleID];
-    if (entry) {
-      const sale = data.marketplace?.[entry.category]?.[entry.itemName]?.[saleID];
-      if (sale) {
-        return [entry.category, entry.itemName, sale];
-      }
+    // Ensure marketplace cache and index are loaded
+    await marketplace.loadMarketplace();
+    const data = marketData ?? marketplace.marketplaceCache;
+
+    const entry = marketplace.saleIndex[saleID];
+    if (!entry) {
+      return "That sale doesn't exist!";
     }
 
-    // Rebuild the index if the sale wasn't found
-    marketplace.saleIndex = {};
-    for (const category in data.marketplace) {
-      const categoryItems = data.marketplace[category];
-      for (const item in categoryItems) {
-        const sales = categoryItems[item];
-        for (const id in sales) {
-          marketplace.saleIndex[id] = { category, itemName: item };
-        }
-      }
+    const sale = data.marketplace?.[entry.category]?.[entry.itemName]?.[saleID];
+    if (!sale) {
+      return "That sale doesn't exist!";
     }
 
-    entry = marketplace.saleIndex[saleID];
-    if (entry) {
-      const sale = data.marketplace?.[entry.category]?.[entry.itemName]?.[saleID];
-      if (sale) {
-        return [entry.category, entry.itemName, sale];
-      }
-    }
-    return "That sale doesn't exist!";
+    return [entry.category, entry.itemName, sale];
   }
 
   //Invalidate cached collections
