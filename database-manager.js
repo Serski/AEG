@@ -58,53 +58,117 @@ async function ensureTable(table) {
   ensuredTables.add(table);
 }
 
+async function updateCollectionRecord(collectionName, id, data) {
+  await pgReady;
+  if (usingPg) {
+    const table = formatTable(collectionName);
+    if (!ensuredTables.has(table)) await ensureTable(table);
+    await pgClient.query(
+      `INSERT INTO ${table} (id, data) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`,
+      [id, data]
+    );
+    getCache(collectionName).set(id, data);
+  } else {
+    const dirPath = path.join(storageDir, collectionName);
+    await fs.promises.mkdir(dirPath, { recursive: true });
+    const filePath = path.join(dirPath, `${id}.json`);
+    const cache = getCache(collectionName);
+    const cached = cache.get(id);
+    if (cached && JSON.stringify(cached) === JSON.stringify(data)) return;
+    if (!cached) {
+      try {
+        const existing = await fs.promises.readFile(filePath, 'utf8');
+        if (existing && JSON.stringify(JSON.parse(existing)) === JSON.stringify(data)) {
+          cache.set(id, data);
+          return;
+        }
+      } catch {}
+    }
+    await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
+    cache.set(id, data);
+  }
+}
+
+async function removeCollectionRecord(collectionName, id) {
+  await pgReady;
+  if (usingPg) {
+    const table = formatTable(collectionName);
+    if (!ensuredTables.has(table)) await ensureTable(table);
+    await pgClient.query(`DELETE FROM ${table} WHERE id = $1`, [id]);
+    getCache(collectionName).delete(id);
+  } else {
+    const dirPath = path.join(storageDir, collectionName);
+    const filePath = path.join(dirPath, `${id}.json`);
+    await fs.promises.unlink(filePath).catch(() => {});
+    getCache(collectionName).delete(id);
+  }
+}
+
 async function saveCollection(collectionName, data) {
   await pgReady;
   if (usingPg) {
     const table = formatTable(collectionName);
-    if (!ensuredTables.has(table)) await ensureTable(table); // ensure table exists before transaction
-    await pgClient.query('BEGIN');
-    await pgClient.query(`DELETE FROM ${table}`);
-    for (const [id, value] of Object.entries(data)) {
-      await pgClient.query(`INSERT INTO ${table} (id, data) VALUES ($1, $2)`, [id, value]);
-    }
-    await pgClient.query('COMMIT');
+    if (!ensuredTables.has(table)) await ensureTable(table);
     const cache = getCache(collectionName);
-    cache.clear();
+    let existing;
+    if (fullyLoadedCollections.has(collectionName)) {
+      existing = new Set(cache.keys());
+    } else {
+      const res = await pgClient.query(`SELECT id FROM ${table}`);
+      existing = new Set(res.rows.map((r) => r.id));
+    }
     for (const [id, value] of Object.entries(data)) {
-      cache.set(id, value);
+      await updateCollectionRecord(collectionName, id, value);
+      existing.delete(id);
+    }
+    for (const id of existing) {
+      await removeCollectionRecord(collectionName, id);
     }
     fullyLoadedCollections.add(collectionName);
   } else {
     const dirPath = path.join(storageDir, collectionName);
     const useDir = fs.existsSync(dirPath);
+    const cache = getCache(collectionName);
     if (useDir) {
-      await fs.promises.mkdir(dirPath, { recursive: true });
-      const cache = getCache(collectionName);
       const existing = new Set(
         await fs.promises
           .readdir(dirPath)
           .then((files) => files.filter((f) => f.endsWith('.json')).map((f) => path.basename(f, '.json')))
       );
       for (const [id, value] of Object.entries(data)) {
-        const filePath = path.join(dirPath, `${id}.json`);
-        await fs.promises.writeFile(filePath, JSON.stringify(value, null, 2));
-        cache.set(id, value);
+        await updateCollectionRecord(collectionName, id, value);
         existing.delete(id);
       }
-      // Remove docs no longer present
       for (const id of existing) {
-        await fs.promises.unlink(path.join(dirPath, `${id}.json`)).catch(() => {});
-        cache.delete(id);
+        await removeCollectionRecord(collectionName, id);
       }
       fullyLoadedCollections.add(collectionName);
     } else {
       const filePath = path.join(storageDir, `${collectionName}.json`);
-      await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
-      const cache = getCache(collectionName);
-      cache.clear();
+      let existingData = {};
+      try {
+        const content = await fs.promises.readFile(filePath, 'utf8');
+        existingData = JSON.parse(content);
+      } catch (err) {
+        if (err.code !== 'ENOENT') throw err;
+      }
+      let changed = false;
       for (const [id, value] of Object.entries(data)) {
+        if (!existingData.hasOwnProperty(id) || JSON.stringify(existingData[id]) !== JSON.stringify(value)) {
+          existingData[id] = value;
+          changed = true;
+        }
         cache.set(id, value);
+      }
+      for (const id of Object.keys(existingData)) {
+        if (!data.hasOwnProperty(id)) {
+          delete existingData[id];
+          cache.delete(id);
+          changed = true;
+        }
+      }
+      if (changed) {
+        await fs.promises.writeFile(filePath, JSON.stringify(existingData, null, 2));
       }
       fullyLoadedCollections.add(collectionName);
     }
@@ -344,5 +408,7 @@ module.exports = {
   docDelete,
   fieldDelete,
   logData,
+  updateCollectionRecord,
+  removeCollectionRecord,
 };
 
