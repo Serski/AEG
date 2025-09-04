@@ -928,7 +928,7 @@ class char {
       charData[charID].cooldowns.craftSlots[recipe] = finishTime;
     }
 
-    await dbm.saveCollection('characters', charData);
+    await updatePlayerUtil(charID, charData[charID]);
 
     let returnEmbed = await this.craftingCooldowns(charID);
     if (typeof(returnEmbed) == 'string') {
@@ -962,7 +962,7 @@ class char {
       //If more than 4 exist, delete the newest one and send an error message
       if (Object.keys(charData[charID].cooldowns.craftSlots).length > 3) {
         delete charData[charID].cooldowns.craftSlots[key];
-        await dbm.saveCollection('characters', charData);
+        await updatePlayerUtil(charID, charData[charID]);
         return "ERROR: Too many crafting slots. Contact Alex immediately.";
       }
       if (key.startsWith("REPEAT_")) {
@@ -972,7 +972,7 @@ class char {
       if (!recipeData[key]) {
         //Remove the key from the character's cooldowns
         delete charData[charID].cooldowns.craftSlots[oldKey];
-        await dbm.saveCollection('characters', charData);
+        await updatePlayerUtil(charID, charData[charID]);
         return "ERROR: The following recipe was not found and has been removed: " + key + ". Contact Alex";
       }
       //If any recipes are finished, add them to the finishedCrafts array and remove them from the character's cooldowns. Skip the rest of the loop
@@ -981,7 +981,7 @@ class char {
 
         //Remove the key from the character's cooldowns
         delete charData[charID].cooldowns.craftSlots[oldKey];
-        await dbm.saveCollection('characters', charData);
+        await updatePlayerUtil(charID, charData[charID]);
 
         continue;
       }
@@ -1029,7 +1029,7 @@ class char {
       }
     }
 
-    await dbm.saveCollection('characters', charData);
+    await updatePlayerUtil(charID, charData[charID]);
     return returnEmbed;
   }
 
@@ -1501,7 +1501,7 @@ class char {
     let errorMembers = [];
   
     for (let [id, member] of members) {
-  
+
       // Check if the member has a character
       let charID = member.user.username;
       if (process.env.DEBUG) console.log("ID" + charID);
@@ -1512,12 +1512,12 @@ class char {
         errorMembers.push(charID);
         continue;
       }
-  
+
       // Add the item to the member's inventory
       if (!charData[charID].inventory) {
         charData[charID].inventory = {};
       }
-  
+
       if (amount > 0) {
         charData[charID].inventory[item] = (charData[charID].inventory[item] || 0) + amount;
       } else if (amount < 0) {
@@ -1526,11 +1526,12 @@ class char {
           delete charData[charID].inventory[item]; // Optional: Remove if amount is 0
         }
       }
+
+      await updatePlayerUtil(charID, charData[charID]);
     }
-  
-    await dbm.saveCollection(collectionName, charData);
+
     if (process.env.DEBUG) console.log(errorMembers);
-  
+
     return errorMembers;
   }
 

@@ -12,7 +12,7 @@ const {
   findPlayerData,
   updatePlayer,
 } = require('./shared/shop-char-utils');
-const { clearShopCache, clearCharCache } = require('./cache-utils');
+const { clearShopCache } = require('./cache-utils');
 
 class shop {
   //Declare constants for class
@@ -400,13 +400,12 @@ class shop {
 
   static async renameCategory(oldCategory, newCategory) {
     let data = await getShopData();
-    let itemNames = Object.keys(data);
-    for (let i = 0; i < itemNames.length; i++) {
-      if (data[itemNames[i]].infoOptions.Category == oldCategory) {
-        data[itemNames[i]].infoOptions.Category = newCategory;
+    for (const itemName of Object.keys(data)) {
+      if (data[itemName].infoOptions.Category == oldCategory) {
+        data[itemName].infoOptions.Category = newCategory;
+        await dbm.updateCollectionRecord('shop', itemName, data[itemName]);
       }
     }
-    await dbm.saveCollection('shop', data);
     await refreshShopCache();
     return "Category renamed!";
   }
@@ -1254,13 +1253,19 @@ class shop {
       //Go into every character and change the item name in their inventory
       let allChars = await dbm.loadCollection('characters');
       for (let charID in allChars) {
+        let updated = false;
         if (allChars[charID].inventory && allChars[charID].inventory[itemName]) {
           allChars[charID].inventory[newValue] = allChars[charID].inventory[itemName];
           delete allChars[charID].inventory[itemName];
+          updated = true;
         }
         if (allChars[charID].storage && allChars[charID].storage[itemName]) {
           allChars[charID].storage[newValue] = allChars[charID].storage[itemName];
           delete allChars[charID].storage[itemName];
+          updated = true;
+        }
+        if (updated) {
+          await updatePlayer(charID, allChars[charID]);
         }
       }
       //Delete old item
@@ -1269,8 +1274,6 @@ class shop {
       //Change the item name in the user's editingFields
       charData.editingFields["Item Edited"] = newValue;
       await updatePlayer(player, charData);
-      await dbm.saveCollection('characters', allChars);
-      clearCharCache();
       await refreshShopCache();
 
       return `Item name changed to ${newValue}`;
@@ -1473,12 +1476,11 @@ class shop {
           if (process.env.DEBUG) console.log(allChars[characters[i]].cooldowns.craftSlots);
           allChars[characters[i]].cooldowns.craftSlots = slots;
           if (process.env.DEBUG) console.log(allChars[characters[i]].cooldowns.craftSlots);
+          await updatePlayer(characters[i], allChars[characters[i]]);
         }
       }
 
       await updatePlayer(player, charData);
-      await dbm.saveCollection('characters', allChars);
-      clearCharCache();
 
       return `Recipe name changed to ${newValue}`;
     } else {
@@ -1616,10 +1618,11 @@ class shop {
             return ("ERROR! Item " + item + " is not in shop" + "\n\nSubmitted layout string: \n " + layoutString);
           } else {
             shopData[item].category = category;
+            await dbm.updateCollectionRecord("shop", item, shopData[item]);
           }
         }
       }
-      await dbm.saveCollection("shop", shopData);
+      await refreshShopCache();
       //Convert shopMap into an ordered array of its elements with a key to avoid alphabetizing
       let shopMapInMap = {};
 
@@ -1687,9 +1690,10 @@ class shop {
           return ("ERROR! Item " + item + " is not in shop" + "\n\nSubmitted layout string: \n " + layoutString);
         } else {
           shopData[item].infoOptions.Category = categoryToEdit;
+          await dbm.updateCollectionRecord("shop", item, shopData[item]);
         }
       }
-      await dbm.saveCollection("shop", shopData);
+      await refreshShopCache();
 
       let layoutData = await dbm.loadFile("shoplayout", "shopLayout");
       // if (!layoutData.organizedLayout) {
