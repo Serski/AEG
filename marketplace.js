@@ -6,11 +6,15 @@ const clientManager = require('./clientManager'); // Importing the client manage
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 class marketplace {
   static marketplaceCache = null;
+  // Maps sale IDs to { category, itemName } to avoid O(n) scans when locating a sale
   static saleIndex = {};
 
   /**
-   * Load all marketplace data into memory, rebuilding the cache and sale index.
-   * Subsequent calls will return the cached data unless a refresh is requested.
+   * Loads marketplace data from the flat database format and rebuilds the in-memory
+   * cache and sale index. Each sale is stored as an individual row keyed by sale ID
+   * with its category and item name, so this method reconstructs a nested
+   * {category -> itemName -> saleID} structure and populates an index mapping sale IDs
+   * to their locations. Subsequent calls will return the cached data unless a refresh is requested.
    * @param {boolean} refresh - force reload even if cache exists
    * @returns {Promise<{idfile: object, marketplace: object}>}
    */

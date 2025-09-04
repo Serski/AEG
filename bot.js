@@ -62,6 +62,7 @@ client.on('clientReady', async () => {
     // Load all required collections in parallel
     const [shopData] = await Promise.all([
         shop.getShopData(),
+        // Pre-warm marketplace cache and sale index at startup
         marketplace.loadMarketplace(),
         dbm.loadCollection('keys'),
         dbm.loadCollection('recipes'),
