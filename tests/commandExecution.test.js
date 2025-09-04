@@ -10,17 +10,27 @@ const assert = require('node:assert/strict');
 const char = require('../char');
 const shop = require('../shop');
 const dbm = require('../database-manager');
+const { clearCharCache, clearShopCache } = require('../cache-utils');
+const { refreshShopCache } = require('../shared/shop-char-utils');
 const addItemsCmd = require('../commands/charCommands/additemstoplayer');
 const giveItemCmd = require('../commands/charCommands/giveitem');
 
 test('item commands update caches correctly', async (t) => {
   await t.test('additemstoplayer updates player inventory and caches', async (t) => {
     // Reset caches and set up a transferrable item
-    char.charCache = new Map();
-    shop.shopCache = {
-      Potion: { infoOptions: { 'Transferrable (Y/N)': 'Yes' } }
+    clearCharCache();
+    clearShopCache();
+    const origLoadCollection = dbm.loadCollection;
+    dbm.loadCollection = async (name) => {
+      if (name === 'shop') {
+        return {
+          Potion: { infoOptions: { 'Transferrable (Y/N)': 'Yes' } }
+        };
+      }
+      return {};
     };
-    shop.buildItemNameIndex();
+    await refreshShopCache();
+    dbm.loadCollection = origLoadCollection;
 
     const playerId = 'player1';
     const playerData = { inventory: {} };
@@ -46,18 +56,26 @@ test('item commands update caches correctly', async (t) => {
     assert.equal(reply, `Gave 2 Potion to ${playerId}`);
     assert.strictEqual(char.charCache.get(playerId), playerData);
     assert.deepStrictEqual(playerData.inventory, { Potion: 2 });
-    assert.deepStrictEqual(shop.shopCache, {
+    assert.deepStrictEqual(await shop.getShopData(), {
       Potion: { infoOptions: { 'Transferrable (Y/N)': 'Yes' } }
     });
   });
 
   await t.test('giveitemtoplayer transfers item and keeps caches consistent', async (t) => {
     // Reset caches and set up a transferrable item
-    char.charCache = new Map();
-    shop.shopCache = {
-      Potion: { infoOptions: { 'Transferrable (Y/N)': 'Yes' } }
+    clearCharCache();
+    clearShopCache();
+    const origLoadCollection2 = dbm.loadCollection;
+    dbm.loadCollection = async (name) => {
+      if (name === 'shop') {
+        return {
+          Potion: { infoOptions: { 'Transferrable (Y/N)': 'Yes' } }
+        };
+      }
+      return {};
     };
-    shop.buildItemNameIndex();
+    await refreshShopCache();
+    dbm.loadCollection = origLoadCollection2;
 
     const giver = 'giver';
     const receiver = 'receiver';
@@ -89,7 +107,7 @@ test('item commands update caches correctly', async (t) => {
     assert.strictEqual(char.charCache.get(receiver), receiverData);
     assert.strictEqual(giverData.inventory.Potion, 2);
     assert.strictEqual(receiverData.inventory.Potion, 3);
-    assert.deepStrictEqual(shop.shopCache, {
+    assert.deepStrictEqual(await shop.getShopData(), {
       Potion: { infoOptions: { 'Transferrable (Y/N)': 'Yes' } }
     });
   });
