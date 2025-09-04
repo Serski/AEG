@@ -275,9 +275,11 @@ class marketplace {
       buyerChar.inventory[foundItemName] += sale.number;
       delete marketData.marketplace[foundCategory][foundItemName][saleID];
       delete marketplace.saleIndex[saleID];
+      // Persist buyer file and drop the single sale record instead of rewriting
+      // the entire marketplace collection.
       await Promise.all([
         char.updatePlayer(buyerIDStr, buyerChar),
-        dbm.saveCollection('marketplace', marketData)
+        dbm.removeCollectionRecord('marketplace', String(saleID))
       ]);
       marketplace.marketplaceCache = marketData;
       let embed = new EmbedBuilder();
@@ -298,16 +300,18 @@ class marketplace {
     buyerChar.inventory[foundItemName] = buyerChar.inventory[foundItemName] || 0;
     buyerChar.inventory[foundItemName] += Number(sale.number);
 
-    // Remove the sale from the marketplace
+    // Remove the sale from the marketplace and index
     delete marketData.marketplace[foundCategory][foundItemName][saleID];
     delete marketplace.saleIndex[saleID];
 
-    // Save updated character files and marketplace
+    // Incrementally persist changes: update both character files and delete just
+    // the sold listing record from storage.
     await Promise.all([
       char.updatePlayer(buyerIDStr, buyerChar),
       char.updatePlayer(sellerIDStr, sellerChar),
-      dbm.saveCollection('marketplace', marketData)
+      dbm.removeCollectionRecord('marketplace', String(saleID))
     ]);
+    // Update in-memory cache after targeted deletion
     marketplace.marketplaceCache = marketData;
 
     let embed = new EmbedBuilder();
