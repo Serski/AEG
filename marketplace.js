@@ -45,12 +45,13 @@ class marketplace {
    * Items will be added to the marketplace according to their item name and category- i.e. all iron swords will be next to each other, and the iron swords will be next to steel swords
    * */ 
   static async postSale(numberItems, itemName, price, sellerID) {
+    // Ensure marketplace cache and lastID are current
+    await marketplace.loadMarketplace();
     const shopData = await shop.getShopData();
 
     // Load the character file
     const [sellerIDStr, charData] = await char.findPlayerData(sellerID);
-    const mktData = marketplace.marketplaceCache || { idfile: { lastID: 1000 }, marketplace: {} };
-    marketplace.marketplaceCache = mktData;
+    const mktData = marketplace.marketplaceCache;
     // Find the item name using shop.findItemName
     itemName = await shop.findItemName(itemName, shopData);
     if (itemName == "ERROR") {
@@ -107,10 +108,9 @@ class marketplace {
     page = Number(page);
     // Load cached marketplace and shop data in parallel
     const [marketData, shopData] = await Promise.all([
-      marketplace.marketplaceCache ?? dbm.loadCollection('marketplace'),
+      marketplace.loadMarketplace(),
       shop.getShopData()
     ]);
-    marketplace.marketplaceCache = marketData;
 
     // Max items allowed per page
     const maxItemsPerPage = 25;
@@ -226,10 +226,9 @@ class marketplace {
   static async showSales(sellerID, page) {
     // Load cached marketplace and shop data in parallel
     const [marketData, shopData] = await Promise.all([
-      marketplace.marketplaceCache ?? dbm.loadCollection('marketplace'),
+      marketplace.loadMarketplace(),
       shop.getShopData()
     ]);
-    marketplace.marketplaceCache = marketData;
     // Create an embed to return on success. Will just say @user has listed **numberItems :itemIcon: itemName** for <:Gold:1232097113089904710>**price**.
     let embed = new EmbedBuilder();
     const playerUser = await clientManager.getUser(sellerID);
@@ -278,8 +277,7 @@ class marketplace {
   //Buy a sale. Send the money from the buyer to the seller, and give the buyer the items.
   //If the seller is buying their own sale, merely give them back their items; no need to check their money.
   static async buySale(saleID, buyerID) {
-    const marketData = marketplace.marketplaceCache ?? await dbm.loadCollection('marketplace');
-    marketplace.marketplaceCache = marketData;
+    const marketData = await marketplace.loadMarketplace();
     const shopData = await shop.getShopData();
 
     // Locate the sale using the index
@@ -372,9 +370,7 @@ class marketplace {
   //Get itemcategory, itemname and sale from saleID
   static async getSale(saleID, marketData = null) {
     // Load marketplace data if not provided
-    const data = marketData
-      ?? marketplace.marketplaceCache
-      ?? await dbm.loadCollection('marketplace');
+    const data = marketData ?? await marketplace.loadMarketplace();
     marketplace.marketplaceCache = data;
     // Use the saleIndex if possible
     let entry = marketplace.saleIndex[saleID];
