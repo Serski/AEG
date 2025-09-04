@@ -34,3 +34,11 @@ granted, and a log entry is written to the `raidLog` collection for later
 analysis. A short cooldown prevents spamming the command. Session state is kept
 in-memory but can be swapped for Redis in production.
 
+## Shared Shop/Char Utilities
+
+Common helpers for item lookup and character persistence are located in
+`shared/shop-char-utils.js`. These functions are used by both `shop.js` and
+`char.js` and are kept in a standalone module to avoid circular dependencies.
+Future features that need shop or character data should import from this shared
+file rather than referencing `shop.js` or `char.js` directly.
+
