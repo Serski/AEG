@@ -7,6 +7,36 @@ const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('
 class marketplace {
   static marketplaceCache = null;
   static saleIndex = {};
+
+  /**
+   * Load all marketplace data into memory, rebuilding the cache and sale index.
+   * Subsequent calls will return the cached data unless a refresh is requested.
+   * @param {boolean} refresh - force reload even if cache exists
+   * @returns {Promise<{idfile: object, marketplace: object}>}
+   */
+  static async loadMarketplace(refresh = false) {
+    if (marketplace.marketplaceCache && !refresh) {
+      return marketplace.marketplaceCache;
+    }
+    const rows = await dbm.loadCollection('marketplace');
+    const mktData = { idfile: {}, marketplace: {} };
+    const index = {};
+    for (const [id, row] of Object.entries(rows)) {
+      if (id === 'idfile') {
+        mktData.idfile = row;
+        continue;
+      }
+      const { category, itemName, ...sale } = row;
+      mktData.marketplace[category] = mktData.marketplace[category] || {};
+      mktData.marketplace[category][itemName] = mktData.marketplace[category][itemName] || {};
+      mktData.marketplace[category][itemName][id] = sale;
+      index[id] = { category, itemName };
+    }
+    marketplace.marketplaceCache = mktData;
+    marketplace.saleIndex = index;
+    return mktData;
+  }
+
   /**Function for a player to post a sale.
    * Will take the number of items, the item name, and the price they want to sell it for.
    * Will also be passed their user ID
