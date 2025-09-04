@@ -1,6 +1,5 @@
 const dbm = require('./database-manager'); // Importing the database manager
 const keys = require('./keys');
-const char = require('./char');
 const Discord = require('discord.js');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 const clientManager = require('./clientManager');
@@ -544,6 +543,7 @@ class shop {
 
   //function to create an embed of player inventory
   static async createInventoryEmbed(charID) {
+    const char = require('./char');
     // load data for this character and shop.json
     const [player, charData] = await char.findPlayerData(charID);
     const shopData = await this.getShopData();
@@ -623,6 +623,7 @@ class shop {
   }
 
   static async storage(charID) {
+    const char = require('./char');
     // load data for this character and shop.json
     const [player, charData] = await char.findPlayerData(charID);
     const shopData = await this.getShopData();
@@ -1010,6 +1011,7 @@ class shop {
     Usage Options: Is Usable, Removed on Use, Need Role, Give Role, Take Role, Show an Image, Show a Message, Give/Take Money, Cooldown, Give Item, Give Item 2, Give Item 3, Take Item, Take Item 2, Take Item 3, Give Item, Give Item 2, Give Item 3, Change HP, Change STR, Change DEX, Change INT, Change CHA
     */
   static async editItemMenu(itemName, pageNumber, numericID) {
+    const char = require('./char');
     pageNumber = Number(pageNumber);
     let shopData = await this.getShopData();
     itemName = await this.findItemName(itemName, shopData);
@@ -1112,6 +1114,7 @@ class shop {
   }
 
   static async editRecipeMenu(recipeName, numericID) {
+    const char = require('./char');
     // Load the recipe data
     let recipeData = await dbm.loadCollection('recipes', recipeName);
 
@@ -1155,6 +1158,7 @@ class shop {
   }
 
   static async editItemField(numericID, fieldNumber, newValue) {
+    const char = require('./char');
     let shopData = await this.getShopData();
     // Load user data
     let [player, charData] = await char.findPlayerData(numericID);
@@ -1315,6 +1319,7 @@ class shop {
   }
 
   static async editRecipeField(numericID, fieldNumber, newValue) {
+    const char = require('./char');
     // Load user data
     let [player, charData] = await char.findPlayerData(numericID);
     let recipeName;
