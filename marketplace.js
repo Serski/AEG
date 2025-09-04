@@ -40,27 +40,30 @@ class marketplace {
     // Add them to the marketplace under a created unique ID, one greater than the last. The last will be under lastID in marketplace.json
     mktData.idfile = mktData.idfile || {};
     mktData.idfile.lastID = mktData.idfile.lastID || 1000;
-    let itemID = mktData.idfile.lastID + 1;
-    mktData.idfile.lastID = itemID;
+    const saleID = mktData.idfile.lastID + 1;
+    mktData.idfile.lastID = saleID;
     // Add the item to the marketplace according to its item name and category. Category can be found in shop.getItemCategory
     const itemCategory = await shop.getItemCategory(itemName, shopData);
     mktData.marketplace = mktData.marketplace || {};
     mktData.marketplace[itemCategory] = mktData.marketplace[itemCategory] || {};
     mktData.marketplace[itemCategory][itemName] = mktData.marketplace[itemCategory][itemName] || {};
 
-    mktData.marketplace[itemCategory][itemName][itemID] = {
-      "sellerID": String(sellerID),
-      "price": price,
-      "number": numberItems
-    }
-    // Save the character.json file and update marketplace data in parallel
+    const saleRecord = {
+      sellerID: String(sellerID),
+      price,
+      number: numberItems
+    };
+    mktData.marketplace[itemCategory][itemName][saleID] = saleRecord;
+    // Save the character.json file and update marketplace data in parallel.
+    // Single-row updates avoid rewriting the entire collection, reducing I/O and contention.
     await Promise.all([
       char.updatePlayer(sellerIDStr, charData),
-      dbm.saveCollection('marketplace', mktData)
+      dbm.updateCollectionRecord('marketplace', 'idfile', mktData.idfile), // persist new lastID only
+      dbm.updateCollectionRecord('marketplace', String(saleID), { category: itemCategory, itemName, ...saleRecord }) // write just the new sale
     ]);
+    // Update cache and index without reloading the whole table
     marketplace.marketplaceCache = mktData;
-    // Track sale location for faster lookups
-    marketplace.saleIndex[itemID] = { category: itemCategory, itemName };
+    marketplace.saleIndex[saleID] = { category: itemCategory, itemName };
     // Create an embed to return on success. Will just say @user listed **numberItems :itemIcon: itemName** to the **/sales** page for <:Gold:1232097113089904710>**price**.
     let embed = new EmbedBuilder();
     embed.setDescription(`<@${sellerID}> listed **${numberItems} ${await shop.getItemIcon(itemName, shopData)} ${itemName}** to the **/sales** page for ${clientManager.getEmoji("Gold")}**${price}**.`);
