@@ -1,6 +1,8 @@
 const dbm = require('./database-manager'); // Importing the database manager
 const keys = require('./keys');
-const shop = require('./shop');
+// NOTE: shared utilities for shop and char interactions live in shared/shop-char-utils.js
+// Import shared helpers instead of cross-importing shop.js
+const { getShopData, findItemName, findPlayerData: findPlayerDataUtil, updatePlayer: updatePlayerUtil, charCache } = require('./shared/shop-char-utils');
 const clientManager = require('./clientManager');
 const axios = require('axios');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, createWebhook } = require('discord.js');
@@ -8,7 +10,7 @@ const shipUtils = require('./shipUtils');
 
 class char {
   static incomeListCache = null;
-  static charCache = new Map();
+  static charCache = charCache;
   static async warn(numericID) {
     if (process.env.DEBUG) console.log(numericID);
     let [playerID, charData] = await this.findPlayerData(numericID);
@@ -567,8 +569,8 @@ class char {
     //   'Take Item', 'Take Item 2', 'Take Item 3', 'Take Item 4', 'Take Item 5',
     //   'Change HP (#)', 'Change STR (#)', 'Change DEX (#)', 'Change INT (#)', 'Change CHA (#)', 'Revive (Y/N)', 'Durability (#)'
     // ];
-    let shopData = await shop.getShopData();
-    itemName = await shop.findItemName(itemName, shopData);
+    let shopData = await getShopData();
+    itemName = await findItemName(itemName, shopData);
 
     if (!numToUse) {
       numToUse = 1;
@@ -941,7 +943,7 @@ class char {
   //Creates cooldowns embed, followed by a return string if any recipes are completed
   static async craftingCooldowns(charID) {
     let charData = await dbm.loadCollection('characters');
-    let shopData = await shop.getShopData();
+    let shopData = await getShopData();
     let recipeData = await dbm.loadCollection('recipes');
     let finishedCrafts = [];
 
@@ -1036,7 +1038,7 @@ class char {
 
 
   /*static async craft(charID, itemName) {
-    itemName = await shop.findItemName(itemName);
+    itemName = await findItemName(itemName);
     if (itemName === "ERROR") {
       return "Not a valid item";
     }
@@ -1148,7 +1150,7 @@ class char {
 
       for (let i = 0; i < finishedCrafts.length; i++) {
         let key = finishedCrafts[i];
-        key = await shop.findItemName(key);
+        key = await findItemName(key);
 
         if (key === "ERROR") {
           return "Somehow, this isn't a valid item. This is a problem. Contact Alex";
@@ -1175,7 +1177,7 @@ class char {
     } else if (numToUse < 1) {
       return "Must use at least 1";
     }
-    itemName = await shop.findItemName(itemName);
+    itemName = await findItemName(itemName);
     if (itemName === "ERROR") {
       return "Not a valid item";
     }
@@ -1449,8 +1451,8 @@ class char {
 
   static async addItemToPlayer(player, item, amount) {
     let collectionName = 'characters';
-    const shopData = await shop.getShopData();
-    item = await shop.findItemName(item, shopData);
+    const shopData = await getShopData();
+    item = await findItemName(item, shopData);
     let charData;
     [player, charData] = await this.findPlayerData(player);
     if (!player) {
@@ -1534,8 +1536,8 @@ class char {
 
   static async store(player, item, amount) {
     let collectionName = 'characters';
-    const shopData = await shop.getShopData();
-    item = await shop.findItemName(item, shopData);
+    const shopData = await getShopData();
+    item = await findItemName(item, shopData);
     let charData;
     [player, charData] = await this.findPlayerData(player);
     if (!player) {
@@ -1572,8 +1574,8 @@ class char {
 
   static async grab(player, item, amount) {
     let collectionName = 'characters';
-    const shopData = await shop.getShopData();
-    item = await shop.findItemName(item, shopData);
+    const shopData = await getShopData();
+    item = await findItemName(item, shopData);
     let charData;
     [player, charData] = await this.findPlayerData(player);
     if (!player) {
@@ -1688,9 +1690,9 @@ class char {
 
     //Check if player has item, if they do, remove it and give it to player
     let collectionName = 'characters';
-    const shopData = await shop.getShopData();
+    const shopData = await getShopData();
 
-    item = await shop.findItemName(item, shopData);
+    item = await findItemName(item, shopData);
     if (item === "ERROR") {
       return "Not a valid item";
     }
@@ -1772,22 +1774,11 @@ class char {
 
 
   static async findPlayerData(id) {
-    const player = String(id);
-    if (this.charCache.has(player)) {
-      return [player, this.charCache.get(player)];
-    }
-    const charData = await dbm.loadFile('characters', player);
-    if (!charData) {
-      return [false, false];
-    }
-    this.charCache.set(player, charData);
-    return [player, charData];
+    return findPlayerDataUtil(id);
   }
 
   static async updatePlayer(id, data) {
-    const player = String(id);
-    await dbm.saveFile('characters', player, data);
-    this.charCache.set(player, data);
+    return updatePlayerUtil(id, data);
   }
 }
 
