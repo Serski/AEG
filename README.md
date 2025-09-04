@@ -42,3 +42,9 @@ Common helpers for item lookup and character persistence are located in
 Future features that need shop or character data should import from this shared
 file rather than referencing `shop.js` or `char.js` directly.
 
+## Development
+
+Character-related helpers must require `char` within function bodies.
+This lazy `require('./char')` pattern prevents circular dependencies
+with `char.js`.
+
