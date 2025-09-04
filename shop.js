@@ -4,7 +4,15 @@ const Discord = require('discord.js');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 const clientManager = require('./clientManager');
 // NOTE: shared utilities for shop and char interactions live in shared/shop-char-utils.js
-const { getShopData, refreshShopCache, clearShopCache, findItemName, charCache, findPlayerData, updatePlayer } = require('./shared/shop-char-utils');
+const {
+  getShopData,
+  refreshShopCache,
+  findItemName,
+  charCache,
+  findPlayerData,
+  updatePlayer,
+} = require('./shared/shop-char-utils');
+const { clearShopCache, clearCharCache } = require('./cache-utils');
 
 class shop {
   //Declare constants for class
@@ -1262,7 +1270,7 @@ class shop {
       charData.editingFields["Item Edited"] = newValue;
       await updatePlayer(player, charData);
       await dbm.saveCollection('characters', allChars);
-      charCache.clear();
+      clearCharCache();
       await refreshShopCache();
 
       return `Item name changed to ${newValue}`;
@@ -1470,7 +1478,7 @@ class shop {
 
       await updatePlayer(player, charData);
       await dbm.saveCollection('characters', allChars);
-      charCache.clear();
+      clearCharCache();
 
       return `Recipe name changed to ${newValue}`;
     } else {
