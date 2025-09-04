@@ -1,6 +1,7 @@
 const dbm = require('./database-manager'); // Importing the database manager
 const keys = require('./keys');
-const char = require('./char');
+const { getCharModule } = require('./charModule');
+const char = getCharModule();
 const axios = require('axios');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, createWebhook, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } = require('discord.js');
 const shop = require('./shop');

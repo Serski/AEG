@@ -1,5 +1,6 @@
 const shop = require('./shop');
-const char = require('./char');
+const { getCharModule } = require('./charModule');
+const char = getCharModule();
 const marketplace = require('./marketplace');
 const admin = require('./admin');
 

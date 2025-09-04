@@ -1,6 +1,7 @@
 const dbm = require('./database-manager'); // Importing the database manager
 const shop = require('./shop'); // Importing the shop module
-const char = require('./char'); // Importing the character manager
+const { getCharModule } = require('./charModule');
+const char = getCharModule(); // Importing the character manager
 const clientManager = require('./clientManager'); // Importing the client manager
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 class marketplace {
