@@ -17,11 +17,12 @@ class marketplace {
    * to their locations. Subsequent calls will return the cached data unless a refresh is requested.
    * @param {boolean} refresh - force reload even if cache exists
    * @returns {Promise<{idfile: object, marketplace: object}>}
-   */
+  */
   static async loadMarketplace(refresh = false) {
     if (marketplace.marketplaceCache && !refresh) {
       return marketplace.marketplaceCache;
     }
+    console.log('Loading marketplace data from DB…');
     const rows = await dbm.loadCollection('marketplace');
     const { idfile = {}, ...salesRows } = rows;
     const mktData = { idfile, marketplace: {} };
@@ -42,6 +43,7 @@ class marketplace {
     }
     marketplace.marketplaceCache = mktData;
     marketplace.saleIndex = index;
+    console.log('Marketplace data loaded and cached');
     return mktData;
   }
 
