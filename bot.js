@@ -60,9 +60,9 @@ client.on('clientReady', async () => {
     const preloadChars = (process.env.PRELOAD_CHAR_IDS || '').split(',').filter(Boolean);
 
     // Load all required collections in parallel
-    const [shopData, marketData] = await Promise.all([
+    const [shopData] = await Promise.all([
         shop.getShopData(),
-        dbm.loadCollection('marketplace'),
+        marketplace.loadMarketplace(),
         dbm.loadCollection('keys'),
         dbm.loadCollection('recipes'),
         ...preloadChars.map(id => char.findPlayerData(id.trim()))
@@ -70,18 +70,6 @@ client.on('clientReady', async () => {
 
     // Share shop data cache across modules
     marketplace.shopDataCache = shopData;
-    marketplace.marketplaceCache = marketData;
-
-    // Build a quick lookup for sale IDs -> { category, itemName }
-    marketplace.saleIndex = {};
-    const marketplaceData = marketData.marketplace || {};
-    for (const [category, items] of Object.entries(marketplaceData)) {
-        for (const [itemName, sales] of Object.entries(items)) {
-            for (const saleID of Object.keys(sales)) {
-                marketplace.saleIndex[saleID] = { category, itemName };
-            }
-        }
-    }
 });
 
 // //message handler
