@@ -22,19 +22,21 @@ module.exports = {
                 .setRequired(true)
         ),
     async execute(interaction) {
-            await interaction.deferReply({ flags: 64 });
+        await interaction.deferReply({ ephemeral: true });
+
         const itemName = interaction.options.getString('itemname');
         const quantity = interaction.options.getInteger('quantity');
         const price = interaction.options.getInteger('price');
         const numericID = interaction.user.id;
 
-        (async () => {
-            let reply = await marketplace.postSale(quantity, itemName, price, String(numericID));
-            if (typeof (reply) == 'string') {
-                await interaction.editReply(reply);
-            } else {
-                await interaction.editReply({ embeds: [reply] });
-            }
-        })()
+        const [reply] = await Promise.all([
+            marketplace.postSale(quantity, itemName, price, String(numericID))
+        ]);
+
+        if (typeof reply === 'string') {
+            await interaction.editReply(reply);
+        } else {
+            await interaction.editReply({ embeds: [reply] });
+        }
     }
 };
