@@ -30,6 +30,12 @@ module.exports = {
     const numericID = interaction.user.id;
     const charId = String(numericID);
 
+    // Prevent concurrent raid sessions for the same user
+    if (clientManager.getRaidSession(numericID)) {
+      await interaction.editReply({ content: 'You already have an active raid in progress.' });
+      return;
+    }
+
     const [player, charData] = await char.findPlayerData(charId);
     if (!charData) {
       await interaction.editReply({ content: 'Create a character first with /newchar.' });
@@ -43,6 +49,9 @@ module.exports = {
       await interaction.editReply({ content: `You must wait ${mins} more minutes before raiding again.` });
       return;
     }
+
+    // Mark raid session before any interactive prompts
+    clientManager.setRaidSession(numericID, { selectedTarget: null });
 
     const targets = await raidUtils.loadRaidTargets();
     const targetOptions = Object.keys(targets).map(key => ({
@@ -81,6 +90,7 @@ module.exports = {
         time: 60000
       });
     } catch (err) {
+      clientManager.clearRaidSession(numericID);
       return;
     }
 
