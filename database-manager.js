@@ -40,6 +40,50 @@ async function pgBoot() {
   usingPg = false;
 }
 
+const TRANSIENT = /(ECONNRESET|terminat|57P01|57P02|57P03|connection error)/i;
+
+async function runWithRetry(op, max = 2) {
+  let a = 0;
+  while (true) {
+    try {
+      return await op();
+    } catch (e) {
+      if (++a > max || !TRANSIENT.test(String(e.message))) throw e;
+      await new Promise((r) => setTimeout(r, 500 * a));
+    }
+  }
+}
+
+async function withClient(fn) {
+  const c = await pool.connect();
+  try {
+    await c.query("SET statement_timeout = '30s'").catch(() => {});
+    return await fn(c);
+  } finally {
+    c.release();
+  }
+}
+
+async function withTx(fn) {
+  return withClient(async (c) => {
+    await c.query('BEGIN');
+    try {
+      const r = await fn(c);
+      await c.query('COMMIT');
+      return r;
+    } catch (e) {
+      try {
+        await c.query('ROLLBACK');
+      } catch {}
+      throw e;
+    }
+  });
+}
+
+async function ping() {
+  return runWithRetry(() => withClient((c) => c.query('SELECT 1')));
+}
+
 pgBoot().catch(console.error);
 
 const storageDir = path.join(__dirname, 'jsonStorage');
@@ -428,5 +472,6 @@ module.exports = {
   logData,
   updateCollectionRecord,
   removeCollectionRecord,
+  ping,
 };
 
