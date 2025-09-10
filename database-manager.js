@@ -2,32 +2,45 @@ const fs = require('fs');
 const path = require('path');
 const config = require('./config');
 
-let pgClient = null;
-let usingPg = false;
-let pgReady = Promise.resolve();
-
+let Pool;
 try {
-  const { Client } = require('pg');
-  if (config.databaseUrl) {
-    const pgOptions = { connectionString: config.databaseUrl };
-    if (process.env.AEG_PG_KEEPALIVE === 'true') {
-      pgOptions.keepAlive = true;
-      pgOptions.keepAliveInitialDelayMillis = 10000;
-    }
-    pgClient = new Client(pgOptions);
-    pgReady = pgClient
-      .connect()
-      .then(() => {
-        usingPg = true;
-      })
-      .catch((err) => {
-        console.error('PostgreSQL connection error, falling back to JSON storage:', err);
-        usingPg = false;
-      });
-  }
+  ({ Pool } = require('pg'));
 } catch (err) {
   console.error('pg module not installed, falling back to JSON storage:', err);
 }
+
+let pool = null;
+let usingPg = false;
+
+async function pgBoot() {
+  if (pool || !config.databaseUrl || !Pool) return;
+  const pgOptions = {
+    connectionString: config.databaseUrl,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
+  };
+  if (process.env.AEG_PG_KEEPALIVE === 'true') {
+    pgOptions.keepAlive = true;
+    pgOptions.keepAliveInitialDelayMillis = 10000;
+  }
+  pool = new Pool(pgOptions);
+  pool.on('error', (err) => {
+    console.error('PostgreSQL pool error:', err);
+  });
+  for (let attempt = 1; attempt <= 10; attempt++) {
+    try {
+      await pool.query('SELECT 1');
+      usingPg = true;
+      return;
+    } catch (err) {
+      await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+    }
+  }
+  usingPg = false;
+}
+
+pgBoot().catch(console.error);
 
 const storageDir = path.join(__dirname, 'jsonStorage');
 if (!fs.existsSync(storageDir)) {
@@ -54,21 +67,21 @@ function formatTable(name) {
 const ensuredTables = new Set();
 
 async function ensureTable(table) {
-  await pgReady;
+  await pgBoot();
   if (!usingPg) return;
   if (ensuredTables.has(table)) return;
-  await pgClient.query(
+  await pool.query(
     `CREATE TABLE IF NOT EXISTS ${table} (id TEXT PRIMARY KEY, data JSONB)`
   );
   ensuredTables.add(table);
 }
 
 async function updateCollectionRecord(collectionName, id, data) {
-  await pgReady;
+  await pgBoot();
   if (usingPg) {
     const table = formatTable(collectionName);
     if (!ensuredTables.has(table)) await ensureTable(table);
-    await pgClient.query(
+    await pool.query(
       `INSERT INTO ${table} (id, data) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`,
       [id, data]
     );
@@ -95,11 +108,11 @@ async function updateCollectionRecord(collectionName, id, data) {
 }
 
 async function removeCollectionRecord(collectionName, id) {
-  await pgReady;
+  await pgBoot();
   if (usingPg) {
     const table = formatTable(collectionName);
     if (!ensuredTables.has(table)) await ensureTable(table);
-    await pgClient.query(`DELETE FROM ${table} WHERE id = $1`, [id]);
+    await pool.query(`DELETE FROM ${table} WHERE id = $1`, [id]);
     getCache(collectionName).delete(id);
   } else {
     const dirPath = path.join(storageDir, collectionName);
@@ -110,7 +123,7 @@ async function removeCollectionRecord(collectionName, id) {
 }
 
 async function saveCollection(collectionName, data) {
-  await pgReady;
+  await pgBoot();
   if (usingPg) {
     const table = formatTable(collectionName);
     if (!ensuredTables.has(table)) await ensureTable(table);
@@ -119,7 +132,7 @@ async function saveCollection(collectionName, data) {
     if (fullyLoadedCollections.has(collectionName)) {
       existing = new Set(cache.keys());
     } else {
-      const res = await pgClient.query(`SELECT id FROM ${table}`);
+      const res = await pool.query(`SELECT id FROM ${table}`);
       existing = new Set(res.rows.map((r) => r.id));
     }
     for (const [id, value] of Object.entries(data)) {
@@ -181,7 +194,7 @@ async function saveCollection(collectionName, data) {
 }
 
 async function loadCollection(collectionName, forceRefresh = false) {
-  await pgReady;
+  await pgBoot();
   const cache = getCache(collectionName);
   if (!forceRefresh && fullyLoadedCollections.has(collectionName)) {
     return Object.fromEntries(cache);
@@ -189,7 +202,7 @@ async function loadCollection(collectionName, forceRefresh = false) {
   if (usingPg) {
     const table = formatTable(collectionName);
     if (!ensuredTables.has(table)) await ensureTable(table);
-    const res = await pgClient.query(`SELECT id, data FROM ${table}`);
+    const res = await pool.query(`SELECT id, data FROM ${table}`);
     const data = {};
     cache.clear();
     for (const row of res.rows) {
@@ -251,11 +264,11 @@ async function loadCollectionFileNames(collectionName) {
 }
 
 async function saveFile(collectionName, docId, data) {
+  await pgBoot();
   if (usingPg) {
-    await pgReady;
     const table = formatTable(collectionName);
     if (!ensuredTables.has(table)) await ensureTable(table);
-    await pgClient.query(
+    await pool.query(
       `INSERT INTO ${table} (id, data) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`,
       [docId, data]
     );
@@ -275,11 +288,11 @@ async function loadFile(collectionName, docId, forceRefresh = false) {
   const cache = getCache(collectionName);
   if (!forceRefresh && cache.has(docId)) return cache.get(docId);
   if (!forceRefresh && fullyLoadedCollections.has(collectionName)) return undefined;
+  await pgBoot();
   if (usingPg) {
-    await pgReady;
     const table = formatTable(collectionName);
     if (!ensuredTables.has(table)) await ensureTable(table);
-    const res = await pgClient.query(`SELECT data FROM ${table} WHERE id = $1`, [docId]);
+    const res = await pool.query(`SELECT data FROM ${table} WHERE id = $1`, [docId]);
     const row = res.rows[0];
     if (row) {
       cache.set(docId, row.data);
@@ -319,11 +332,11 @@ async function loadFile(collectionName, docId, forceRefresh = false) {
 }
 
 async function docDelete(collectionName, docName) {
+  await pgBoot();
   if (usingPg) {
-    await pgReady;
     const table = formatTable(collectionName);
     if (!ensuredTables.has(table)) await ensureTable(table);
-    await pgClient.query(`DELETE FROM ${table} WHERE id = $1`, [docName]);
+    await pool.query(`DELETE FROM ${table} WHERE id = $1`, [docName]);
     getCache(collectionName).delete(docName);
   } else {
     const dirPath = path.join(storageDir, collectionName);
@@ -346,11 +359,11 @@ async function docDelete(collectionName, docName) {
 }
 
 async function fieldDelete(collectionName, docName, deleteField) {
+  await pgBoot();
   if (usingPg) {
-    await pgReady;
     const table = formatTable(collectionName);
     if (!ensuredTables.has(table)) await ensureTable(table);
-    await pgClient.query(`UPDATE ${table} SET data = data - $2 WHERE id = $1`, [docName, deleteField]);
+    await pool.query(`UPDATE ${table} SET data = data - $2 WHERE id = $1`, [docName, deleteField]);
     const cache = getCache(collectionName);
     if (cache.has(docName)) {
       const doc = cache.get(docName);
@@ -367,9 +380,9 @@ async function fieldDelete(collectionName, docName, deleteField) {
 }
 
 async function logData() {
+  await pgBoot();
   if (usingPg) {
-    await pgReady;
-    const res = await pgClient.query(
+    const res = await pool.query(
       `SELECT tablename FROM pg_tables WHERE schemaname='public'`
     );
     const tables = res.rows
