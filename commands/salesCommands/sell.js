@@ -22,7 +22,7 @@ module.exports = {
                 .setRequired(true)
         ),
     async execute(interaction) {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
 
         const itemName = interaction.options.getString('itemname');
         const quantity = interaction.options.getInteger('quantity');
