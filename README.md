@@ -48,3 +48,11 @@ Character-related helpers must require `char` within function bodies.
 This lazy `require('./char')` pattern prevents circular dependencies
 with `char.js`.
 
+## Environment Flags
+
+* `AEG_SAFE_COMPONENTS=true|false` (default `true`) - Enables safer handling of Discord component interactions to avoid expired updates.
+* `AEG_GLOBAL_GUARDS=true|false` (default `true`) - Installs global handlers for unhandled rejections and uncaught exceptions.
+* `AEG_WARMUP_TICK=true|false` (default `false`) - Periodically refreshes marketplace and shop caches while the bot runs.
+* `AEG_WARMUP_INTERVAL_MS=600000` - Interval in milliseconds for the warmup tick when enabled.
+* `AEG_PG_KEEPALIVE=true|false` (default `false`) - Keeps PostgreSQL connections alive with periodic packets.
+
