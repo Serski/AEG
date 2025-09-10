@@ -12,11 +12,16 @@ const shop = require('./shop');
 const marketplace = require('./marketplace');
 // Preload frequently used key data
 require('./keys');
-const client = new Client({ 
+
+if (process.env.AEG_GLOBAL_GUARDS !== 'false') {
+    process.on('unhandledRejection', e => console.error('[unhandledRejection]', e));
+    process.on('uncaughtException', e => console.error('[uncaughtException]', e));
+}
+const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
-		GatewayIntentBits.GuildMembers,
+                GatewayIntentBits.GuildMembers,
         GatewayIntentBits.MessageContent,
     ],
 });
@@ -68,6 +73,15 @@ client.once(Events.ClientReady, async () => {
 
     // Share shop data cache across modules
     marketplace.shopDataCache = shopData;
+
+    if (process.env.AEG_WARMUP_TICK === 'true') {
+        const interval = Number(process.env.AEG_WARMUP_INTERVAL_MS) || 600000;
+        setInterval(async () => {
+            try {
+                await Promise.all([marketplace.loadMarketplace(), shop.getShopData()]);
+            } catch (err) { console.error('warmup tick error', err); }
+        }, interval);
+    }
 });
 
 // //message handler
@@ -102,14 +116,14 @@ client.on(Events.InteractionCreate, async interaction => {
 			console.error(error);
 			console.error("BELOW IS THE REST OF THINGS");
 			if (interaction.replied || interaction.deferred) {
-				await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
-			} else {
-				await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
-			}
-		}
-	} else {
-		interactionHandler.handle(interaction);
-	}
+                                await interaction.followUp({ content: 'There was an error while executing this command!', flags: 64 });
+                        } else {
+                                await interaction.reply({ content: 'There was an error while executing this command!', flags: 64 });
+                        }
+                }
+        } else {
+                interactionHandler.handle(interaction);
+        }
 });
 
 client.on('guildMemberAdd', member => {
