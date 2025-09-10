@@ -19,7 +19,8 @@ addItem = async (interaction) => {
     if (itemIcon[i] == ":") {
       colonCounter++;
       if (colonCounter >= 3) {
-        await interaction.reply({content: `Item creation failed. Invalid icon format.`, ephemeral: true});
+        // flags 64 preserves ephemeral behavior without using the deprecated `ephemeral` field
+        await interaction.reply({ content: `Item creation failed. Invalid icon format.`, flags: 64 });
         return;
       }
     }
@@ -31,7 +32,7 @@ addItem = async (interaction) => {
     await interaction.reply(`Item '${itemName}' has been added to the item list. Use /shoplayout or ping Alex to add to shop.`);
   } else {
     // Handle missing information
-    await interaction.reply({content: 'Item creation failed. Please provide a name and integer price.', ephemeral: true});
+    await interaction.reply({ content: 'Item creation failed. Please provide a name and integer price.', flags: 64 });
   }
 };
 // {
@@ -153,7 +154,7 @@ newChar = async (interaction) => {
     await interaction.reply(`Character '${charName}' has been created.`);
   } else {
     // Handle missing information
-    await interaction.reply({content: 'Character creation failed. Please provide a name and bio.', ephemeral: true});
+    await interaction.reply({ content: 'Character creation failed. Please provide a name and bio.', flags: 64 });
   }
 };
 
