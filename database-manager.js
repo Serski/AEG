@@ -9,7 +9,12 @@ let pgReady = Promise.resolve();
 try {
   const { Client } = require('pg');
   if (config.databaseUrl) {
-    pgClient = new Client({ connectionString: config.databaseUrl });
+    const pgOptions = { connectionString: config.databaseUrl };
+    if (process.env.AEG_PG_KEEPALIVE === 'true') {
+      pgOptions.keepAlive = true;
+      pgOptions.keepAliveInitialDelayMillis = 10000;
+    }
+    pgClient = new Client(pgOptions);
     pgReady = pgClient
       .connect()
       .then(() => {
