@@ -1,6 +1,8 @@
 class clientManager {
     // simple in-memory raid session store
     static raidSessions = new Map();
+    // simple in-memory mine session store
+    static mineSessions = new Map();
 
     static getRaidSession(userID) {
         const session = this.raidSessions.get(userID);
@@ -18,6 +20,24 @@ class clientManager {
 
     static clearRaidSession(userID) {
         this.raidSessions.delete(userID);
+    }
+
+    static getMineSession(userID) {
+        const session = this.mineSessions.get(userID);
+        if (session && session.expiresAt > Date.now()) {
+            return session;
+        }
+        this.mineSessions.delete(userID);
+        return null;
+    }
+
+    static setMineSession(userID, data) {
+        const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
+        this.mineSessions.set(userID, { ...data, expiresAt });
+    }
+
+    static clearMineSession(userID) {
+        this.mineSessions.delete(userID);
     }
     static getEmoji(emojiName) {
         const bot = require('./bot');
