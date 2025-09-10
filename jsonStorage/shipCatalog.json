@@ -3,5 +3,7 @@
   "Destroyer": { "tier": 2, "attack": 70, "defense": 55, "speed": 65, "hp": 550 },
   "Heavy Frigate": { "tier": 3, "attack": 90, "defense": 75, "speed": 45, "hp": 800 },
   "Cruiser": { "tier": 4, "attack": 130, "defense": 90, "speed": 35, "hp": 1200 },
-  "Battleship": { "tier": 5, "attack": 170, "defense": 110, "speed": 25, "hp": 1800 }
+  "Battleship": { "tier": 5, "attack": 170, "defense": 110, "speed": 25, "hp": 1800 },
+  "Miner": { "tier": 1, "attack": 20, "defense": 15, "speed": 80, "hp": 250 },
+  "Atlas": { "tier": 2, "attack": 60, "defense": 40, "speed": 55, "hp": 700 }
 }

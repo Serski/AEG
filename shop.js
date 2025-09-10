@@ -13,6 +13,7 @@ const {
   updatePlayer,
 } = require('./shared/shop-char-utils');
 const { clearShopCache } = require('./cache-utils');
+const { loadShipCatalog } = require('./shipUtils');
 
 class shop {
   //Declare constants for class
@@ -521,6 +522,7 @@ class shop {
     // load data for this character and shop.json
     const [player, charData] = await findPlayerData(charID);
     const shopData = await getShopData();
+    const shipCatalog = await loadShipCatalog();
 
     // If character doesn't exist, instruct user to create one
     if (!charData) {
@@ -540,9 +542,18 @@ class shop {
         continue;
       }
       if (!shopData[item]) {
-        deleted = true;
-        delete charData.inventory[item];
-        continue;
+        if (shipCatalog[item]) {
+          const category = 'Ships';
+          if (!inventory[category]) {
+            inventory[category] = [];
+          }
+          inventory[category].push(item);
+          continue;
+        } else {
+          deleted = true;
+          delete charData.inventory[item];
+          continue;
+        }
       }
       const category = shopData[item].infoOptions.Category;
       if (!inventory[category]) {
@@ -572,7 +583,7 @@ class shop {
       descriptionText += `**\`--${category}${endSpaces}\`**\n`;
       descriptionText += inventory[category]
         .map((item) => {
-          const icon = shopData[item].infoOptions.Icon;
+          const icon = shopData[item]?.infoOptions.Icon || clientManager.getEmoji(item) || '🚀';
           const quantity = charData.inventory[item];
 
           let alignSpaces = ' ' 
