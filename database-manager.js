@@ -114,23 +114,17 @@ async function ensureTable(table) {
   await pgBoot();
   if (!usingPg) return;
   if (ensuredTables.has(table)) return;
-  await pool.query(
-    `CREATE TABLE IF NOT EXISTS ${table} (id TEXT PRIMARY KEY, data JSONB)`
+  await runWithRetry(() =>
+    withClient((c) =>
+      c.query(`CREATE TABLE IF NOT EXISTS ${table} (id TEXT PRIMARY KEY, data JSONB)`)
+    )
   );
   ensuredTables.add(table);
 }
 
 async function updateCollectionRecord(collectionName, id, data) {
   await pgBoot();
-  if (usingPg) {
-    const table = formatTable(collectionName);
-    if (!ensuredTables.has(table)) await ensureTable(table);
-    await pool.query(
-      `INSERT INTO ${table} (id, data) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`,
-      [id, data]
-    );
-    getCache(collectionName).set(id, data);
-  } else {
+  if (!usingPg) {
     const dirPath = path.join(storageDir, collectionName);
     await fs.promises.mkdir(dirPath, { recursive: true });
     const filePath = path.join(dirPath, `${id}.json`);
@@ -148,46 +142,41 @@ async function updateCollectionRecord(collectionName, id, data) {
     }
     await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
     cache.set(id, data);
+    return;
   }
+  const table = formatTable(collectionName);
+  if (!ensuredTables.has(table)) await ensureTable(table);
+  await runWithRetry(() =>
+    withClient((c) =>
+      c.query(
+        `INSERT INTO ${table} (id, data) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`,
+        [id, data]
+      )
+    )
+  );
+  getCache(collectionName).set(id, data);
 }
 
 async function removeCollectionRecord(collectionName, id) {
   await pgBoot();
-  if (usingPg) {
-    const table = formatTable(collectionName);
-    if (!ensuredTables.has(table)) await ensureTable(table);
-    await pool.query(`DELETE FROM ${table} WHERE id = $1`, [id]);
-    getCache(collectionName).delete(id);
-  } else {
+  if (!usingPg) {
     const dirPath = path.join(storageDir, collectionName);
     const filePath = path.join(dirPath, `${id}.json`);
     await fs.promises.unlink(filePath).catch(() => {});
     getCache(collectionName).delete(id);
+    return;
   }
+  const table = formatTable(collectionName);
+  if (!ensuredTables.has(table)) await ensureTable(table);
+  await runWithRetry(() =>
+    withClient((c) => c.query(`DELETE FROM ${table} WHERE id = $1`, [id]))
+  );
+  getCache(collectionName).delete(id);
 }
 
 async function saveCollection(collectionName, data) {
   await pgBoot();
-  if (usingPg) {
-    const table = formatTable(collectionName);
-    if (!ensuredTables.has(table)) await ensureTable(table);
-    const cache = getCache(collectionName);
-    let existing;
-    if (fullyLoadedCollections.has(collectionName)) {
-      existing = new Set(cache.keys());
-    } else {
-      const res = await pool.query(`SELECT id FROM ${table}`);
-      existing = new Set(res.rows.map((r) => r.id));
-    }
-    for (const [id, value] of Object.entries(data)) {
-      await updateCollectionRecord(collectionName, id, value);
-      existing.delete(id);
-    }
-    for (const id of existing) {
-      await removeCollectionRecord(collectionName, id);
-    }
-    fullyLoadedCollections.add(collectionName);
-  } else {
+  if (!usingPg) {
     const dirPath = path.join(storageDir, collectionName);
     const useDir = fs.existsSync(dirPath);
     const cache = getCache(collectionName);
@@ -234,7 +223,28 @@ async function saveCollection(collectionName, data) {
       }
       fullyLoadedCollections.add(collectionName);
     }
+    return;
   }
+  const table = formatTable(collectionName);
+  if (!ensuredTables.has(table)) await ensureTable(table);
+  const cache = getCache(collectionName);
+  let existing;
+  if (fullyLoadedCollections.has(collectionName)) {
+    existing = new Set(cache.keys());
+  } else {
+    const res = await runWithRetry(() =>
+      withClient((c) => c.query(`SELECT id FROM ${table}`))
+    );
+    existing = new Set(res.rows.map((r) => r.id));
+  }
+  for (const [id, value] of Object.entries(data)) {
+    await updateCollectionRecord(collectionName, id, value);
+    existing.delete(id);
+  }
+  for (const id of existing) {
+    await removeCollectionRecord(collectionName, id);
+  }
+  fullyLoadedCollections.add(collectionName);
 }
 
 async function loadCollection(collectionName, forceRefresh = false) {
@@ -243,19 +253,7 @@ async function loadCollection(collectionName, forceRefresh = false) {
   if (!forceRefresh && fullyLoadedCollections.has(collectionName)) {
     return Object.fromEntries(cache);
   }
-  if (usingPg) {
-    const table = formatTable(collectionName);
-    if (!ensuredTables.has(table)) await ensureTable(table);
-    const res = await pool.query(`SELECT id, data FROM ${table}`);
-    const data = {};
-    cache.clear();
-    for (const row of res.rows) {
-      data[row.id] = row.data;
-      cache.set(row.id, row.data);
-    }
-    fullyLoadedCollections.add(collectionName);
-    return data;
-  } else {
+  if (!usingPg) {
     const dirPath = path.join(storageDir, collectionName);
     try {
       const stat = await fs.promises.stat(dirPath);
@@ -296,6 +294,19 @@ async function loadCollection(collectionName, forceRefresh = false) {
       throw err;
     }
   }
+  const table = formatTable(collectionName);
+  if (!ensuredTables.has(table)) await ensureTable(table);
+  const res = await runWithRetry(() =>
+    withClient((c) => c.query(`SELECT id, data FROM ${table}`))
+  );
+  const data = {};
+  cache.clear();
+  for (const row of res.rows) {
+    data[row.id] = row.data;
+    cache.set(row.id, row.data);
+  }
+  fullyLoadedCollections.add(collectionName);
+  return data;
 }
 
 async function loadCollectionFileNames(collectionName) {
@@ -309,23 +320,27 @@ async function loadCollectionFileNames(collectionName) {
 
 async function saveFile(collectionName, docId, data) {
   await pgBoot();
-  if (usingPg) {
-    const table = formatTable(collectionName);
-    if (!ensuredTables.has(table)) await ensureTable(table);
-    await pool.query(
-      `INSERT INTO ${table} (id, data) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`,
-      [docId, data]
-    );
-    const cache = getCache(collectionName);
-    cache.set(docId, data);
-  } else {
+  if (!usingPg) {
     const dirPath = path.join(storageDir, collectionName);
     await fs.promises.mkdir(dirPath, { recursive: true });
     const filePath = path.join(dirPath, `${docId}.json`);
     await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
     const cache = getCache(collectionName);
     cache.set(docId, data);
+    return;
   }
+  const table = formatTable(collectionName);
+  if (!ensuredTables.has(table)) await ensureTable(table);
+  await runWithRetry(() =>
+    withClient((c) =>
+      c.query(
+        `INSERT INTO ${table} (id, data) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`,
+        [docId, data]
+      )
+    )
+  );
+  const cache = getCache(collectionName);
+  cache.set(docId, data);
 }
 
 async function loadFile(collectionName, docId, forceRefresh = false) {
@@ -333,19 +348,7 @@ async function loadFile(collectionName, docId, forceRefresh = false) {
   if (!forceRefresh && cache.has(docId)) return cache.get(docId);
   if (!forceRefresh && fullyLoadedCollections.has(collectionName)) return undefined;
   await pgBoot();
-  if (usingPg) {
-    const table = formatTable(collectionName);
-    if (!ensuredTables.has(table)) await ensureTable(table);
-    const res = await pool.query(`SELECT data FROM ${table} WHERE id = $1`, [docId]);
-    const row = res.rows[0];
-    if (row) {
-      cache.set(docId, row.data);
-      return row.data;
-    } else {
-      cache.delete(docId);
-      return undefined;
-    }
-  } else {
+  if (!usingPg) {
     const dirPath = path.join(storageDir, collectionName);
     const filePath = path.join(dirPath, `${docId}.json`);
     try {
@@ -373,16 +376,24 @@ async function loadFile(collectionName, docId, forceRefresh = false) {
       throw err;
     }
   }
+  const table = formatTable(collectionName);
+  if (!ensuredTables.has(table)) await ensureTable(table);
+  const res = await runWithRetry(() =>
+    withClient((c) => c.query(`SELECT data FROM ${table} WHERE id = $1`, [docId]))
+  );
+  const row = res.rows[0];
+  if (row) {
+    cache.set(docId, row.data);
+    return row.data;
+  } else {
+    cache.delete(docId);
+    return undefined;
+  }
 }
 
 async function docDelete(collectionName, docName) {
   await pgBoot();
-  if (usingPg) {
-    const table = formatTable(collectionName);
-    if (!ensuredTables.has(table)) await ensureTable(table);
-    await pool.query(`DELETE FROM ${table} WHERE id = $1`, [docName]);
-    getCache(collectionName).delete(docName);
-  } else {
+  if (!usingPg) {
     const dirPath = path.join(storageDir, collectionName);
     const filePath = path.join(dirPath, `${docName}.json`);
     try {
@@ -399,47 +410,44 @@ async function docDelete(collectionName, docName) {
         throw err;
       }
     }
+    return;
   }
+  const table = formatTable(collectionName);
+  if (!ensuredTables.has(table)) await ensureTable(table);
+  await runWithRetry(() =>
+    withClient((c) => c.query(`DELETE FROM ${table} WHERE id = $1`, [docName]))
+  );
+  getCache(collectionName).delete(docName);
 }
 
 async function fieldDelete(collectionName, docName, deleteField) {
   await pgBoot();
-  if (usingPg) {
-    const table = formatTable(collectionName);
-    if (!ensuredTables.has(table)) await ensureTable(table);
-    await pool.query(`UPDATE ${table} SET data = data - $2 WHERE id = $1`, [docName, deleteField]);
-    const cache = getCache(collectionName);
-    if (cache.has(docName)) {
-      const doc = cache.get(docName);
-      delete doc[deleteField];
-      cache.set(docName, doc);
-    }
-  } else {
+  if (!usingPg) {
     const doc = await loadFile(collectionName, docName);
     if (doc && Object.prototype.hasOwnProperty.call(doc, deleteField)) {
       delete doc[deleteField];
       await saveFile(collectionName, docName, doc);
     }
+    return;
+  }
+  const table = formatTable(collectionName);
+  if (!ensuredTables.has(table)) await ensureTable(table);
+  await runWithRetry(() =>
+    withClient((c) =>
+      c.query(`UPDATE ${table} SET data = data - $2 WHERE id = $1`, [docName, deleteField])
+    )
+  );
+  const cache = getCache(collectionName);
+  if (cache.has(docName)) {
+    const doc = cache.get(docName);
+    delete doc[deleteField];
+    cache.set(docName, doc);
   }
 }
 
 async function logData() {
   await pgBoot();
-  if (usingPg) {
-    const res = await pool.query(
-      `SELECT tablename FROM pg_tables WHERE schemaname='public'`
-    );
-    const tables = res.rows
-      .map((r) => r.tablename)
-      .filter((name) => name !== 'logs');
-    const logData = {};
-    for (const table of tables) {
-      logData[table] = await loadCollection(table);
-    }
-    const dateString = new Date().toISOString().split('T')[0];
-    await saveFile('logs', dateString, logData);
-    if (process.env.DEBUG) console.log(`Log data for ${dateString} saved successfully.`);
-  } else {
+  if (!usingPg) {
     const files = await fs.promises.readdir(storageDir);
     const collections = [];
     for (const file of files) {
@@ -458,7 +466,23 @@ async function logData() {
     const dateString = new Date().toISOString().split('T')[0];
     await saveFile('logs', dateString, logDataObj);
     if (process.env.DEBUG) console.log(`Log data for ${dateString} saved successfully.`);
+    return;
   }
+  const res = await runWithRetry(() =>
+    withClient((c) =>
+      c.query(`SELECT tablename FROM pg_tables WHERE schemaname='public'`)
+    )
+  );
+  const tables = res.rows
+    .map((r) => r.tablename)
+    .filter((name) => name !== 'logs');
+  const logData = {};
+  for (const table of tables) {
+    logData[table] = await loadCollection(table);
+  }
+  const dateString = new Date().toISOString().split('T')[0];
+  await saveFile('logs', dateString, logData);
+  if (process.env.DEBUG) console.log(`Log data for ${dateString} saved successfully.`);
 }
 
 module.exports = {
