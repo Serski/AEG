@@ -3,6 +3,7 @@ const { getCharModule } = require('./charModule');
 const char = getCharModule();
 const marketplace = require('./marketplace');
 const admin = require('./admin');
+const SAFE = process.env.AEG_SAFE_COMPONENTS !== 'false';
 
 // MODALS
 addItem = async (interaction) => {
@@ -184,8 +185,31 @@ allItemSwitch = async (interaction) => {
 }
 itemSwitch = async (interaction) => {
   const numericID = interaction.user.id;
-  let [edittedEmbed, rows] = await shop.editItemMenu(interaction.customId.substring(12), interaction.customId[11], String(numericID));
-  await interaction.update({ embeds: [edittedEmbed], components: [rows]});
+  const [embed, row] = await shop.editItemMenu(
+    interaction.customId.substring(12),
+    interaction.customId[11],
+    String(numericID)
+  );
+  const embeds = [embed];
+  const components = [row];
+
+  function handleEditError(err) {
+    const content = '⏰ That menu expired. Run /edititemmenu again.';
+    if (err.code === 10062 || /Unknown interaction/i.test(err.message)) {
+      interaction.followUp({ content, flags: 64 }).catch(() => {});
+    } else {
+      console.error(err);
+    }
+  }
+
+  if (!SAFE) {
+    await interaction.update({ embeds, components });
+    return;
+  }
+  if (!interaction.deferred && !interaction.replied) {
+    await interaction.deferUpdate().catch(() => {});
+  }
+  interaction.message.edit({ embeds, components }).catch(handleEditError);
 }
 balaSwitch = async (interaction) => {
   let [edittedEmbed, rows] = await char.balanceAll(interaction.customId[11])
