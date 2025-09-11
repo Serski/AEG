@@ -182,6 +182,10 @@ module.exports = {
 
     const region = regionInteraction.values[0];
     clientManager.setTradeSession(numericID, { region });
+    const available = {
+      Bridger: (charData.fleet?.Bridger || 0) + (charData.inventory?.Bridger || 0),
+      Freighter: (charData.fleet?.Freighter || 0) + (charData.inventory?.Freighter || 0)
+    };
 
     const regionLabel = {
       SECTOR: 'Sector Trade',
@@ -189,17 +193,25 @@ module.exports = {
       DOMINION: 'Dominion Area Trade'
     }[region];
 
-    await interaction.editReply({ content: `Region **${regionLabel}** selected. Enter ship quantities.`, components: [] });
+    await interaction.editReply({
+      content:
+        `Region **${regionLabel}** selected.\n\n` +
+        `**Available Ships**\nBridger: ${available.Bridger}\nFreighter: ${available.Freighter}\n\n` +
+        `Enter ship quantities.`,
+      components: []
+    });
 
     const modal = new ModalBuilder().setCustomId('tradeQuantities').setTitle('Ship Quantities');
     const bridgerInput = new TextInputBuilder()
       .setCustomId('qty_Bridger')
-      .setLabel('Bridger (optional)')
+      .setLabel(`Bridger (available: ${available.Bridger})`)
+      .setPlaceholder(`0-${available.Bridger}`)
       .setStyle(TextInputStyle.Short)
       .setRequired(false);
     const freighterInput = new TextInputBuilder()
       .setCustomId('qty_Freighter')
-      .setLabel('Freighter (optional)')
+      .setLabel(`Freighter (available: ${available.Freighter})`)
+      .setPlaceholder(`0-${available.Freighter}`)
       .setStyle(TextInputStyle.Short)
       .setRequired(false);
     modal.addComponents(
@@ -222,28 +234,21 @@ module.exports = {
     }
 
     const submitted = {};
-    const bridgerQty = parseInt(modalInteraction.fields.getTextInputValue('qty_Bridger'), 10);
-    const freighterQty = parseInt(modalInteraction.fields.getTextInputValue('qty_Freighter'), 10);
-    if (!isNaN(bridgerQty) && bridgerQty > 0) submitted.Bridger = bridgerQty;
-    if (!isNaN(freighterQty) && freighterQty > 0) submitted.Freighter = freighterQty;
+    let bridgerQty = parseInt(modalInteraction.fields.getTextInputValue('qty_Bridger'), 10);
+    let freighterQty = parseInt(modalInteraction.fields.getTextInputValue('qty_Freighter'), 10);
+    if (!isNaN(bridgerQty)) {
+      bridgerQty = Math.min(Math.max(bridgerQty, 0), available.Bridger);
+      if (bridgerQty > 0) submitted.Bridger = bridgerQty;
+    }
+    if (!isNaN(freighterQty)) {
+      freighterQty = Math.min(Math.max(freighterQty, 0), available.Freighter);
+      if (freighterQty > 0) submitted.Freighter = freighterQty;
+    }
 
     if (Object.keys(submitted).length === 0) {
       await interaction.followUp({ content: 'You did not send any ships.' });
       clientManager.clearTradeSession(numericID);
       return;
-    }
-
-    const available = {
-      Bridger: (charData.fleet?.Bridger || 0) + (charData.inventory?.Bridger || 0),
-      Freighter: (charData.fleet?.Freighter || 0) + (charData.inventory?.Freighter || 0)
-    };
-
-    for (const [ship, qty] of Object.entries(submitted)) {
-      if (qty > available[ship]) {
-        await interaction.followUp({ content: `You do not have enough ${ship}.` });
-        clientManager.clearTradeSession(numericID);
-        return;
-      }
     }
 
     clientManager.setTradeSession(numericID, { region, ships: submitted });
