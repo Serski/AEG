@@ -69,18 +69,28 @@ module.exports = {
     const region = regionInteraction.values[0];
     clientManager.setMineSession(numericID, { region });
 
+    const available = {
+      Miner: (charData.fleet?.Miner || 0) + (charData.inventory?.Miner || 0),
+      Atlas: (charData.fleet?.Atlas || 0) + (charData.inventory?.Atlas || 0)
+    };
+
     const regionLabel = region === 'ASTEROID_BELT' ? 'Asteroid Belt' : 'Maw Drift';
-    await interaction.editReply({ content: `Region **${regionLabel}** selected. Enter ship quantities.`, components: [] });
+    await interaction.editReply({
+      content: `Region **${regionLabel}** selected.\n\nAvailable Ships:\nMiner: ${available.Miner}\nAtlas: ${available.Atlas}\n\nEnter ship quantities.`,
+      components: []
+    });
 
     const modal = new ModalBuilder().setCustomId('mineQuantities').setTitle('Ship Quantities');
     const minerInput = new TextInputBuilder()
       .setCustomId('qty_Miner')
-      .setLabel('Miner (optional)')
+      .setLabel(`Miner (available: ${available.Miner})`)
+      .setPlaceholder(`0-${available.Miner}`)
       .setStyle(TextInputStyle.Short)
       .setRequired(false);
     const atlasInput = new TextInputBuilder()
       .setCustomId('qty_Atlas')
-      .setLabel('Atlas (optional)')
+      .setLabel(`Atlas (available: ${available.Atlas})`)
+      .setPlaceholder(`0-${available.Atlas}`)
       .setStyle(TextInputStyle.Short)
       .setRequired(false);
     modal.addComponents(
@@ -102,29 +112,18 @@ module.exports = {
       return;
     }
 
+    const minerQtyRaw = parseInt(modalInteraction.fields.getTextInputValue('qty_Miner'), 10);
+    const atlasQtyRaw = parseInt(modalInteraction.fields.getTextInputValue('qty_Atlas'), 10);
     const submitted = {};
-    const minerQty = parseInt(modalInteraction.fields.getTextInputValue('qty_Miner'), 10);
-    const atlasQty = parseInt(modalInteraction.fields.getTextInputValue('qty_Atlas'), 10);
-    if (!isNaN(minerQty) && minerQty > 0) submitted.Miner = minerQty;
-    if (!isNaN(atlasQty) && atlasQty > 0) submitted.Atlas = atlasQty;
+    const minerQty = Math.max(0, Math.min(isNaN(minerQtyRaw) ? 0 : minerQtyRaw, available.Miner));
+    const atlasQty = Math.max(0, Math.min(isNaN(atlasQtyRaw) ? 0 : atlasQtyRaw, available.Atlas));
+    if (minerQty > 0) submitted.Miner = minerQty;
+    if (atlasQty > 0) submitted.Atlas = atlasQty;
 
     if (Object.keys(submitted).length === 0) {
       await interaction.followUp({ content: 'You did not send any ships.' });
       clientManager.clearMineSession(numericID);
       return;
-    }
-
-    const available = {
-      Miner: (charData.fleet?.Miner || 0) + (charData.inventory?.Miner || 0),
-      Atlas: (charData.fleet?.Atlas || 0) + (charData.inventory?.Atlas || 0)
-    };
-
-    for (const [ship, qty] of Object.entries(submitted)) {
-      if (qty > available[ship]) {
-        await interaction.followUp({ content: `You do not have enough ${ship}.` });
-        clientManager.clearMineSession(numericID);
-        return;
-      }
     }
 
     clientManager.setMineSession(numericID, { region, ships: submitted });
