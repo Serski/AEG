@@ -159,7 +159,7 @@ module.exports = {
 
     const regionEmbed = new EmbedBuilder()
       .setTitle('Choose a trade region')
-      .setImage('https://i.imgur.com/2hW2c4z.jpeg');
+      .setImage('https://i.imgur.com/nq6Sblw.jpeg');
 
     await interaction.editReply({
       embeds: [regionEmbed],
