@@ -22,31 +22,31 @@ test('performTrade earnings and loss logic', async (t) => {
     const now = Date.now();
     const charData = { fleet: {}, inventory: {}, balance: 0 };
     const submitted = { Bridger: 1, Freighter: 1 };
-    let rand = makeRand([0, 0.5]);
+    let rand = makeRand([0, 0, 0.5]);
     let res = tradeCmd._performTrade(charData, 'SECTOR', { ...submitted }, now, rand);
-    assert.equal(res.earnings, 60); // 50 + 10
+    assert.equal(res.earnings, 125); // 50 + floor(50*1.5)
     assert.equal(res.moneyLost, 0);
 
     const charData2 = { fleet: {}, inventory: {}, balance: 0 };
-    rand = makeRand([0.999, 0.5]);
+    rand = makeRand([0.999, 0.999, 0.5]);
     res = tradeCmd._performTrade(charData2, 'SECTOR', { ...submitted }, now, rand);
-    assert.equal(res.earnings, 110); // 100 + 10
+    assert.equal(res.earnings, 250); // 100 + floor(100*1.5)
   });
 
   await t.test('DOMINION money loss and ship loss', () => {
     const now = Date.now();
     const charData = { fleet: { Bridger: 1, Freighter: 1 }, inventory: {}, balance: 0 };
     const submitted = { Bridger: 1, Freighter: 1 };
-    // earnings 150, money loss 75, ship loss 1 Bridger, compensation Horse
-    const rand = makeRand([0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    // earnings 150 + floor(150*1.5) = 375, money loss 75, ship loss 1 Bridger, compensation Horse
+    const rand = makeRand([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
     const res = tradeCmd._performTrade(charData, 'DOMINION', submitted, now, rand);
-    assert.equal(res.earnings, 180); // 150 + 30
+    assert.equal(res.earnings, 375);
     assert.equal(res.moneyLost, 75);
     assert.deepEqual(res.losses, { Bridger: 1 });
     assert.equal(charData.fleet.Bridger, undefined);
     assert.equal(charData.fleet.Freighter, 1);
     assert.equal(charData.inventory.Horse, 1);
-    assert.equal(charData.balance, 105);
+    assert.equal(charData.balance, 300);
     assert.equal(res.compensationItem, 'Horse');
   });
 });
@@ -115,13 +115,13 @@ test('trade command normal flow', async (t) => {
 
   await tradeCmd.execute(interaction);
 
-  assert.equal(charData.balance, 110);
+  assert.equal(charData.balance, 250);
   assert.equal(logSaved.coll, 'tradeLog');
   const finalEmbed = editCalls[editCalls.length - 1].embeds[0];
   assert.equal(finalEmbed.data.title, '💰 Trade Result');
   const fields = finalEmbed.data.fields.reduce((acc, f) => ({ ...acc, [f.name]: f.value }), {});
   assert.equal(fields.Region, 'Sector Trade');
   assert.equal(fields['Ships Sent'], 'Bridger: 1\nFreighter: 1');
-  assert.equal(fields['Gold Earned'], 'Gold 110');
+  assert.equal(fields['Gold Earned'], 'Gold 250');
   assert.equal(fields['Gold Lost'], 'Gold 0');
 });
