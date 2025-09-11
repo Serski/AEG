@@ -42,7 +42,8 @@ module.exports = {
       ]);
 
     const regionEmbed = new EmbedBuilder()
-      .setTitle('Choose a region to mine');
+      .setTitle('Choose a region to mine')
+      .setImage('https://i.imgur.com/hpELIpq.jpeg');
 
     await interaction.editReply({
       embeds: [regionEmbed],

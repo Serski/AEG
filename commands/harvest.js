@@ -95,7 +95,8 @@ module.exports = {
       ]);
 
     const regionEmbed = new EmbedBuilder()
-      .setTitle('Choose a region to harvest');
+      .setTitle('Choose a region to harvest')
+      .setImage('https://i.imgur.com/JsNcz17.jpeg');
 
     await interaction.editReply({
       embeds: [regionEmbed],
