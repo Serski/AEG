@@ -874,12 +874,13 @@ When selected grants the:
     }
 
     const foldersPath = path.join(__dirname, 'commands');
-    const commandFolders = fs.readdirSync(foldersPath);
+    const entries = fs.readdirSync(foldersPath, { withFileTypes: true });
 
-    for (const folder of commandFolders) {
-      const commandsPath = path.join(foldersPath, folder);
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      const commandsPath = path.join(foldersPath, entry.name);
       const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-      if (folder == folderToHelp) {
+      if (entry.name == folderToHelp) {
         for (const file of commandFiles) {
           const filePath = path.join(commandsPath, file);
           const command = require(filePath);
@@ -894,6 +895,16 @@ When selected grants the:
           }
         }
       }
+    }
+
+    if (!isAdminMenu && page === 1) {
+      const tradePath = path.join(__dirname, 'commands', 'trade.js');
+      try {
+        const tradeCmd = require(tradePath);
+        if (tradeCmd && tradeCmd.data && tradeCmd.data.description) {
+          embed.addFields({ name: '/trade', value: tradeCmd.data.description });
+        }
+      } catch {}
     }
 
     const rows = [];
