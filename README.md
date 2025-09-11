@@ -34,6 +34,21 @@ granted, and a log entry is written to the `raidLog` collection for later
 analysis. A short cooldown prevents spamming the command. Session state is kept
 in-memory but can be swapped for Redis in production.
 
+## Trade Command
+
+The `/trade` command sends Bridgers and Freighters on regional trade runs for
+Gold.
+
+* **Regions** – Sector, Federation Area, and Dominion Area routes offer
+  progressively higher earnings.
+* **Ships** – Freighters generate income while Bridgers add bonus Gold per run
+  (10/20/30 in the Sector/Federation/Dominion respectively).
+* **Risk** – Every trade can lose a portion of profits; Dominion trades may also
+  destroy ships.
+* **Compensation** – When Gold is lost, a random item is granted as
+  compensation.
+* **Cooldown** – Trades share a 3-minute cooldown between uses.
+
 ## Shared Shop/Char Utilities
 
 Common helpers for item lookup and character persistence are located in
