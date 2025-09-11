@@ -3,6 +3,8 @@ const char = require('../char');
 const dbm = require('../database-manager');
 const clientManager = require('../clientManager');
 
+const getRand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('mine')
@@ -127,8 +129,31 @@ module.exports = {
 
     clientManager.setMineSession(numericID, { region, ships: submitted });
 
+    if (region === 'MAW_DRIFT' && Math.random() < 0.05) {
+      const abortReason = 'Pirates closed in, but the ships outran the trap and slipped away unharmed into open space.';
+      charData.lastMineAt = now;
+      await char.updatePlayer(player, charData);
+      const abortEmbed = new EmbedBuilder()
+        .setTitle('⛏️ Mining Aborted')
+        .addFields(
+          { name: 'Region', value: regionLabel, inline: true },
+          { name: 'Ships Sent', value: Object.entries(submitted).map(([k, v]) => `${k}: ${v}`).join('\n'), inline: true },
+          { name: 'AFM Gained', value: '0', inline: true },
+          { name: 'Reason', value: abortReason }
+        );
+      await interaction.editReply({ embeds: [abortEmbed], components: [] });
+      await dbm.saveFile('mineLog', `${numericID}-${now}`, {
+        user: charId,
+        region,
+        ships: submitted,
+        aborted: true,
+        timestamp: new Date(now).toISOString()
+      });
+      clientManager.clearMineSession(numericID);
+      return;
+    }
+
     let afmGained = 0;
-    const getRand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
     for (let i = 0; i < (submitted.Miner || 0); i++) {
       afmGained += region === 'ASTEROID_BELT' ? getRand(2,5) : getRand(5,10);
