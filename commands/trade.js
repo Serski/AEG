@@ -55,6 +55,67 @@ const TRADE_RULES = {
   }
 };
 
+function performTrade(charData, region, submitted, now, rand = Math.random) {
+  const rules = TRADE_RULES[region];
+  let earnings = 0;
+  for (let i = 0; i < (submitted.Freighter || 0); i++) {
+    earnings += getRand(rules.earnings[0], rules.earnings[1], rand);
+    earnings += (submitted.Bridger || 0) * rules.bridgerBonus;
+  }
+
+  let moneyLost = 0;
+  let failureText = null;
+  let compensationItem = null;
+  if (rand() < rules.moneyLoss.chance) {
+    moneyLost = getRand(rules.moneyLoss.range[0], rules.moneyLoss.range[1], rand);
+    failureText = rules.moneyLoss.failureTexts[getRand(0, rules.moneyLoss.failureTexts.length - 1, rand)];
+    compensationItem = rules.moneyLoss.compensation[getRand(0, rules.moneyLoss.compensation.length - 1, rand)];
+    if (!charData.inventory) charData.inventory = {};
+    charData.inventory[compensationItem] = (charData.inventory[compensationItem] || 0) + 1;
+  }
+
+  let losses = {};
+  if (region === 'DOMINION') {
+    const chance = getRand(rules.shipLoss.chanceRange[0], rules.shipLoss.chanceRange[1], rand) / 100;
+    if (rand() < chance) {
+      let lossCount = Math.min(getRand(rules.shipLoss.countRange[0], rules.shipLoss.countRange[1], rand), (submitted.Bridger || 0) + (submitted.Freighter || 0));
+      const pool = [];
+      for (let i = 0; i < (submitted.Bridger || 0); i++) pool.push('Bridger');
+      for (let i = 0; i < (submitted.Freighter || 0); i++) pool.push('Freighter');
+      while (lossCount > 0 && pool.length > 0) {
+        const idx = Math.floor(rand() * pool.length);
+        const ship = pool.splice(idx, 1)[0];
+        submitted[ship]--;
+        losses[ship] = (losses[ship] || 0) + 1;
+        lossCount--;
+      }
+    }
+  }
+
+  // Deduct losses from fleet then inventory
+  for (const [ship, lost] of Object.entries(losses)) {
+    let remaining = lost;
+    if (charData.fleet && charData.fleet[ship]) {
+      const fromFleet = Math.min(remaining, charData.fleet[ship]);
+      charData.fleet[ship] -= fromFleet;
+      if (charData.fleet[ship] <= 0) delete charData.fleet[ship];
+      remaining -= fromFleet;
+    }
+    if (remaining > 0 && charData.inventory && charData.inventory[ship]) {
+      const fromInventory = Math.min(remaining, charData.inventory[ship]);
+      charData.inventory[ship] -= fromInventory;
+      if (charData.inventory[ship] <= 0) delete charData.inventory[ship];
+      remaining -= fromInventory;
+    }
+  }
+
+  const netGold = Math.max(earnings - moneyLost, 0);
+  charData.balance = Math.max((charData.balance || 0) + netGold, 0);
+  charData.lastTradeAt = now;
+
+  return { earnings, moneyLost, netGold, losses, failureText, compensationItem };
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('trade')
@@ -185,63 +246,7 @@ module.exports = {
 
     clientManager.setTradeSession(numericID, { region, ships: submitted });
 
-    // Earnings computation
-    const rules = TRADE_RULES[region];
-    let earnings = 0;
-    for (let i = 0; i < (submitted.Freighter || 0); i++) {
-      earnings += getRand(rules.earnings[0], rules.earnings[1]);
-      earnings += (submitted.Bridger || 0) * rules.bridgerBonus;
-    }
-
-    let moneyLost = 0;
-    let failureText = null;
-    let compensationItem = null;
-    if (Math.random() < rules.moneyLoss.chance) {
-      moneyLost = getRand(rules.moneyLoss.range[0], rules.moneyLoss.range[1]);
-      failureText = rules.moneyLoss.failureTexts[getRand(0, rules.moneyLoss.failureTexts.length - 1)];
-      compensationItem = rules.moneyLoss.compensation[getRand(0, rules.moneyLoss.compensation.length - 1)];
-      if (!charData.inventory) charData.inventory = {};
-      charData.inventory[compensationItem] = (charData.inventory[compensationItem] || 0) + 1;
-    }
-
-    let losses = {};
-    if (region === 'DOMINION') {
-      const chance = getRand(rules.shipLoss.chanceRange[0], rules.shipLoss.chanceRange[1]) / 100;
-      if (Math.random() < chance) {
-        let lossCount = Math.min(getRand(rules.shipLoss.countRange[0], rules.shipLoss.countRange[1]), (submitted.Bridger || 0) + (submitted.Freighter || 0));
-        const pool = [];
-        for (let i = 0; i < (submitted.Bridger || 0); i++) pool.push('Bridger');
-        for (let i = 0; i < (submitted.Freighter || 0); i++) pool.push('Freighter');
-        while (lossCount > 0 && pool.length > 0) {
-          const idx = Math.floor(Math.random() * pool.length);
-          const ship = pool.splice(idx, 1)[0];
-          submitted[ship]--;
-          losses[ship] = (losses[ship] || 0) + 1;
-          lossCount--;
-        }
-      }
-    }
-
-    // Deduct losses from fleet then inventory
-    for (const [ship, lost] of Object.entries(losses)) {
-      let remaining = lost;
-      if (charData.fleet && charData.fleet[ship]) {
-        const fromFleet = Math.min(remaining, charData.fleet[ship]);
-        charData.fleet[ship] -= fromFleet;
-        if (charData.fleet[ship] <= 0) delete charData.fleet[ship];
-        remaining -= fromFleet;
-      }
-      if (remaining > 0 && charData.inventory && charData.inventory[ship]) {
-        const fromInventory = Math.min(remaining, charData.inventory[ship]);
-        charData.inventory[ship] -= fromInventory;
-        if (charData.inventory[ship] <= 0) delete charData.inventory[ship];
-        remaining -= fromInventory;
-      }
-    }
-
-    const netGold = Math.max(earnings - moneyLost, 0);
-    charData.balance = Math.max((charData.balance || 0) + netGold, 0);
-    charData.lastTradeAt = now;
+    const { earnings, moneyLost, netGold, losses, failureText, compensationItem } = performTrade(charData, region, submitted, now);
     await char.updatePlayer(player, charData);
 
     await dbm.saveFile('tradeLog', `${numericID}-${now}`, {
@@ -280,6 +285,7 @@ module.exports = {
 
     await interaction.editReply({ embeds: [embed], components: [] });
     clientManager.clearTradeSession(numericID);
-  }
+  },
+  _performTrade: performTrade
 };
 
