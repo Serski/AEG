@@ -121,18 +121,28 @@ module.exports = {
     const region = regionInteraction.values[0];
     clientManager.setHarvestSession(numericID, { region });
 
+    const available = {
+      Harvester: (charData.fleet?.Harvester || 0) + (charData.inventory?.Harvester || 0),
+      Aether: (charData.fleet?.Aether || 0) + (charData.inventory?.Aether || 0)
+    };
+
     const regionLabel = region === 'GAS_GIANT' ? 'Gas Giant Upper Atmosphere' : 'Storm Zone';
-    await interaction.editReply({ content: `Region **${regionLabel}** selected. Enter ship quantities.`, components: [] });
+    await interaction.editReply({
+      content: `Region **${regionLabel}** selected.\nAvailable Ships:\nHarvester: ${available.Harvester}\nAether: ${available.Aether}\nEnter ship quantities.`,
+      components: []
+    });
 
     const modal = new ModalBuilder().setCustomId('harvestQuantities').setTitle('Ship Quantities');
     const harvesterInput = new TextInputBuilder()
       .setCustomId('qty_Harvester')
-      .setLabel('Harvester (optional)')
+      .setLabel(`Harvester (available: ${available.Harvester})`)
+      .setPlaceholder(`0-${available.Harvester}`)
       .setStyle(TextInputStyle.Short)
       .setRequired(false);
     const aetherInput = new TextInputBuilder()
       .setCustomId('qty_Aether')
-      .setLabel('Aether (optional)')
+      .setLabel(`Aether (available: ${available.Aether})`)
+      .setPlaceholder(`0-${available.Aether}`)
       .setStyle(TextInputStyle.Short)
       .setRequired(false);
     modal.addComponents(
@@ -155,28 +165,17 @@ module.exports = {
     }
 
     const submitted = {};
-    const harvesterQty = parseInt(modalInteraction.fields.getTextInputValue('qty_Harvester'), 10);
-    const aetherQty = parseInt(modalInteraction.fields.getTextInputValue('qty_Aether'), 10);
-    if (!isNaN(harvesterQty) && harvesterQty > 0) submitted.Harvester = harvesterQty;
-    if (!isNaN(aetherQty) && aetherQty > 0) submitted.Aether = aetherQty;
+    const harvesterInputVal = parseInt(modalInteraction.fields.getTextInputValue('qty_Harvester'), 10);
+    const aetherInputVal = parseInt(modalInteraction.fields.getTextInputValue('qty_Aether'), 10);
+    const harvesterQty = Math.max(0, Math.min(available.Harvester, isNaN(harvesterInputVal) ? 0 : harvesterInputVal));
+    const aetherQty = Math.max(0, Math.min(available.Aether, isNaN(aetherInputVal) ? 0 : aetherInputVal));
+    if (harvesterQty > 0) submitted.Harvester = harvesterQty;
+    if (aetherQty > 0) submitted.Aether = aetherQty;
 
-    if (Object.keys(submitted).length === 0) {
+    if (!submitted.Harvester && !submitted.Aether) {
       await interaction.followUp({ content: 'You did not send any ships.' });
       clientManager.clearHarvestSession(numericID);
       return;
-    }
-
-    const available = {
-      Harvester: (charData.fleet?.Harvester || 0) + (charData.inventory?.Harvester || 0),
-      Aether: (charData.fleet?.Aether || 0) + (charData.inventory?.Aether || 0)
-    };
-
-    for (const [ship, qty] of Object.entries(submitted)) {
-      if (qty > available[ship]) {
-        await interaction.followUp({ content: `You do not have enough ${ship}.` });
-        clientManager.clearHarvestSession(numericID);
-        return;
-      }
     }
 
     clientManager.setHarvestSession(numericID, { region, ships: submitted });
