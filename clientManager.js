@@ -3,6 +3,8 @@ class clientManager {
     static raidSessions = new Map();
     // simple in-memory mine session store
     static mineSessions = new Map();
+    // simple in-memory harvest session store
+    static harvestSessions = new Map();
 
     static getRaidSession(userID) {
         const session = this.raidSessions.get(userID);
@@ -38,6 +40,22 @@ class clientManager {
 
     static clearMineSession(userID) {
         this.mineSessions.delete(userID);
+    }
+
+    static getHarvestSession(userID) {
+        const s = this.harvestSessions.get(userID);
+        if (s && s.expiresAt > Date.now()) return s;
+        this.harvestSessions.delete(userID);
+        return null;
+    }
+
+    static setHarvestSession(userID, data) {
+        const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
+        this.harvestSessions.set(userID, { ...data, expiresAt });
+    }
+
+    static clearHarvestSession(userID) {
+        this.harvestSessions.delete(userID);
     }
     static getEmoji(emojiName) {
         const bot = require('./bot');
