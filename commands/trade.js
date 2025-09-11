@@ -63,7 +63,9 @@ function performTrade(charData, region, submitted, now, rand = Math.random) {
   let earnings = 0;
   for (let i = 0; i < (submitted.Freighter || 0); i++) {
     earnings += getRand(rules.earnings[0], rules.earnings[1], rand);
-    earnings += (submitted.Bridger || 0) * rules.bridgerBonus;
+  }
+  for (let i = 0; i < (submitted.Bridger || 0); i++) {
+    earnings += Math.floor(getRand(rules.earnings[0], rules.earnings[1], rand) * 1.5);
   }
 
   let moneyLost = 0;
