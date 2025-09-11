@@ -3,22 +3,23 @@ const char = require('../char');
 const dbm = require('../database-manager');
 const clientManager = require('../clientManager');
 
+const getRand = (min, max, rand = Math.random) => Math.floor(rand() * (max - min + 1)) + min;
+
 function performHarvest(charData, region, submitted, now, rand = Math.random) {
   let pccGained = 0;
-  const getRand = (min, max) => Math.floor(rand() * (max - min + 1)) + min;
 
   for (let i = 0; i < (submitted.Harvester || 0); i++) {
-    pccGained += region === 'GAS_GIANT' ? getRand(2, 4) : getRand(4, 8);
+    pccGained += region === 'GAS_GIANT' ? getRand(2, 4, rand) : getRand(4, 8, rand);
   }
   for (let i = 0; i < (submitted.Aether || 0); i++) {
-    pccGained += region === 'GAS_GIANT' ? getRand(4, 8) : getRand(10, 15);
+    pccGained += region === 'GAS_GIANT' ? getRand(4, 8, rand) : getRand(10, 15, rand);
   }
 
   const losses = {};
   if (region === 'STORM_ZONE') {
-    const chance = getRand(5, 15) / 100;
+    const chance = getRand(5, 15, rand) / 100;
     if (rand() < chance) {
-      let lossCount = Math.min(getRand(1, 3), (submitted.Harvester || 0) + (submitted.Aether || 0));
+      let lossCount = Math.min(getRand(1, 3, rand), (submitted.Harvester || 0) + (submitted.Aether || 0));
       const pool = [];
       for (let i = 0; i < (submitted.Harvester || 0); i++) pool.push('Harvester');
       for (let i = 0; i < (submitted.Aether || 0); i++) pool.push('Aether');
@@ -179,6 +180,34 @@ module.exports = {
     }
 
     clientManager.setHarvestSession(numericID, { region, ships: submitted });
+
+    if (region === 'STORM_ZONE') {
+      const failChance = getRand(5, 8) / 100;
+      if (Math.random() < failChance) {
+        charData.lastHarvestAt = now;
+        await char.updatePlayer(player, charData);
+        await dbm.saveFile('harvestLog', `${numericID}-${now}`, {
+          user: charId,
+          region,
+          ships: submitted,
+          pccGained: 0,
+          losses: {},
+          aborted: true,
+          timestamp: new Date(now).toISOString()
+        });
+        const abortEmbed = new EmbedBuilder()
+          .setTitle('🧪 Harvest Aborted')
+          .setDescription('A volatile magnetar surge ripped across the sector, driving the ships to disengage and flee to safety.')
+          .addFields(
+            { name: 'Region', value: regionLabel, inline: true },
+            { name: 'Ships Sent', value: Object.entries(submitted).map(([k, v]) => `${k}: ${v}`).join('\n'), inline: true },
+            { name: 'PCC Gained', value: '0', inline: true }
+          );
+        await interaction.editReply({ embeds: [abortEmbed], components: [] });
+        clientManager.clearHarvestSession(numericID);
+        return;
+      }
+    }
 
     const { pccGained, losses } = performHarvest(charData, region, submitted, now);
     await char.updatePlayer(player, charData);
