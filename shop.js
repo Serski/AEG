@@ -1048,7 +1048,7 @@ class shop {
         let currentString = "";
         for (let i = 0; i < lines.length; i++) {
           let currLine = lines[i];
-          if (currLine > 400) {
+          if (currLine.length > 400) {
             currLine = currLine.substring(0, 400) + "...";
           }
 
