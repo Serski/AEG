@@ -792,8 +792,8 @@ class char {
   }
 
   static async craft(userPassed, recipe, guild) {
-    let charID = userPassed.tag;
-    let user = await guild.members.fetch(userPassed.id);
+    const charID = String(userPassed.id);  // use numeric ID as string
+    const user   = await guild.members.fetch(userPassed.id);
 
     let allRecipes = await dbm.loadCollection('recipes');
     let recipeData = allRecipes[recipe];
