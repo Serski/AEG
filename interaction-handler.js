@@ -262,9 +262,13 @@ exports.handle = async (interaction) => {
   } else if (interaction.isButton()) {
     if (interaction.customId.startsWith('USAGE_OPTS:')) {
       const itemKey = interaction.customId.split(':')[1];
-      await interaction.deferUpdate();
+      await interaction.deferUpdate().catch(() => {});
       const [embed, row] = await shop.editItemMenu(itemKey, 2, String(interaction.user.id));
-      await interaction.message.edit({ embeds: [embed], components: [row] });
+      // Ephemeral-safe update
+      await interaction.update({ embeds: [embed], components: [row] }).catch(async () => {
+        // Fallback for any odd cases
+        await interaction.editReply({ embeds: [embed], components: [row] });
+      });
       return;
     } else if (interaction.customId.substring(0, 11) == 'switch_page') {
       shopSwitch(interaction);
