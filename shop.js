@@ -1084,7 +1084,7 @@ class shop {
         .setStyle('Primary')
         .setDisabled(pageNumber === 1),
       new Discord.ButtonBuilder()
-        .setCustomId('switch_item2' + itemName)
+        .setCustomId(`USAGE_OPTS:${itemName}`)
         .setLabel('Usage Options')
         .setStyle('Primary')
         .setDisabled(pageNumber === 2),
