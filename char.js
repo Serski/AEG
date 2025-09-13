@@ -53,7 +53,8 @@ class char {
         balance: 200,
         inventory: {
           "Adventure Token": 1,
-          "Bridger": 1
+          "Bridger": 1,
+          "Corvette": 1
         },
         fleet: {},
         incomeList: {},
