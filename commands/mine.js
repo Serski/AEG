@@ -26,10 +26,12 @@ module.exports = {
     }
 
     const now = Date.now();
-    const COOLDOWN = 3 * 60 * 1000; // 3 minutes
+    const COOLDOWN = 24 * 60 * 60 * 1000; // 1 day
     if (charData.lastMineAt && now - charData.lastMineAt < COOLDOWN) {
-      const mins = Math.ceil((COOLDOWN - (now - charData.lastMineAt)) / 60000);
-      await interaction.editReply({ content: `You must wait ${mins} more minutes before mining again.` });
+      const remaining = COOLDOWN - (now - charData.lastMineAt);
+      const hours = Math.floor(remaining / (60 * 60 * 1000));
+      const minutes = Math.ceil((remaining % (60 * 60 * 1000)) / 60000);
+      await interaction.editReply({ content: `You must wait ${hours} hours and ${minutes} minutes before mining again.` });
       return;
     }
 
