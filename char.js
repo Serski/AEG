@@ -52,7 +52,8 @@ class char {
         bio: charBio,
         balance: 200,
         inventory: {
-          "Adventure Token": 1
+          "Adventure Token": 1,
+          "Bridger": 1
         },
         fleet: {},
         incomeList: {},
