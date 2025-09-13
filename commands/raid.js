@@ -43,10 +43,13 @@ module.exports = {
     }
 
     const now = Date.now();
-    const COOLDOWN = 3 * 60 * 1000; // 1 hour
+    const COOLDOWN = 3 * 24 * 60 * 60 * 1000; // 3 days
     if (charData.lastRaidAt && now - charData.lastRaidAt < COOLDOWN) {
-      const mins = Math.ceil((COOLDOWN - (now - charData.lastRaidAt)) / 60000);
-      await interaction.editReply({ content: `You must wait ${mins} more minutes before raiding again.` });
+      const remaining = COOLDOWN - (now - charData.lastRaidAt);
+      const hoursRemaining = Math.ceil(remaining / (60 * 60 * 1000));
+      const days = Math.floor(hoursRemaining / 24);
+      const hours = hoursRemaining % 24;
+      await interaction.editReply({ content: `You must wait ${days} days and ${hours} hours before raiding again.` });
       return;
     }
 
