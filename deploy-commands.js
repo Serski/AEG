@@ -4,7 +4,7 @@ const path = require('node:path');
 
 const token = process.env.TOKEN || process.env.DISCORD_TOKEN;
 const clientId = process.env.CLIENT_ID || process.env.DISCORD_CLIENT_ID;
-const guildId = process.env.GUILD_ID || process.env.DISCORD_GUILD_ID;
+// const guildId = process.env.GUILD_ID || process.env.DISCORD_GUILD_ID;
 
 
 async function loadCommands() {
@@ -46,9 +46,9 @@ async function loadCommands() {
         try {
                 if (process.env.DEBUG) console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
-                // The put method is used to fully refresh all commands in the guild with the current set
+                // The put method is used to fully refresh all commands for the application with the current set
                 const data = await rest.put(
-                        Routes.applicationGuildCommands(clientId, guildId),
+                        Routes.applicationCommands(clientId),
                         { body: commands },
                 );
 
