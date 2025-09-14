@@ -217,16 +217,16 @@ balaSwitch = async (interaction) => {
   await interaction.update({ embeds: [edittedEmbed], components: rows});
 }
 helpSwitch = async (interaction) => {
-  //This one is odder, will either have the 11th character be "A" or "R" for admin or regular help. The 12th character will be the page number.
+  //This one is odder, will either have the 11th character be "A" or "R" for admin or regular help. Characters after that represent the page number.
   let isAdmin = false;
-  if (interaction.customId[11] == "A") {
+  if (interaction.customId[11] === "A") {
     isAdmin = true;
-  } else if (interaction.customId[11] == "R") {
-    isAdmin = false;
-  } else {
+  } else if (interaction.customId[11] !== "R") {
     await interaction.reply("Error in helpSwitch");
+    return;
   }
-  let [edittedEmbed, rows] = await admin.generalHelpMenu(interaction.customId[12], isAdmin);
+  const page = Number(interaction.customId.slice(12));
+  let [edittedEmbed, rows] = await admin.generalHelpMenu(page, isAdmin);
   await interaction.update({ embeds: [edittedEmbed], components: rows});
 }
 

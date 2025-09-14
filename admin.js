@@ -852,24 +852,31 @@ When selected grants the:
     let folderToHelp = ""
 
     let embed = new EmbedBuilder()
-      .setDescription("Use /help <command> to get help with a specific command");
 
     switch (page) {
       case 1:
-        folderToHelp = "charCommands";
-        embed.setTitle("Character Commands" + (isAdminMenu ? " (Admin)" : ""));
+        embed.setTitle("Getting Started" + (isAdminMenu ? " (Admin)" : ""));
+        embed.setDescription("Welcome to Massalia! Begin by creating your character with `/newchar`, checking your stats with `/char`, and browsing items in `/shop`.\n\nUse /help <command> to get help with a specific command");
         break;
       case 2:
-        folderToHelp = "shopCommands";
-        embed.setTitle("Shop Commands" + (isAdminMenu ? " (Admin)" : ""));
+        folderToHelp = "charCommands";
+        embed.setTitle("Character Commands" + (isAdminMenu ? " (Admin)" : ""));
+        embed.setDescription("Use /help <command> to get help with a specific command");
         break;
       case 3:
-        folderToHelp = "salesCommands";
-        embed.setTitle("Sales Commands" + (isAdminMenu ? " (Admin)" : "")); 
+        folderToHelp = "shopCommands";
+        embed.setTitle("Shop Commands" + (isAdminMenu ? " (Admin)" : ""));
+        embed.setDescription("Use /help <command> to get help with a specific command");
         break;
       case 4:
+        folderToHelp = "salesCommands";
+        embed.setTitle("Sales Commands" + (isAdminMenu ? " (Admin)" : ""));
+        embed.setDescription("Use /help <command> to get help with a specific command");
+        break;
+      case 5:
         folderToHelp = "adminCommands";
         embed.setTitle("Admin Commands" + (isAdminMenu ? " (Admin)" : ""));
+        embed.setDescription("Use /help <command> to get help with a specific command");
         break;
     }
 
@@ -897,7 +904,7 @@ When selected grants the:
       }
     }
 
-    if (!isAdminMenu && page === 1) {
+    if (!isAdminMenu && page === 2) {
       const tradePath = path.join(__dirname, 'commands', 'trade.js');
       try {
         const tradeCmd = require(tradePath);
@@ -912,18 +919,18 @@ When selected grants the:
     let baseID = 'switch_help';
     if (isAdminMenu) {
       baseID += 'A';
-      embed.setFooter({ text: 'Page ' + page + ' of ' + 4 });
+      embed.setFooter({ text: 'Page ' + page + ' of ' + 5 });
     } else {
       baseID += 'R';
-      embed.setFooter({ text: 'Page ' + page + ' of ' + 3 });
+      embed.setFooter({ text: 'Page ' + page + ' of ' + 4 });
     }
 
     let prevID = baseID;
     if (page === 1) {
       if (isAdminMenu) {
-        prevID += 4;
+        prevID += 5;
       } else {
-        prevID += 3;
+        prevID += 4;
       }
     } else {
       prevID += page - 1;
@@ -935,11 +942,7 @@ When selected grants the:
       .setStyle(ButtonStyle.Secondary); // You can change the style to your preference
 
     let nextID = baseID;
-    if (page === 4) { 
-      if (isAdminMenu) {
-        nextID += 1;
-      }
-    } else if (page === 3 && !isAdminMenu) {
+    if ((!isAdminMenu && page === 4) || (isAdminMenu && page === 5)) {
       nextID += 1;
     } else {
       nextID += page + 1;
