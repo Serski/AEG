@@ -78,10 +78,12 @@ module.exports = {
     }
 
     const now = Date.now();
-    const COOLDOWN = 3 * 60 * 1000; // 3 minutes
+    const COOLDOWN = 24 * 60 * 60 * 1000; // 1 day
     if (charData.lastHarvestAt && now - charData.lastHarvestAt < COOLDOWN) {
-      const mins = Math.ceil((COOLDOWN - (now - charData.lastHarvestAt)) / 60000);
-      await interaction.editReply({ content: `You must wait ${mins} more minutes before harvesting again.` });
+      const remaining = COOLDOWN - (now - charData.lastHarvestAt);
+      const hours = Math.floor(remaining / (60 * 60 * 1000));
+      const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+      await interaction.editReply({ content: `You must wait ${hours} hours and ${minutes} minutes before harvesting again.` });
       return;
     }
 
