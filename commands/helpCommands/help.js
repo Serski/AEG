@@ -15,7 +15,7 @@ module.exports = {
             let command = interaction.options.getString('command');
 
             if (command == null) {
-                let [embed, rows] = await admin.generalHelpMenu(1, false);
+                let [embed, rows] = await admin.generalHelpMenu(2, false);
                 await interaction.editReply({ embeds: [embed], components: rows});
                 return;
             } else {
