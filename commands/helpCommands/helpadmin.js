@@ -15,7 +15,7 @@ module.exports = {
             let command = interaction.options.getString('command');
 
             if (command == null) {
-                let [embed, rows] = await admin.generalHelpMenu(2, true);
+                let [embed, rows] = await admin.generalHelpMenu(1, true);
                 await interaction.editReply({ embeds: [embed], components: rows});
                 return;
             } else {
@@ -31,5 +31,5 @@ module.exports = {
             console.error("Failed to help:", error);
             await interaction.editReply({ content: "Failed to help. Please try again." });
         }
-	},
+        },
 };
