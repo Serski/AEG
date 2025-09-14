@@ -62,7 +62,7 @@ test('harvest command cooldown enforcement', async (t) => {
   };
 
   await harvestCmd.execute(interaction);
-  assert.equal(reply.content, 'You must wait 3 more minutes before harvesting again.');
+  assert.equal(reply.content, 'You must wait 23 hours and 59 minutes before harvesting again.');
 });
 
 test('harvest command normal flow', async (t) => {
@@ -70,7 +70,7 @@ test('harvest command normal flow', async (t) => {
   const now = Date.now();
   t.mock.method(Date, 'now', () => now);
 
-  const charData = { fleet: { Harvester: 1, Aether: 1 }, inventory: {}, lastHarvestAt: now - 4 * 60 * 1000 };
+  const charData = { fleet: { Harvester: 1, Aether: 1 }, inventory: {}, lastHarvestAt: now - 25 * 60 * 60 * 1000 };
   t.mock.method(clientManager, 'getHarvestSession', () => null);
   t.mock.method(clientManager, 'setHarvestSession', () => {});
   t.mock.method(clientManager, 'clearHarvestSession', () => {});
