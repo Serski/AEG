@@ -6,7 +6,7 @@ const clientManager = require('../clientManager');
 const getRand = (min, max, rand = Math.random) => Math.floor(rand() * (max - min + 1)) + min;
 
 // Trade command global cooldown in milliseconds
-const COOLDOWN_MS = 3 * 60 * 1000; // 3 minutes
+const COOLDOWN_MS = 24 * 60 * 60 * 1000; // 1 day
 
 // Trade configuration for each region
 const TRADE_RULES = {
@@ -143,8 +143,11 @@ module.exports = {
 
     const now = Date.now();
     if (charData.lastTradeAt && now - charData.lastTradeAt < COOLDOWN_MS) {
-      const mins = Math.ceil((COOLDOWN_MS - (now - charData.lastTradeAt)) / 60000);
-      await interaction.editReply({ content: `You must wait ${mins} more minutes before trading again.` });
+      const remaining = COOLDOWN_MS - (now - charData.lastTradeAt);
+      const mins = Math.ceil(remaining / 60000);
+      const hours = Math.floor(mins / 60);
+      const minutes = mins % 60;
+      await interaction.editReply({ content: `You must wait ${hours} hours and ${minutes} minutes before trading again.` });
       return;
     }
 
