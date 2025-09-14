@@ -856,7 +856,9 @@ When selected grants the:
     switch (page) {
       case 1:
         embed.setTitle("Getting Started" + (isAdminMenu ? " (Admin)" : ""));
-        embed.setDescription("Welcome to Massalia! Begin by creating your character with `/newchar`, checking your stats with `/char`, and browsing items in `/shop`.\n\nUse /help <command> to get help with a specific command");
+        embed.setDescription(
+          "Welcome to Aegir! Start by typing /newchar to create your character. You’ll get a balance, inventory, stats, and more. Every newcomer begins with 200 credits, a trade ship, and a corvette. From there, you can dive straight into /trade or /raid — just be careful where you point your guns. Aim to secure a Microcorp license early: it gives you a steady baseline income and unlocks new layers of play. After that? The station is yours to claw through.\nUse /help <command> to get help with a specific command"
+        );
         break;
       case 2:
         folderToHelp = "charCommands";
