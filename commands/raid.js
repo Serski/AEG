@@ -7,7 +7,7 @@ const clientManager = require('../clientManager');
 
 // Custom display names for each difficulty
 const DIFFICULTY_NAMES = {
-  easy: 'Graven Belt',
+  easy: 'Graven Belt (easy)',
   medium: 'Dyne Rift',
   hard: 'Razathaar Sector',
   extreme: 'Dominion Frontier'
