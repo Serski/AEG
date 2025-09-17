@@ -1504,6 +1504,9 @@ class shop {
   } 
 
   static async buyItem(itemName, charID, numToBuy, channelId) {
+    if (!Number.isInteger(numToBuy) || numToBuy <= 0) {
+      return "Invalid quantity to purchase!";
+    }
     let shopData = await getShopData();
     itemName = await findItemName(itemName, shopData);
     if (itemName == "ERROR") {

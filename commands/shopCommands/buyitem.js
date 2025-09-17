@@ -5,11 +5,12 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('buyitem')
 		.setDescription('Buy an item')
-        .addIntegerOption((option) => 
-        option.setName('numbertobuy')
-			.setDescription('How many do you want to buy')
-			.setRequired(true)
-		)
+.addIntegerOption((option) =>
+option.setName('numbertobuy')
+.setDescription('How many do you want to buy')
+.setMinValue(1)
+.setRequired(true)
+)
 		.addStringOption((option) =>
 		option.setName('itemname')
 			.setDescription('The item name')
