@@ -6,7 +6,7 @@ module.exports = {
 		.setName('me')
 		.setDescription('Show player character- only RP aspects'),
 	async execute(interaction) {
-	        await interaction.deferReply({ flags: 64 });
+                await interaction.deferReply();
                 const numericID = interaction.user.id;
 
                 (async () => {
