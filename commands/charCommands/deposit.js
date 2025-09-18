@@ -5,10 +5,11 @@ module.exports = {
 	data: new SlashCommandBuilder()
 		.setName('deposit')
 		.setDescription('Deposit gold to bank')
-        .addIntegerOption(option => 
+        .addIntegerOption(option =>
             option.setName('quantity')
                 .setDescription('Quantity to deposit')
-                .setRequired(true)),
+                .setRequired(true)
+                .setMinValue(1)),
 	async execute(interaction) {
 	        await interaction.deferReply({ flags: 64 });
                 const numericID = interaction.user.id;
