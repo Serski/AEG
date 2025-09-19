@@ -14,11 +14,13 @@ module.exports = {
         .addIntegerOption((option) =>
             option.setName('quantity')
                 .setDescription('The quantity of the item')
+                .setMinValue(1)
                 .setRequired(true)
         )
         .addIntegerOption((option) =>
             option.setName('price')
                 .setDescription('The price of the item')
+                .setMinValue(1)
                 .setRequired(true)
         ),
     async execute(interaction) {
