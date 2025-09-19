@@ -55,6 +55,9 @@ class marketplace {
    * Items will be added to the marketplace according to their item name and category- i.e. all iron swords will be next to each other, and the iron swords will be next to steel swords
    * */ 
   static async postSale(numberItems, itemName, price, sellerID) {
+    if (!Number.isInteger(numberItems) || numberItems <= 0 || !Number.isInteger(price) || price <= 0) {
+      return "Number of items and price must be positive integers.";
+    }
     // Ensure marketplace cache and lastID are current
     await marketplace.loadMarketplace();
     const shopData = await shop.getShopData();
