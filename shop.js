@@ -532,6 +532,17 @@ class shop {
         .setDescription("You haven't made a character! Use /newchar first");
     }
 
+    const tradeableShipsCounts = {};
+    const boundShipsCounts = {};
+    const boundShips = charData.boundShips || {};
+
+    for (const shipName in shipCatalog) {
+      const fleetCount = charData.fleet?.[shipName] || 0;
+      const inventoryCount = charData.inventory?.[shipName] || 0;
+      tradeableShipsCounts[shipName] = fleetCount + inventoryCount;
+      boundShipsCounts[shipName] = boundShips[shipName] || 0;
+    }
+
     // create a 2d of items in the player's inventory sorted by category. Remove items with 0 quantity or that don't exist in the shop
     let deleted = false;
     let inventory = [];
@@ -564,6 +575,24 @@ class shop {
     if (deleted) {
       await updatePlayer(player, charData);
     }
+
+    const ensureShipPlacement = (shipName) => {
+      const category = shopData[shipName]?.infoOptions?.Category || 'Ships';
+      if (!inventory[category]) {
+        inventory[category] = [];
+      }
+      if (!inventory[category].includes(shipName)) {
+        inventory[category].push(shipName);
+      }
+    };
+
+    for (const shipName in shipCatalog) {
+      const tradeableCount = tradeableShipsCounts[shipName] || 0;
+      const boundCount = boundShipsCounts[shipName] || 0;
+      if (tradeableCount > 0 || boundCount > 0) {
+        ensureShipPlacement(shipName);
+      }
+    }
     // let inventory = [];
     // for (const item in charData.inventory) {
     //   const category = shopData[item].category;
@@ -581,20 +610,43 @@ class shop {
         endSpaces = "-".repeat(20 - category.length - 2);
       }
       descriptionText += `**\`--${category}${endSpaces}\`**\n`;
-      descriptionText += inventory[category]
-        .map((item) => {
+      const categoryLines = [];
+      for (const item of inventory[category]) {
+        if (shipCatalog[item]) {
+          const tradeableCount = tradeableShipsCounts[item] || 0;
+          const boundCount = boundShipsCounts[item] || 0;
+
+          if (tradeableCount === 0 && boundCount === 0) {
+            continue;
+          }
+
+          if (boundCount > 0) {
+            categoryLines.push(`${item} – tradeable × ${tradeableCount}`);
+            categoryLines.push(`${item} – bound × ${boundCount}`);
+          } else {
+            const icon = shopData[item]?.infoOptions?.Icon || clientManager.getEmoji(item) || '🚀';
+            const quantity = tradeableCount;
+
+            let alignSpaces = ' ';
+            if ((30 - item.length - ('' + quantity).length) > 0) {
+              alignSpaces = ' '.repeat(30 - item.length - ('' + quantity).length);
+            }
+
+            categoryLines.push(`${icon} \`${item}${alignSpaces}${quantity}\``);
+          }
+        } else {
           const icon = shopData[item]?.infoOptions.Icon || clientManager.getEmoji(item) || '🚀';
           const quantity = charData.inventory[item];
 
-          let alignSpaces = ' ' 
-          if ((30 - item.length - ("" + quantity).length) > 0){
-            alignSpaces = ' '.repeat(30 - item.length - ("" + quantity).length);
+          let alignSpaces = ' ';
+          if ((30 - item.length - ('' + quantity).length) > 0) {
+            alignSpaces = ' '.repeat(30 - item.length - ('' + quantity).length);
           }
-  
-          // Create the formatted line
-          return `${icon} \`${item}${alignSpaces}${quantity}\``;
-        })
-        .join('\n');
+
+          categoryLines.push(`${icon} \`${item}${alignSpaces}${quantity}\``);
+        }
+      }
+      descriptionText += categoryLines.join('\n');
       descriptionText += '\n';
     }
 
