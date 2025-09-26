@@ -632,8 +632,21 @@ class shop {
           }
 
           if (boundCount > 0) {
-            categoryLines.push(`${item} – tradeable × ${tradeableCount}`);
-            categoryLines.push(`${item} – bound × ${boundCount}`);
+            const icon = shopData[item]?.infoOptions?.Icon || clientManager.getEmoji(item) || '';
+
+            const tradeableLabel = `${item} – tradeable × ${tradeableCount}`;
+            let tradeableAlignSpaces = ' ';
+            if ((30 - tradeableLabel.length) > 0) {
+              tradeableAlignSpaces = ' '.repeat(30 - tradeableLabel.length);
+            }
+            categoryLines.push(`${icon} \`${tradeableLabel}${tradeableAlignSpaces}\``);
+
+            const boundLabel = `${item} – bound × ${boundCount}`;
+            let boundAlignSpaces = ' ';
+            if ((30 - boundLabel.length) > 0) {
+              boundAlignSpaces = ' '.repeat(30 - boundLabel.length);
+            }
+            categoryLines.push(`${icon} \`${boundLabel}${boundAlignSpaces}\``);
           } else {
             const icon = shopData[item]?.infoOptions?.Icon || clientManager.getEmoji(item) || '🚀';
             const quantity = tradeableCount;
