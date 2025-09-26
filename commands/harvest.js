@@ -2,6 +2,11 @@ const { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, Componen
 const char = require('../char');
 const dbm = require('../database-manager');
 const clientManager = require('../clientManager');
+const {
+  ensureBoundShips,
+  bindShipsForMission,
+  applyShipCasualties
+} = require('../shared/bound-ships');
 
 const getRand = (min, max, rand = Math.random) => Math.floor(rand() * (max - min + 1)) + min;
 
@@ -33,22 +38,7 @@ function performHarvest(charData, region, submitted, now, rand = Math.random) {
     }
   }
 
-  // Deduct losses from fleet then inventory
-  for (const [ship, lost] of Object.entries(losses)) {
-    let remaining = lost;
-    if (charData.fleet && charData.fleet[ship]) {
-      const fromFleet = Math.min(remaining, charData.fleet[ship]);
-      charData.fleet[ship] -= fromFleet;
-      if (charData.fleet[ship] <= 0) delete charData.fleet[ship];
-      remaining -= fromFleet;
-    }
-    if (remaining > 0 && charData.inventory && charData.inventory[ship]) {
-      const fromInventory = Math.min(remaining, charData.inventory[ship]);
-      charData.inventory[ship] -= fromInventory;
-      if (charData.inventory[ship] <= 0) delete charData.inventory[ship];
-      remaining -= fromInventory;
-    }
-  }
+  applyShipCasualties(charData, losses);
 
   if (!charData.inventory) charData.inventory = {};
   charData.inventory.PCC = (charData.inventory.PCC || 0) + pccGained;
@@ -76,6 +66,8 @@ module.exports = {
       await interaction.editReply({ content: 'Create a character first with /newchar.' });
       return;
     }
+
+    ensureBoundShips(charData);
 
     const now = Date.now();
     const COOLDOWN = 24 * 60 * 60 * 1000; // 1 day
@@ -124,8 +116,14 @@ module.exports = {
     clientManager.setHarvestSession(numericID, { region });
 
     const available = {
-      Harvester: (charData.fleet?.Harvester || 0) + (charData.inventory?.Harvester || 0),
-      Aether: (charData.fleet?.Aether || 0) + (charData.inventory?.Aether || 0)
+      Harvester:
+        (charData.fleet?.Harvester || 0) +
+        (charData.inventory?.Harvester || 0) +
+        (charData.boundShips?.Harvester || 0),
+      Aether:
+        (charData.fleet?.Aether || 0) +
+        (charData.inventory?.Aether || 0) +
+        (charData.boundShips?.Aether || 0)
     };
 
     const regionLabel = region === 'GAS_GIANT' ? 'Gas Giant Upper Atmosphere' : 'Storm Zone';
@@ -209,6 +207,8 @@ module.exports = {
         return;
       }
     }
+
+    bindShipsForMission(charData, submitted);
 
     const { pccGained, losses } = performHarvest(charData, region, submitted, now);
     await char.updatePlayer(player, charData);
