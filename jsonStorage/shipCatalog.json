@@ -5,5 +5,9 @@
   "Cruiser": { "tier": 4, "attack": 130, "defense": 90, "speed": 35, "hp": 1200 },
   "Battleship": { "tier": 5, "attack": 170, "defense": 110, "speed": 25, "hp": 1800 },
   "Miner": { "tier": 1, "attack": 20, "defense": 15, "speed": 80, "hp": 250 },
-  "Atlas": { "tier": 2, "attack": 60, "defense": 40, "speed": 55, "hp": 700 }
+  "Atlas": { "tier": 2, "attack": 60, "defense": 40, "speed": 55, "hp": 700 },
+  "Aether": { "tier": 1, "attack": 0, "defense": 10, "speed": 70, "hp": 300 },
+  "Harvester": { "tier": 1, "attack": 0, "defense": 8, "speed": 60, "hp": 250 },
+  "Freighter": { "tier": 1, "attack": 0, "defense": 5, "speed": 50, "hp": 500 },
+  "Bridger": { "tier": 1, "attack": 0, "defense": 6, "speed": 55, "hp": 550 }
 }
