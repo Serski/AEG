@@ -2,6 +2,7 @@ const { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, Componen
 const char = require('../char');
 const dbm = require('../database-manager');
 const clientManager = require('../clientManager');
+const { ensureBoundShips, bindShipsForMission, applyShipCasualties } = require('../shared/bound-ships');
 
 const getRand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
@@ -24,6 +25,8 @@ module.exports = {
       await interaction.editReply({ content: 'Create a character first with /newchar.' });
       return;
     }
+
+    ensureBoundShips(charData);
 
     const now = Date.now();
     const COOLDOWN = 24 * 60 * 60 * 1000; // 1 day
@@ -72,8 +75,14 @@ module.exports = {
     clientManager.setMineSession(numericID, { region });
 
     const available = {
-      Miner: (charData.fleet?.Miner || 0) + (charData.inventory?.Miner || 0),
-      Atlas: (charData.fleet?.Atlas || 0) + (charData.inventory?.Atlas || 0)
+      Miner:
+        (charData.fleet?.Miner || 0) +
+        (charData.inventory?.Miner || 0) +
+        (charData.boundShips?.Miner || 0),
+      Atlas:
+        (charData.fleet?.Atlas || 0) +
+        (charData.inventory?.Atlas || 0) +
+        (charData.boundShips?.Atlas || 0)
     };
 
     const regionLabel = region === 'ASTEROID_BELT' ? 'Asteroid Belt' : 'Maw Drift';
@@ -130,6 +139,8 @@ module.exports = {
 
     clientManager.setMineSession(numericID, { region, ships: submitted });
 
+    bindShipsForMission(charData, submitted);
+
     if (region === 'MAW_DRIFT' && Math.random() < 0.05) {
       const abortReason = 'Pirates closed in, but the ships outran the trap and slipped away unharmed into open space.';
       charData.lastMineAt = now;
@@ -181,22 +192,7 @@ module.exports = {
       }
     }
 
-    // Deduct losses from fleet then inventory
-    for (const [ship, lost] of Object.entries(losses)) {
-      let remaining = lost;
-      if (charData.fleet && charData.fleet[ship]) {
-        const fromFleet = Math.min(remaining, charData.fleet[ship]);
-        charData.fleet[ship] -= fromFleet;
-        if (charData.fleet[ship] <= 0) delete charData.fleet[ship];
-        remaining -= fromFleet;
-      }
-      if (remaining > 0 && charData.inventory && charData.inventory[ship]) {
-        const fromInventory = Math.min(remaining, charData.inventory[ship]);
-        charData.inventory[ship] -= fromInventory;
-        if (charData.inventory[ship] <= 0) delete charData.inventory[ship];
-        remaining -= fromInventory;
-      }
-    }
+    applyShipCasualties(charData, losses);
 
     if (!charData.inventory) charData.inventory = {};
     charData.inventory.AFM = (charData.inventory.AFM || 0) + afmGained;

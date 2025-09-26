@@ -4,6 +4,7 @@ const raidUtils = require('../raidUtils');
 const dbm = require('../database-manager');
 const char = require('../char');
 const clientManager = require('../clientManager');
+const { ensureBoundShips, bindShipsForMission, applyShipCasualties } = require('../shared/bound-ships');
 
 // Custom display names for each difficulty
 const DIFFICULTY_NAMES = {
@@ -41,6 +42,8 @@ module.exports = {
       await interaction.editReply({ content: 'Create a character first with /newchar.' });
       return;
     }
+
+    ensureBoundShips(charData);
 
     const now = Date.now();
     const COOLDOWN = 3 * 24 * 60 * 60 * 1000; // 3 days
@@ -103,15 +106,19 @@ module.exports = {
     // Load the ship catalog so we know which entries are valid ships
     const catalog = await raidUtils.loadShipCatalog();
 
-    // Build a temporary fleet combining owned ships with ship items in inventory
-    const fleet = { ...(charData.fleet || {}) };
-    if (charData.inventory) {
-      for (const [itemName, qty] of Object.entries(charData.inventory)) {
-        if (catalog[itemName]) {
-          fleet[itemName] = (fleet[itemName] || 0) + qty;
+    // Build a temporary fleet combining owned, tradeable, and bound ships
+    const fleet = {};
+    const mergeShips = source => {
+      if (!source) return;
+      for (const [name, qty] of Object.entries(source)) {
+        if (catalog[name]) {
+          fleet[name] = (fleet[name] || 0) + qty;
         }
       }
-    }
+    };
+    mergeShips(charData.fleet);
+    mergeShips(charData.inventory);
+    mergeShips(charData.boundShips);
 
     const shipEntries = Object.entries(fleet)
       .filter(([name, count]) => catalog[name] && count > 0)
@@ -173,6 +180,8 @@ module.exports = {
 
     const weights = raidUtils.DEFAULT_WEIGHTS;
     const variance = 0.1;
+    bindShipsForMission(charData, fleetSelection);
+
     const sim = await raidUtils.simulateBattle(
       fleetSelection,
       targets[targetKey],
@@ -182,22 +191,7 @@ module.exports = {
       charData
     );
 
-    // Remove casualties from fleet and inventory separately without merging them
-    for (const [ship, lost] of Object.entries(sim.casualties)) {
-      let remaining = lost;
-      if (charData.fleet && charData.fleet[ship]) {
-        const fromFleet = Math.min(remaining, charData.fleet[ship]);
-        charData.fleet[ship] -= fromFleet;
-        if (charData.fleet[ship] <= 0) delete charData.fleet[ship];
-        remaining -= fromFleet;
-      }
-      if (remaining > 0 && charData.inventory && charData.inventory[ship]) {
-        const fromInventory = Math.min(remaining, charData.inventory[ship]);
-        charData.inventory[ship] -= fromInventory;
-        if (charData.inventory[ship] <= 0) delete charData.inventory[ship];
-        remaining -= fromInventory;
-      }
-    }
+    applyShipCasualties(charData, sim.casualties);
 
     if (sim.result !== 'loss') {
       for (const [res, amt] of Object.entries(sim.loot)) {

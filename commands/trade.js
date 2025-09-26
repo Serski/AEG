@@ -2,6 +2,7 @@ const { SlashCommandBuilder, StringSelectMenuBuilder, ActionRowBuilder, Componen
 const char = require('../char');
 const dbm = require('../database-manager');
 const clientManager = require('../clientManager');
+const { ensureBoundShips, bindShipsForMission, applyShipCasualties } = require('../shared/bound-ships');
 
 const getRand = (min, max, rand = Math.random) => Math.floor(rand() * (max - min + 1)) + min;
 
@@ -59,6 +60,9 @@ const TRADE_RULES = {
 };
 
 function performTrade(charData, region, submitted, now, rand = Math.random) {
+  ensureBoundShips(charData);
+  bindShipsForMission(charData, submitted);
+
   const rules = TRADE_RULES[region];
   let earnings = 0;
   for (let i = 0; i < (submitted.Freighter || 0); i++) {
@@ -97,22 +101,7 @@ function performTrade(charData, region, submitted, now, rand = Math.random) {
     }
   }
 
-  // Deduct losses from fleet then inventory
-  for (const [ship, lost] of Object.entries(losses)) {
-    let remaining = lost;
-    if (charData.fleet && charData.fleet[ship]) {
-      const fromFleet = Math.min(remaining, charData.fleet[ship]);
-      charData.fleet[ship] -= fromFleet;
-      if (charData.fleet[ship] <= 0) delete charData.fleet[ship];
-      remaining -= fromFleet;
-    }
-    if (remaining > 0 && charData.inventory && charData.inventory[ship]) {
-      const fromInventory = Math.min(remaining, charData.inventory[ship]);
-      charData.inventory[ship] -= fromInventory;
-      if (charData.inventory[ship] <= 0) delete charData.inventory[ship];
-      remaining -= fromInventory;
-    }
-  }
+  applyShipCasualties(charData, losses);
 
   const netGold = Math.max(earnings - moneyLost, 0);
   charData.balance = Math.max((charData.balance || 0) + netGold, 0);
@@ -140,6 +129,8 @@ module.exports = {
       await interaction.editReply({ content: 'Create a character first with /newchar.' });
       return;
     }
+
+    ensureBoundShips(charData);
 
     const now = Date.now();
     if (charData.lastTradeAt && now - charData.lastTradeAt < COOLDOWN_MS) {
@@ -188,8 +179,14 @@ module.exports = {
     const region = regionInteraction.values[0];
     clientManager.setTradeSession(numericID, { region });
     const available = {
-      Bridger: (charData.fleet?.Bridger || 0) + (charData.inventory?.Bridger || 0),
-      Freighter: (charData.fleet?.Freighter || 0) + (charData.inventory?.Freighter || 0)
+      Bridger:
+        (charData.fleet?.Bridger || 0) +
+        (charData.inventory?.Bridger || 0) +
+        (charData.boundShips?.Bridger || 0),
+      Freighter:
+        (charData.fleet?.Freighter || 0) +
+        (charData.inventory?.Freighter || 0) +
+        (charData.boundShips?.Freighter || 0)
     };
 
     const regionLabel = {

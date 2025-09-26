@@ -57,6 +57,7 @@ class char {
           "Corvette": 1
         },
         fleet: {},
+        boundShips: {},
         incomeList: {},
         incomeAvailable: true,
         stats: { HP: 100, STR: 0, DEX: 0, INT: 0, CHA: 0 },
@@ -67,6 +68,10 @@ class char {
         shireID: 0,
         numericID: numericID,
       };
+    }
+
+    if (!charData.boundShips || typeof charData.boundShips !== 'object') {
+      charData.boundShips = {};
     }
 
     // Save the character data
