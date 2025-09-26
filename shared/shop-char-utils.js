@@ -1,4 +1,5 @@
 const dbm = require('../database-manager');
+const { ensureBoundShips } = require('./bound-ships');
 
 // Utilities shared between char.js and shop.js
 // Avoid importing char.js or shop.js here to prevent circular dependencies.
@@ -45,12 +46,15 @@ const charCache = new Map();
 async function findPlayerData(id) {
   const player = String(id);
   if (charCache.has(player)) {
-    return [player, charCache.get(player)];
+    const cached = charCache.get(player);
+    ensureBoundShips(cached);
+    return [player, cached];
   }
   const charData = await dbm.loadFile('characters', player);
   if (!charData) {
     return [false, false];
   }
+  ensureBoundShips(charData);
   charCache.set(player, charData);
   return [player, charData];
 }
