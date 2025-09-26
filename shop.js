@@ -14,6 +14,7 @@ const {
 } = require('./shared/shop-char-utils');
 const { clearShopCache } = require('./cache-utils');
 const { loadShipCatalog } = require('./shipUtils');
+const { ensureBoundShips } = require('./shared/bound-ships');
 
 class shop {
   //Declare constants for class
@@ -532,15 +533,26 @@ class shop {
         .setDescription("You haven't made a character! Use /newchar first");
     }
 
+    ensureBoundShips(charData);
+
     const tradeableShipsCounts = {};
     const boundShipsCounts = {};
-    const boundShips = charData.boundShips || {};
 
-    for (const shipName in shipCatalog) {
+    const shipNameSet = new Set([
+      ...Object.keys(shipCatalog || {}),
+      ...Object.keys(charData.fleet || {}),
+      ...Object.keys(charData.inventory || {}),
+      ...Object.keys(charData.boundShips || {}),
+    ]);
+
+    const allShipNames = Array.from(shipNameSet);
+    const allShipNamesSet = new Set(allShipNames);
+
+    for (const shipName of allShipNames) {
       const fleetCount = charData.fleet?.[shipName] || 0;
       const inventoryCount = charData.inventory?.[shipName] || 0;
       tradeableShipsCounts[shipName] = fleetCount + inventoryCount;
-      boundShipsCounts[shipName] = boundShips[shipName] || 0;
+      boundShipsCounts[shipName] = charData.boundShips?.[shipName] || 0;
     }
 
     // create a 2d of items in the player's inventory sorted by category. Remove items with 0 quantity or that don't exist in the shop
@@ -553,18 +565,17 @@ class shop {
         continue;
       }
       if (!shopData[item]) {
-        if (shipCatalog[item]) {
-          const category = 'Ships';
-          if (!inventory[category]) {
-            inventory[category] = [];
-          }
-          inventory[category].push(item);
-          continue;
-        } else {
+        if (!allShipNamesSet.has(item)) {
           deleted = true;
           delete charData.inventory[item];
           continue;
         }
+        const category = shopData[item]?.infoOptions?.Category || 'Ships';
+        if (!inventory[category]) {
+          inventory[category] = [];
+        }
+        inventory[category].push(item);
+        continue;
       }
       const category = shopData[item].infoOptions.Category;
       if (!inventory[category]) {
@@ -586,7 +597,7 @@ class shop {
       }
     };
 
-    for (const shipName in shipCatalog) {
+    for (const shipName of allShipNames) {
       const tradeableCount = tradeableShipsCounts[shipName] || 0;
       const boundCount = boundShipsCounts[shipName] || 0;
       if (tradeableCount > 0 || boundCount > 0) {
@@ -612,7 +623,7 @@ class shop {
       descriptionText += `**\`--${category}${endSpaces}\`**\n`;
       const categoryLines = [];
       for (const item of inventory[category]) {
-        if (shipCatalog[item]) {
+        if (allShipNamesSet.has(item)) {
           const tradeableCount = tradeableShipsCounts[item] || 0;
           const boundCount = boundShipsCounts[item] || 0;
 
