@@ -3,6 +3,7 @@ const { getCharModule } = require('./charModule');
 const char = getCharModule();
 const marketplace = require('./marketplace');
 const admin = require('./admin');
+const novaCommand = require('./commands/factionCommands/nova');
 const SAFE = process.env.AEG_SAFE_COMPONENTS !== 'false';
 
 // MODALS
@@ -256,6 +257,9 @@ exports.handle = async (interaction) => {
     if (interaction.customId.substring(0, 17) === 'editmapaboutmodal') {
       admin.editMapAbout(interaction);
     }
+    if (interaction.customId.startsWith('nova:donateModal:')) {
+      await novaCommand.handleDonationModal(interaction);
+    }
     // if (interaction.customId === 'addusedescriptionmodal') {
     //   addUseDescription(interaction);
     // }
@@ -286,6 +290,10 @@ exports.handle = async (interaction) => {
       balaSwitch(interaction);
     } else if (interaction.customId.substring(0, 11) === 'partySelect') {
       await admin.selectParty(interaction);
+    } else if (interaction.customId.startsWith('nova:category:')) {
+      await novaCommand.handleCategory(interaction);
+    } else if (interaction.customId.startsWith('nova:donate:')) {
+      await novaCommand.handleDonate(interaction);
     }
   } else if (interaction.isStringSelectMenu()) {
     if (interaction.customId === 'shireSelect') {
