@@ -9,5 +9,6 @@
   "Aether": { "tier": 1, "attack": 0, "defense": 10, "speed": 70, "hp": 300 },
   "Harvester": { "tier": 1, "attack": 0, "defense": 8, "speed": 60, "hp": 250 },
   "Freighter": { "tier": 1, "attack": 0, "defense": 5, "speed": 50, "hp": 500 },
-  "Bridger": { "tier": 1, "attack": 0, "defense": 6, "speed": 55, "hp": 550 }
+  "Bridger": { "tier": 1, "attack": 0, "defense": 6, "speed": 55, "hp": 550 },
+  "KZ90": { "tier": 3, "attack": 35, "defense": 60, "speed": 80, "hp": 750 }
 }

@@ -37,7 +37,7 @@ test('performTrade earnings and loss logic', async (t) => {
     const now = Date.now();
     const charData = { fleet: { Bridger: 1, Freighter: 1 }, inventory: {}, balance: 0, boundShips: {} };
     const submitted = { Bridger: 1, Freighter: 1 };
-    // earnings 150 + floor(150*1.5) = 375, money loss 75, ship loss 1 Bridger, compensation Horse
+    // earnings 150 + floor(150*1.5) = 375, money loss 75, ship loss 1 Bridger, compensation KZ90 research hull
     const rand = makeRand([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
     const res = tradeCmd._performTrade(charData, 'DOMINION', submitted, now, rand);
     assert.equal(res.earnings, 375);
@@ -47,9 +47,9 @@ test('performTrade earnings and loss logic', async (t) => {
     assert.equal(charData.fleet.Freighter, undefined);
     assert.equal(charData.boundShips.Bridger, undefined);
     assert.equal(charData.boundShips.Freighter, 1);
-    assert.equal(charData.inventory.Horse, 1);
+    assert.equal(charData.inventory.KZ90, 1);
     assert.equal(charData.balance, 300);
-    assert.equal(res.compensationItem, 'Horse');
+    assert.equal(res.compensationItem, 'KZ90');
   });
 });
 
