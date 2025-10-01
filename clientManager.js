@@ -7,6 +7,8 @@ class clientManager {
     static harvestSessions = new Map();
     // simple in-memory trade session store
     static tradeSessions = new Map();
+    // simple in-memory explore session store
+    static exploreSessions = new Map();
 
     static getRaidSession(userID) {
         const session = this.raidSessions.get(userID);
@@ -74,6 +76,22 @@ class clientManager {
 
     static clearTradeSession(userID) {
         this.tradeSessions.delete(userID);
+    }
+
+    static getExploreSession(userID) {
+        const s = this.exploreSessions.get(userID);
+        if (s && s.expiresAt > Date.now()) return s;
+        this.exploreSessions.delete(userID);
+        return null;
+    }
+
+    static setExploreSession(userID, data) {
+        const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
+        this.exploreSessions.set(userID, { ...data, expiresAt });
+    }
+
+    static clearExploreSession(userID) {
+        this.exploreSessions.delete(userID);
     }
     static getEmoji(emojiName) {
         const bot = require('./bot');
