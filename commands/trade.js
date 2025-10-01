@@ -22,7 +22,7 @@ const TRADE_RULES = {
         'A corrupt dockmaster seized part of the cargo.',
         'An unexpected tariff cut into your earnings.'
       ],
-      compensation: ['Bridger', 'Miner', 'Harvester']
+      compensation: ['KZ90', 'Bridger', 'Miner', 'Harvester']
     }
   },
   FEDERATION: {
@@ -36,7 +36,7 @@ const TRADE_RULES = {
         'A rival trader undercut your deal.',
         'Storms damaged part of your cargo.'
       ],
-      compensation: ['Bridger', 'Miner', 'Harvester']
+      compensation: ['KZ90', 'Bridger', 'Miner', 'Harvester']
     }
   },
   DOMINION: {
@@ -50,7 +50,7 @@ const TRADE_RULES = {
         'Bandits made off with part of the haul.',
         'Local warlords extorted your caravans.'
       ],
-      compensation: ['Bridger', 'Miner', 'Harvester']
+      compensation: ['KZ90', 'Bridger', 'Miner', 'Harvester']
     },
     shipLoss: {
       chanceRange: [5, 10],
