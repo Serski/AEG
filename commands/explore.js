@@ -10,6 +10,82 @@ const char = require('../char');
 const { COOLDOWN_MS, EXPLORE_IMAGE, REGION_CONFIG } = require('../shared/explore-data');
 const { ensureBoundShips, bindShipsForMission } = require('../shared/bound-ships');
 
+function rollInclusive(min, max) {
+  const lower = Number(min);
+  const upper = Number(max);
+  if (!Number.isFinite(lower) || !Number.isFinite(upper)) {
+    throw new Error('rollInclusive requires finite numeric bounds.');
+  }
+  const realMin = Math.min(lower, upper);
+  const realMax = Math.max(lower, upper);
+  return Math.floor(Math.random() * (realMax - realMin + 1)) + realMin;
+}
+
+function rollOutcome(probabilities = {}) {
+  const entries = Object.entries(probabilities);
+  if (!entries.length) {
+    return 'nothing';
+  }
+
+  const roll = Math.random();
+  let cumulative = 0;
+  for (const [key, chance] of entries) {
+    const weight = Number(chance) || 0;
+    cumulative += weight;
+    if (roll < cumulative) {
+      return key;
+    }
+  }
+
+  return entries[entries.length - 1][0];
+}
+
+function resolveReward(rewardConfig = {}) {
+  const rewards = { inventory: {}, fleet: {}, curio: null };
+  if (!rewardConfig || typeof rewardConfig !== 'object') {
+    return rewards;
+  }
+
+  if (rewardConfig.curio) {
+    rewards.curio = rewardConfig.curio;
+    rewards.inventory[rewardConfig.curio] = (rewards.inventory[rewardConfig.curio] || 0) + 1;
+  }
+
+  if (rewardConfig.salvage && typeof rewardConfig.salvage === 'object') {
+    for (const [resource, value] of Object.entries(rewardConfig.salvage)) {
+      let amount = 0;
+      if (Array.isArray(value)) {
+        const [min, max] = value;
+        amount = rollInclusive(min, max);
+      } else if (typeof value === 'number') {
+        amount = value;
+      }
+
+      if (amount > 0) {
+        rewards.inventory[resource] = (rewards.inventory[resource] || 0) + amount;
+      }
+    }
+  }
+
+  if (rewardConfig.ships && typeof rewardConfig.ships === 'object') {
+    for (const [shipName, value] of Object.entries(rewardConfig.ships)) {
+      let amount = 0;
+      if (Array.isArray(value)) {
+        const [min, max] = value;
+        amount = rollInclusive(min, max);
+      } else if (typeof value === 'number') {
+        amount = value;
+      }
+
+      if (amount > 0) {
+        rewards.fleet[shipName] = (rewards.fleet[shipName] || 0) + amount;
+      }
+    }
+  }
+
+  return rewards;
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('explore')
@@ -138,12 +214,146 @@ module.exports = {
       clientManager.setExploreSession(numericID, updatedSession);
 
       await selection.update({
-        content: `Region confirmed: **${regionConfig.label}**. Prepare for mission step 2.`,
+        content: `Region confirmed: **${regionConfig.label}**. Expedition underway...`,
         embeds: [],
         components: []
       });
 
-      setupComplete = true;
+      let resolutionComplete = false;
+      try {
+        const encounters = Array.isArray(regionConfig.encounters) ? regionConfig.encounters : [];
+        if (!encounters.length) {
+          throw new Error(`Region ${regionConfig.key} has no encounters configured.`);
+        }
+
+        const encounter = encounters[Math.floor(Math.random() * encounters.length)];
+        const outcomeKey = rollOutcome(regionConfig.probabilities);
+        const outcomes = encounter.outcomes || {};
+        let rewardResult = { inventory: {}, fleet: {}, curio: null };
+        let rareShipAwarded = null;
+
+        if (!charData.inventory || typeof charData.inventory !== 'object') {
+          charData.inventory = {};
+        }
+        if (!charData.fleet || typeof charData.fleet !== 'object') {
+          charData.fleet = {};
+        }
+        if (!charData.boundShips || typeof charData.boundShips !== 'object') {
+          charData.boundShips = {};
+        }
+
+        const ensurePositiveMap = (target, updates = {}) => {
+          for (const [key, amount] of Object.entries(updates)) {
+            if (!Number.isFinite(amount) || amount <= 0) continue;
+            target[key] = (target[key] || 0) + amount;
+            if (target[key] <= 0) {
+              delete target[key];
+            }
+          }
+        };
+
+        if (outcomeKey === 'reward') {
+          rewardResult = resolveReward(outcomes.reward);
+          ensurePositiveMap(charData.inventory, rewardResult.inventory);
+          ensurePositiveMap(charData.fleet, rewardResult.fleet);
+
+          if (regionConfig.rareShip && Array.isArray(regionConfig.rareShip.options) && regionConfig.rareShip.options.length) {
+            const rareChance = Number(regionConfig.rareShip.chance) || 0;
+            if (Math.random() < rareChance) {
+              const optionIndex = rollInclusive(0, regionConfig.rareShip.options.length - 1);
+              rareShipAwarded = regionConfig.rareShip.options[optionIndex];
+              if (rareShipAwarded) {
+                charData.inventory[rareShipAwarded] = (charData.inventory[rareShipAwarded] || 0) + 1;
+              }
+            }
+          }
+        } else if (outcomeKey === 'destroyed') {
+          const deductShip = (collection, shipName) => {
+            if (!collection || !collection[shipName]) return false;
+            collection[shipName] -= 1;
+            if (collection[shipName] <= 0) {
+              delete collection[shipName];
+            }
+            return true;
+          };
+
+          if (!deductShip(charData.boundShips, 'KZ90')) {
+            if (!deductShip(charData.fleet, 'KZ90')) {
+              deductShip(charData.inventory, 'KZ90');
+            }
+          }
+        }
+
+        charData.lastExploreAt = now;
+        await char.updatePlayer(player, charData);
+
+        const fields = [];
+        const encounterLine = encounter.line || 'Your crew reports an uncharted anomaly.';
+        const outcomeDetails =
+          typeof outcomes[outcomeKey] === 'string'
+            ? outcomes[outcomeKey]
+            : outcomeKey === 'reward'
+              ? 'Recovery teams return with secured artifacts.'
+              : 'Mission outcome recorded.';
+
+        fields.push({ name: 'Encounter', value: encounterLine });
+        fields.push({ name: 'Outcome', value: outcomeDetails });
+
+        const rewardLines = [];
+        if (outcomeKey === 'reward') {
+          if (rewardResult.curio) {
+            rewardLines.push(`Curio secured: **${rewardResult.curio}**`);
+          }
+          for (const [item, amount] of Object.entries(rewardResult.inventory)) {
+            if (rewardResult.curio === item) continue;
+            rewardLines.push(`${item}: ${amount}`);
+          }
+          for (const [ship, amount] of Object.entries(rewardResult.fleet)) {
+            rewardLines.push(`${ship}: ${amount}`);
+          }
+          if (!rewardLines.length) {
+            rewardLines.push('No salvage recovered.');
+          }
+          fields.push({ name: 'Recovered Assets', value: rewardLines.join('\n') });
+        }
+
+        if (rareShipAwarded) {
+          fields.push({ name: 'Rare Discovery', value: `Recovered **${rareShipAwarded}** schematic.` });
+        }
+
+        if (outcomeKey === 'destroyed') {
+          fields.push({ name: 'Losses', value: 'KZ90 Research Ship destroyed during expedition.' });
+        }
+
+        const reportEmbed = new EmbedBuilder()
+          .setTitle(`Exploration Report – ${regionConfig.label}`)
+          .setDescription('Mission telemetry received.')
+          .setFields(fields)
+          .setImage(EXPLORE_IMAGE);
+
+        await interaction.followUp({ embeds: [reportEmbed], components: [], ephemeral: true });
+
+        const resolvedSession = {
+          ...clientManager.getExploreSession(numericID),
+          stage: 'resolved',
+          resolution: {
+            timestamp: now,
+            region: regionConfig.key,
+            encounterId: encounter.id,
+            outcome: outcomeKey,
+            reward: rewardResult,
+            rareShip: rareShipAwarded
+          }
+        };
+
+        clientManager.setExploreSession(numericID, resolvedSession);
+        resolutionComplete = true;
+        setupComplete = true;
+      } finally {
+        if (!resolutionComplete) {
+          clientManager.clearExploreSession(numericID);
+        }
+      }
     } finally {
       if (!setupComplete) {
         clientManager.clearExploreSession(numericID);
