@@ -1,7 +1,13 @@
-const { SlashCommandBuilder } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  StringSelectMenuBuilder,
+  ActionRowBuilder,
+  ComponentType,
+  EmbedBuilder
+} = require('discord.js');
 const clientManager = require('../clientManager');
 const char = require('../char');
-const { COOLDOWN_MS } = require('../shared/explore-data');
+const { COOLDOWN_MS, EXPLORE_IMAGE, REGION_CONFIG } = require('../shared/explore-data');
 const { ensureBoundShips, bindShipsForMission } = require('../shared/bound-ships');
 
 module.exports = {
@@ -64,7 +70,79 @@ module.exports = {
       };
       clientManager.setExploreSession(numericID, sessionData);
 
-      await interaction.editReply({ content: 'Exploration mission setup complete. Your KZ90 Research Ship is ready for launch.' });
+      const selectMenuId = `explore-region-select-${numericID}`;
+      const embed = new EmbedBuilder()
+        .setTitle('Exploration Briefing – Step 1')
+        .setDescription('Select a sector to chart for your upcoming expedition.')
+        .setImage(EXPLORE_IMAGE);
+
+      const selectMenu = new StringSelectMenuBuilder()
+        .setCustomId(selectMenuId)
+        .setPlaceholder('Choose a region to explore')
+        .addOptions(
+          Object.values(REGION_CONFIG).map((region) => ({
+            label: region.label,
+            value: region.key,
+            description: region.description
+          }))
+        );
+
+      const components = [new ActionRowBuilder().addComponents(selectMenu)];
+
+      await interaction.editReply({ embeds: [embed], components });
+
+      const message = await interaction.fetchReply();
+
+      let selection;
+      try {
+        selection = await message.awaitMessageComponent({
+          filter: (i) => i.user.id === interaction.user.id && i.customId === selectMenuId,
+          componentType: ComponentType.StringSelect,
+          time: 60_000
+        });
+      } catch (error) {
+        if (
+          error.code === 'INTERACTION_COLLECTOR_ERROR' ||
+          error.code === 'InteractionCollectorError' ||
+          error.message?.includes('time')
+        ) {
+          await interaction.editReply({
+            content: 'Exploration briefing expired before a region was selected. Please run /explore again when you are ready.',
+            embeds: [],
+            components: []
+          });
+          clientManager.clearExploreSession(numericID);
+          return;
+        }
+        throw error;
+      }
+
+      const selectedKey = selection.values[0];
+      const regionConfig = REGION_CONFIG[selectedKey];
+
+      if (!regionConfig) {
+        await selection.update({
+          content: 'The selected region is no longer available. Please try starting a new exploration mission later.',
+          embeds: [],
+          components: []
+        });
+        clientManager.clearExploreSession(numericID);
+        return;
+      }
+
+      const updatedSession = {
+        ...clientManager.getExploreSession(numericID),
+        stage: 'regionSelected',
+        region: regionConfig.key
+      };
+      clientManager.setExploreSession(numericID, updatedSession);
+
+      await selection.update({
+        content: `Region confirmed: **${regionConfig.label}**. Prepare for mission step 2.`,
+        embeds: [],
+        components: []
+      });
+
       setupComplete = true;
     } finally {
       if (!setupComplete) {
