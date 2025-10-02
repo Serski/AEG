@@ -86,6 +86,80 @@ function resolveReward(rewardConfig = {}) {
   return rewards;
 }
 
+async function maybeSendNews(interaction, region, encounter, outcomeKey, rewardResult, rareShipAwarded) {
+  const guild = interaction?.guild;
+  if (!guild || !guild.channels?.cache) {
+    return;
+  }
+
+  const newsChannel = guild.channels.cache.find(
+    (channel) => channel.name === 'news-feed' && typeof channel.isTextBased === 'function' && channel.isTextBased()
+  );
+
+  if (!newsChannel) {
+    return;
+  }
+
+  const outcomeColours = {
+    reward: 0x2ecc71,
+    destroyed: 0xb22222,
+    nothing: 0x708090
+  };
+
+  const encounterLine = encounter?.line || 'Expedition telemetry received without incident.';
+  const outcomes = encounter?.outcomes || {};
+  let outcomeSummary = '';
+
+  if (typeof outcomes[outcomeKey] === 'string') {
+    outcomeSummary = outcomes[outcomeKey];
+  } else if (outcomeKey === 'reward') {
+    outcomeSummary = 'Recovery teams secure valuable salvage.';
+  } else if (outcomeKey === 'destroyed') {
+    outcomeSummary = 'Vessel lost with all hands.';
+  } else {
+    outcomeSummary = 'Survey concluded without notable findings.';
+  }
+
+  const rewardLines = [];
+  if (outcomeKey === 'reward' && rewardResult) {
+    if (rewardResult.curio) {
+      rewardLines.push(`Curio recovered: **${rewardResult.curio}**`);
+    }
+    for (const [item, amount] of Object.entries(rewardResult.inventory || {})) {
+      if (rewardResult.curio === item) continue;
+      rewardLines.push(`${item}: ${amount}`);
+    }
+    for (const [ship, amount] of Object.entries(rewardResult.fleet || {})) {
+      rewardLines.push(`${ship}: ${amount}`);
+    }
+  }
+
+  const embed = new EmbedBuilder()
+    .setTitle(`Expedition Dispatch – ${region?.label || 'Unknown Sector'}`)
+    .setColor(outcomeColours[outcomeKey] ?? 0x1f2933)
+    .setDescription(encounterLine)
+    .addFields({ name: 'Outcome', value: outcomeSummary })
+    .setTimestamp();
+
+  if (rewardLines.length) {
+    embed.addFields({ name: 'Recovered Assets', value: rewardLines.join('\n') });
+  }
+
+  if (rareShipAwarded) {
+    embed.addFields({ name: 'Rare Discovery', value: `Recovered schematics for **${rareShipAwarded}**.` });
+  }
+
+  if (outcomeKey === 'destroyed') {
+    embed.addFields({ name: 'Casualty Report', value: 'KZ90 Research Ship lost during mission.' });
+  }
+
+  try {
+    await newsChannel.send({ content: ':EXPLORE:', embeds: [embed] });
+  } catch (error) {
+    console.error('[explore] Failed to send news-feed dispatch:', error);
+  }
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('explore')
@@ -332,6 +406,14 @@ module.exports = {
           .setImage(EXPLORE_IMAGE);
 
         await interaction.followUp({ embeds: [reportEmbed], components: [], ephemeral: true });
+        await maybeSendNews(
+          interaction,
+          regionConfig,
+          encounter,
+          outcomeKey,
+          rewardResult,
+          rareShipAwarded
+        );
 
         const resolvedSession = {
           ...clientManager.getExploreSession(numericID),
