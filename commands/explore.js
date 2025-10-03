@@ -61,7 +61,7 @@ function resolveReward(rewardConfig = {}) {
 
   let useCurioRewards = hasCurio;
   if (hasCurio && hasResourceRewards) {
-    useCurioRewards = Math.random() < 0.5;
+    useCurioRewards = Math.random() < 0.2;
   }
 
   if (useCurioRewards && curioId) {
