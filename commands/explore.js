@@ -87,6 +87,10 @@ function resolveReward(rewardConfig = {}) {
 }
 
 async function maybeSendNews(interaction, region, encounter, outcomeKey, rewardResult, rareShipAwarded) {
+  if (outcomeKey !== 'destroyed') {
+    return;
+  }
+
   const guild = interaction?.guild;
   if (!guild || !guild.channels?.cache) {
     return;
@@ -413,14 +417,16 @@ module.exports = {
           .setImage(EXPLORE_IMAGE);
 
         await interaction.followUp({ embeds: [reportEmbed], components: [], ephemeral: true });
-        await maybeSendNews(
-          interaction,
-          regionConfig,
-          encounter,
-          outcomeKey,
-          rewardResult,
-          rareShipAwarded
-        );
+        if (outcomeKey === 'destroyed') {
+          await maybeSendNews(
+            interaction,
+            regionConfig,
+            encounter,
+            outcomeKey,
+            rewardResult,
+            rareShipAwarded
+          );
+        }
 
         const resolvedSession = {
           ...clientManager.getExploreSession(numericID),
