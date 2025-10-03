@@ -119,12 +119,12 @@ test('explore command enforces cooldown window', { concurrency: false }, async (
   stubNow(t, now);
   stubRandomSequence(t, [0.1]);
 
-  const remainingMinutes = 90;
+  const remainingSeconds = 90;
   const charData = {
     boundShips: { KZ90: 1 },
     fleet: {},
     inventory: { KZ90: 1 },
-    lastExploreAt: now - (COOLDOWN_MS - remainingMinutes * 60_000)
+    lastExploreAt: now - (COOLDOWN_MS - remainingSeconds * 1000)
   };
 
   const updateMock = stubCharacterData(t, charData);
@@ -133,7 +133,7 @@ test('explore command enforces cooldown window', { concurrency: false }, async (
   await exploreCmd.execute(interaction);
 
   assert.equal(replies.edits.length, 1);
-  assert.match(replies.edits[0].content, /You must wait 1 hours and 30 minutes before exploring again\./);
+  assert.match(replies.edits[0].content, /You must wait 1 minute and 30 seconds before exploring again\./);
   assert.equal(replies.followUps.length, 0);
   assert.equal(updateMock.mock.calls.length, 0);
   assert.equal(sessionStore.size, 0);

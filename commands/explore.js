@@ -190,10 +190,17 @@ module.exports = {
       const now = Date.now();
       if (charData.lastExploreAt && now - charData.lastExploreAt < COOLDOWN_MS) {
         const remaining = COOLDOWN_MS - (now - charData.lastExploreAt);
-        const mins = Math.ceil(remaining / 60000);
-        const hours = Math.floor(mins / 60);
-        const minutes = mins % 60;
-        await interaction.editReply({ content: `You must wait ${hours} hours and ${minutes} minutes before exploring again.` });
+        const totalSeconds = Math.ceil(remaining / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        const parts = [];
+        if (minutes > 0) {
+          parts.push(`${minutes} minute${minutes === 1 ? '' : 's'}`);
+        }
+        if (seconds > 0 || parts.length === 0) {
+          parts.push(`${seconds} second${seconds === 1 ? '' : 's'}`);
+        }
+        await interaction.editReply({ content: `You must wait ${parts.join(' and ')} before exploring again.` });
         return;
       }
 
