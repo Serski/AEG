@@ -156,12 +156,12 @@ test('explore command blocks concurrent sessions', { concurrency: false }, async
   assert.deepEqual(sessionStore.get(userId), { stage: 'existing-session' });
 });
 
-test('explore command resolves rewards and updates inventory/fleet', { concurrency: false }, async (t) => {
+test('explore command awards curio rewards exclusively when selected', { concurrency: false }, async (t) => {
   mockSessions(t);
   const userId = 'reward-user';
   const now = 2_000_000;
   stubNow(t, now);
-  stubRandomSequence(t, [0.2, 0.5, 0.3, 0.6]);
+  stubRandomSequence(t, [0.1, 0.0, 0.2]);
 
   const regionKey = 'UNIT_TEST_REWARD';
   await withRegionOverride(
@@ -211,10 +211,84 @@ test('explore command resolves rewards and updates inventory/fleet', { concurren
 
       const assetsField = extractEmbedField(followPayload.embeds, 'Recovered Assets');
       assert.ok(assetsField.value.includes('Curio secured: **Test Curio**'));
+      assert.ok(!/GGP:/.test(assetsField.value));
+      assert.ok(!/Skiff:/.test(assetsField.value));
+
+      assert.equal(charData.inventory['Test Curio'], 1);
+      assert.ok(!('GGP' in charData.inventory));
+      assert.ok(!('Skiff' in charData.fleet));
+      assert.equal(charData.lastExploreAt, now);
+
+      assert.equal(updateMock.mock.calls.length, 1);
+      const session = sessionStore.get(userId);
+      assert.equal(session.stage, 'resolved');
+      assert.equal(session.resolution.outcome, 'reward');
+      assert.equal(session.resolution.reward.curio, 'Test Curio');
+      assert.deepEqual(session.resolution.reward.inventory, { 'Test Curio': 1 });
+      assert.deepEqual(session.resolution.reward.fleet, {});
+    }
+  );
+});
+
+test('explore command awards salvage and ships when selected', { concurrency: false }, async (t) => {
+  mockSessions(t);
+  const userId = 'salvage-user';
+  const now = 2_500_000;
+  stubNow(t, now);
+  stubRandomSequence(t, [0.1, 0.0, 0.8, 0.0, 0.9]);
+
+  const regionKey = 'UNIT_TEST_SALVAGE';
+  await withRegionOverride(
+    regionKey,
+    {
+      key: regionKey,
+      label: 'Test Region',
+      description: 'Unit test region',
+      probabilities: { reward: 1 },
+      encounters: [
+        {
+          id: 'UT_ENCOUNTER',
+          line: 'Test encounter in the dunes.',
+          outcomes: {
+            reward: {
+              curio: 'Test Curio',
+              salvage: { GGP: [10, 12] },
+              ships: { Skiff: [1, 2] }
+            }
+          }
+        }
+      ]
+    },
+    async () => {
+      const charData = {
+        boundShips: { KZ90: 1 },
+        fleet: {},
+        inventory: { KZ90: 1 },
+        lastExploreAt: now - COOLDOWN_MS - 1000
+      };
+
+      const updateMock = stubCharacterData(t, charData);
+      const { interaction, replies, selectionUpdates } = createInteraction(t, userId, regionKey);
+
+      await exploreCmd.execute(interaction);
+
+      assert.ok(selectionUpdates.some((payload) => /Region confirmed: \*\*Test Region\*\*/.test(payload.content)));
+      assert.equal(replies.followUps.length, 1);
+      const followPayload = replies.followUps[0];
+      assert.ok(Array.isArray(followPayload.embeds));
+
+      const encounterField = extractEmbedField(followPayload.embeds, 'Encounter');
+      assert.equal(encounterField.value, 'Test encounter in the dunes.');
+
+      const outcomeField = extractEmbedField(followPayload.embeds, 'Outcome');
+      assert.equal(outcomeField.value, 'Recovery teams return with secured artifacts.');
+
+      const assetsField = extractEmbedField(followPayload.embeds, 'Recovered Assets');
+      assert.ok(!assetsField.value.includes('Curio secured: **Test Curio**'));
       assert.ok(assetsField.value.includes('GGP: 10'));
       assert.ok(assetsField.value.includes('Skiff: 2'));
 
-      assert.equal(charData.inventory['Test Curio'], 1);
+      assert.ok(!('Test Curio' in charData.inventory));
       assert.equal(charData.inventory.GGP, 10);
       assert.equal(charData.fleet.Skiff, 2);
       assert.equal(charData.lastExploreAt, now);
@@ -223,9 +297,9 @@ test('explore command resolves rewards and updates inventory/fleet', { concurren
       const session = sessionStore.get(userId);
       assert.equal(session.stage, 'resolved');
       assert.equal(session.resolution.outcome, 'reward');
-      assert.equal(session.resolution.reward.curio, 'Test Curio');
-      assert.equal(session.resolution.reward.inventory.GGP, 10);
-      assert.equal(session.resolution.reward.fleet.Skiff, 2);
+      assert.equal(session.resolution.reward.curio, null);
+      assert.deepEqual(session.resolution.reward.inventory, { GGP: 10 });
+      assert.deepEqual(session.resolution.reward.fleet, { Skiff: 2 });
     }
   );
 });

@@ -46,40 +46,55 @@ function resolveReward(rewardConfig = {}) {
     return rewards;
   }
 
-  if (rewardConfig.curio) {
-    rewards.curio = rewardConfig.curio;
-    rewards.inventory[rewardConfig.curio] = (rewards.inventory[rewardConfig.curio] || 0) + 1;
+  const curioId = rewardConfig.curio;
+  const salvageEntries =
+    rewardConfig.salvage && typeof rewardConfig.salvage === 'object'
+      ? Object.entries(rewardConfig.salvage)
+      : [];
+  const shipEntries =
+    rewardConfig.ships && typeof rewardConfig.ships === 'object'
+      ? Object.entries(rewardConfig.ships)
+      : [];
+
+  const hasCurio = Boolean(curioId);
+  const hasResourceRewards = salvageEntries.length > 0 || shipEntries.length > 0;
+
+  let useCurioRewards = hasCurio;
+  if (hasCurio && hasResourceRewards) {
+    useCurioRewards = Math.random() < 0.5;
   }
 
-  if (rewardConfig.salvage && typeof rewardConfig.salvage === 'object') {
-    for (const [resource, value] of Object.entries(rewardConfig.salvage)) {
-      let amount = 0;
-      if (Array.isArray(value)) {
-        const [min, max] = value;
-        amount = rollInclusive(min, max);
-      } else if (typeof value === 'number') {
-        amount = value;
-      }
+  if (useCurioRewards && curioId) {
+    rewards.curio = curioId;
+    rewards.inventory[curioId] = (rewards.inventory[curioId] || 0) + 1;
+    return rewards;
+  }
 
-      if (amount > 0) {
-        rewards.inventory[resource] = (rewards.inventory[resource] || 0) + amount;
-      }
+  for (const [resource, value] of salvageEntries) {
+    let amount = 0;
+    if (Array.isArray(value)) {
+      const [min, max] = value;
+      amount = rollInclusive(min, max);
+    } else if (typeof value === 'number') {
+      amount = value;
+    }
+
+    if (amount > 0) {
+      rewards.inventory[resource] = (rewards.inventory[resource] || 0) + amount;
     }
   }
 
-  if (rewardConfig.ships && typeof rewardConfig.ships === 'object') {
-    for (const [shipName, value] of Object.entries(rewardConfig.ships)) {
-      let amount = 0;
-      if (Array.isArray(value)) {
-        const [min, max] = value;
-        amount = rollInclusive(min, max);
-      } else if (typeof value === 'number') {
-        amount = value;
-      }
+  for (const [shipName, value] of shipEntries) {
+    let amount = 0;
+    if (Array.isArray(value)) {
+      const [min, max] = value;
+      amount = rollInclusive(min, max);
+    } else if (typeof value === 'number') {
+      amount = value;
+    }
 
-      if (amount > 0) {
-        rewards.fleet[shipName] = (rewards.fleet[shipName] || 0) + amount;
-      }
+    if (amount > 0) {
+      rewards.fleet[shipName] = (rewards.fleet[shipName] || 0) + amount;
     }
   }
 
