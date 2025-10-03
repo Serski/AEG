@@ -161,7 +161,7 @@ test('explore command awards curio rewards exclusively when selected', { concurr
   const userId = 'reward-user';
   const now = 2_000_000;
   stubNow(t, now);
-  stubRandomSequence(t, [0.1, 0.0, 0.2]);
+  stubRandomSequence(t, [0.1, 0.0, 0.19]);
 
   const regionKey = 'UNIT_TEST_REWARD';
   await withRegionOverride(
@@ -235,7 +235,7 @@ test('explore command awards salvage and ships when selected', { concurrency: fa
   const userId = 'salvage-user';
   const now = 2_500_000;
   stubNow(t, now);
-  stubRandomSequence(t, [0.1, 0.0, 0.8, 0.0, 0.9]);
+  stubRandomSequence(t, [0.1, 0.0, 0.81, 0.0, 0.9]);
 
   const regionKey = 'UNIT_TEST_SALVAGE';
   await withRegionOverride(
