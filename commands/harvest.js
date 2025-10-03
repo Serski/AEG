@@ -14,10 +14,10 @@ function performHarvest(charData, region, submitted, now, rand = Math.random) {
   let pccGained = 0;
 
   for (let i = 0; i < (submitted.Harvester || 0); i++) {
-    pccGained += region === 'GAS_GIANT' ? getRand(2, 4, rand) : getRand(4, 8, rand);
+    pccGained += region === 'GAS_GIANT' ? getRand(4, 8, rand) : getRand(8, 16, rand);
   }
   for (let i = 0; i < (submitted.Aether || 0); i++) {
-    pccGained += region === 'GAS_GIANT' ? getRand(4, 8, rand) : getRand(10, 15, rand);
+    pccGained += region === 'GAS_GIANT' ? getRand(8, 16, rand) : getRand(20, 30, rand);
   }
 
   const losses = {};
