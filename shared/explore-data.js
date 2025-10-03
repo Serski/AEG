@@ -1,5 +1,5 @@
 const EXPLORE_IMAGE = 'https://i.imgur.com/zCEGfel.jpeg';
-const COOLDOWN_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
+const COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes
 
 const CURIO_DEFINITIONS = {
   'Glass-Sand Urn': { gold: 1000 },
