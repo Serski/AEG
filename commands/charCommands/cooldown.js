@@ -1,10 +1,17 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const char = require('../../char');
+const { COOLDOWN_MS: EXPLORE_COOLDOWN_MS } = require('../shared/explore-data');
+
+const RAID_COOLDOWN_MS = 3 * 24 * 60 * 60 * 1000;
+const HARVEST_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+const MINE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+const TRADE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+const INCOMES_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('cooldown')
-        .setDescription('Check your active timers (item usage and crafting).'),
+        .setDescription('Check your active timers (item usage and missions).'),
     async execute(interaction) {
         await interaction.deferReply({ flags: 64 });
         const numericID = interaction.user.id;
@@ -16,13 +23,14 @@ module.exports = {
         }
 
         const fields = [];
-        const now = Math.round(Date.now() / 1000);
+        const nowMs = Date.now();
+        const nowSeconds = Math.round(nowMs / 1000);
 
         if (charData.cooldowns && charData.cooldowns.usageCooldowns) {
             const usageLines = [];
             for (const [itemName, timestamp] of Object.entries(charData.cooldowns.usageCooldowns)) {
                 const numericTimestamp = Number(timestamp);
-                if (numericTimestamp > now) {
+                if (numericTimestamp > nowSeconds) {
                     usageLines.push(`**${itemName}**: <t:${numericTimestamp}:R>`);
                 }
             }
@@ -32,21 +40,32 @@ module.exports = {
             }
         }
 
-        let craftingResult;
-        try {
-            craftingResult = await char.craftingCooldowns(String(numericID));
-        } catch (error) {
-            if (process.env.DEBUG) console.log(error);
-        }
-
-        if (typeof craftingResult === 'string') {
-            fields.push({ name: 'Crafting', value: craftingResult });
-        } else if (craftingResult && craftingResult.data && Array.isArray(craftingResult.data.fields)) {
-            for (const field of craftingResult.data.fields) {
-                if (field && field.name && field.value) {
-                    fields.push({ name: field.name, value: field.value });
-                }
+        const missionLines = [];
+        const addMissionLine = (label, timestamp, cooldownMs) => {
+            if (!timestamp) {
+                return;
             }
+
+            const numericTimestamp = Number(timestamp);
+            if (!Number.isFinite(numericTimestamp)) {
+                return;
+            }
+
+            const expiry = numericTimestamp + cooldownMs;
+            if (expiry > nowMs) {
+                missionLines.push(`**${label}**: <t:${Math.round(expiry / 1000)}:R>`);
+            }
+        };
+
+        addMissionLine('Raid', charData.lastRaidAt, RAID_COOLDOWN_MS);
+        addMissionLine('Harvest', charData.lastHarvestAt, HARVEST_COOLDOWN_MS);
+        addMissionLine('Mine', charData.lastMineAt, MINE_COOLDOWN_MS);
+        addMissionLine('Trade', charData.lastTradeAt, TRADE_COOLDOWN_MS);
+        addMissionLine('Explore', charData.lastExploreAt, EXPLORE_COOLDOWN_MS);
+        addMissionLine('Incomes', charData.lastIncomesAt, INCOMES_COOLDOWN_MS);
+
+        if (missionLines.length > 0) {
+            fields.push({ name: 'Mission Cooldowns', value: missionLines.join('\n') });
         }
 
         if (fields.length === 0) {
