@@ -210,16 +210,42 @@ module.exports = {
       if (charData.lastExploreAt && now - charData.lastExploreAt < COOLDOWN_MS) {
         const remaining = COOLDOWN_MS - (now - charData.lastExploreAt);
         const totalSeconds = Math.ceil(remaining / 1000);
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = totalSeconds % 60;
+        const timeUnits = [
+          { label: 'day', seconds: 24 * 60 * 60 },
+          { label: 'hour', seconds: 60 * 60 },
+          { label: 'minute', seconds: 60 },
+          { label: 'second', seconds: 1 }
+        ];
+
+        let remainingSeconds = totalSeconds;
         const parts = [];
-        if (minutes > 0) {
-          parts.push(`${minutes} minute${minutes === 1 ? '' : 's'}`);
+
+        for (const { label, seconds } of timeUnits) {
+          if (remainingSeconds <= 0) {
+            break;
+          }
+          const value = Math.floor(remainingSeconds / seconds);
+          if (value > 0) {
+            parts.push(`${value} ${label}${value === 1 ? '' : 's'}`);
+            remainingSeconds -= value * seconds;
+          }
         }
-        if (seconds > 0 || parts.length === 0) {
-          parts.push(`${seconds} second${seconds === 1 ? '' : 's'}`);
+
+        if (parts.length === 0) {
+          parts.push('0 seconds');
         }
-        await interaction.editReply({ content: `You must wait ${parts.join(' and ')} before exploring again.` });
+
+        const formatList = (items) => {
+          if (items.length === 1) {
+            return items[0];
+          }
+          if (items.length === 2) {
+            return `${items[0]} and ${items[1]}`;
+          }
+          return `${items.slice(0, -1).join(', ')}, and ${items.at(-1)}`;
+        };
+
+        await interaction.editReply({ content: `You must wait ${formatList(parts)} before exploring again.` });
         return;
       }
 
