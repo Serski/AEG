@@ -1,5 +1,8 @@
 const { PermissionFlagsBits } = require('discord.js');
 
+// List of Discord user IDs allowed to run admin commands
+const adminUsers = ['378219232577716226'];
+
 async function replyOrFollowUp(interaction, payload) {
     if (interaction.replied || interaction.deferred) {
         await interaction.followUp(payload);
@@ -24,6 +27,13 @@ async function ensureGuildContext(interaction) {
 
 async function ensureAdminInteraction(interaction) {
     if (!(await ensureGuildContext(interaction))) {
+        return false;
+    }
+    if (!adminUsers.includes(interaction.user.id)) {
+        await replyOrFollowUp(interaction, {
+            content: 'You are not authorised to use this command.',
+            ephemeral: true,
+        });
         return false;
     }
     if (interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
