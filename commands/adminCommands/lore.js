@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const admin = require('../../admin'); // Importing the database manager
+const { ensureAdminInteraction } = require('../../shared/interactionGuards');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -10,8 +11,11 @@ module.exports = {
 			.setDescription('The lore name')
 			.setRequired(true)
 		),
-	async execute(interaction) {
-	        await interaction.deferReply({ flags: 64 });
+        async execute(interaction) {
+                if (!(await ensureAdminInteraction(interaction))) {
+                        return;
+                }
+                await interaction.deferReply({ flags: 64 });
 		const loreName = interaction.options.getString('lore');
 
 		(async () => {

@@ -102,20 +102,39 @@ client.once(Events.ClientReady, async () => {
 // });
 
 
+client.on(Events.MessageCreate, async message => {
+        // Ignore direct messages entirely to prevent bypassing permission checks
+        if (!message.guild) {
+                return;
+        }
+});
+
 //interaction handler
 client.on(Events.InteractionCreate, async interaction => {
-	//Ignore a specific user with id 614966892486197259
+        if (!interaction.inGuild()) {
+                if (interaction.isRepliable()) {
+                        const payload = { content: 'Commands can only be used within a server.', ephemeral: true };
+                        if (interaction.deferred || interaction.replied) {
+                                await interaction.followUp(payload);
+                        } else {
+                                await interaction.reply(payload);
+                        }
+                }
+                return;
+        }
 
-	if (interaction.isChatInputCommand()) {
-		const command = client.commands.get(interaction.commandName);
+        //Ignore a specific user with id 614966892486197259
 
-		try {
-			await command.execute(interaction);
-		} catch (error) {
-			console.error("THIS IS THE ERROR: " + error);
-			console.error(error);
-			console.error("BELOW IS THE REST OF THINGS");
-			if (interaction.replied || interaction.deferred) {
+        if (interaction.isChatInputCommand()) {
+                const command = client.commands.get(interaction.commandName);
+
+                try {
+                        await command.execute(interaction);
+                } catch (error) {
+                        console.error("THIS IS THE ERROR: " + error);
+                        console.error(error);
+                        console.error("BELOW IS THE REST OF THINGS");
+                        if (interaction.replied || interaction.deferred) {
                                 await interaction.followUp({ content: 'There was an error while executing this command!', flags: 64 });
                         } else {
                                 await interaction.reply({ content: 'There was an error while executing this command!', flags: 64 });

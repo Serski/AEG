@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const shop = require('../../shop'); // Importing the database manager
+const { ensureAdminInteraction } = require('../../shared/interactionGuards');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -7,6 +8,9 @@ module.exports = {
 		.setDefaultMemberPermissions(0)
 		.setDescription('List all items'),
 	async execute(interaction) {
+	    if (!(await ensureAdminInteraction(interaction))) {
+	        return;
+	    }
 	        await interaction.deferReply({ flags: 64 });
                 // const itemListString = await shop.shop();
                 // await interaction.editReply(itemListString);

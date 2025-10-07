@@ -1,3 +1,4 @@
+const { ensureAdminInteraction } = require('../../shared/interactionGuards');
 //ADMIN COMMAND
 const { SlashCommandBuilder, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const shop = require('../../shop'); // Importing shop
@@ -13,6 +14,9 @@ module.exports = {
 		.addStringOption(option => option.setName('itemcategory').setDescription('The category of the item').setRequired(true))
 		.addStringOption(option => option.setName('itemprice').setDescription('The price of the item').setRequired(false)),
 	async execute(interaction) {
+	    if (!(await ensureAdminInteraction(interaction))) {
+	        return;
+	    }
 	        await interaction.deferReply({ flags: 64 });
 		// Call the addItem function from the Shop class with the collected information
 		if (parseInt(interaction.options.getString('itemprice'))) {

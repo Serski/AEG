@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const admin = require('../../admin'); // Importing the database manager
+const { ensureAdminInteraction } = require('../../shared/interactionGuards');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -7,6 +8,9 @@ module.exports = {
 		.setDescription('Initialize a trade node select menu here')
 		.setDefaultMemberPermissions(0),
 	async execute(interaction) {
+	    if (!(await ensureAdminInteraction(interaction))) {
+	        return;
+	    }
 	        await interaction.deferReply({ flags: 64 });
 		try {
             // Call the method with the channel object directly

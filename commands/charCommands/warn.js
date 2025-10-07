@@ -1,4 +1,5 @@
-//Admin command
+const { ensureRoleInteraction } = require('../../shared/interactionGuards');
+//Moderator command
 
 const { SlashCommandBuilder } = require('discord.js');
 const char = require('../../char'); // Importing the database manager
@@ -10,7 +11,10 @@ module.exports = {
         .setDefaultMemberPermissions(0)
         .addUserOption(option => option.setName('player').setDescription('The player to warn').setRequired(true)),
     async execute(interaction) {
-            await interaction.deferReply({ flags: 64 });
+        if (!(await ensureRoleInteraction(interaction, 'Moderator'))) {
+            return;
+        }
+        await interaction.deferReply({ flags: 64 });
         const player = interaction.options.getUser('player').id;
         const response = await char.warn(player);
 

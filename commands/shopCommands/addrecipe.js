@@ -1,3 +1,4 @@
+const { ensureAdminInteraction } = require('../../shared/interactionGuards');
 //ADMIN COMMAND
 const { SlashCommandBuilder, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 const shop = require('../../shop');
@@ -12,7 +13,10 @@ module.exports = {
             .setDescription('The name of the recipe')
             .setRequired(false)),
     async execute(interaction) {
-            await interaction.deferReply({ flags: 64 });
+        if (!(await ensureAdminInteraction(interaction))) {
+            return;
+        }
+        await interaction.deferReply({ flags: 64 });
         let recipeName = interaction.options.getString('recipename');
         if (!recipeName) {
             recipeName = 'New Recipe';

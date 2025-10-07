@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const char = require('../../char'); // Importing the database manager
+const { ensureAdminInteraction } = require('../../shared/interactionGuards');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -12,6 +13,9 @@ module.exports = {
 				.setRequired(true)
 		),
         async execute(interaction) {
+            if (!(await ensureAdminInteraction(interaction))) {
+                return;
+            }
                 await interaction.deferReply({ flags: 64 });
                 const charID = interaction.options.getUser('character').id;
 
