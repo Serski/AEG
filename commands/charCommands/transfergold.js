@@ -1,3 +1,4 @@
+const { ensureAdminInteraction } = require('../../shared/interactionGuards');
 //Admin command
 
 const { SlashCommandBuilder } = require('discord.js');
@@ -13,7 +14,10 @@ module.exports = {
         .addUserOption(option => option.setName('playergetting').setDescription('The player to give gold to').setRequired(true))
         .addIntegerOption(option => option.setName('amount').setDescription('The amount of gold to give').setRequired(true)),
     async execute(interaction) {
-            await interaction.deferReply({ flags: 64 });
+        if (!(await ensureAdminInteraction(interaction))) {
+            return;
+        }
+        await interaction.deferReply({ flags: 64 });
         const playerGiving = interaction.options.getUser('playergiving').id;
         const player = interaction.options.getUser('playergetting').id;
         const amount = interaction.options.getInteger('amount');

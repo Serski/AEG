@@ -3,6 +3,7 @@ const admin = require('../../admin'); // Importing the database manager
 const char = require('../../char');
 const dbm = require ('../../database-manager');
 const keys = require('../../keys');
+const { ensureAdminInteraction } = require('../../shared/interactionGuards');
 
 ///editfield <field number> <new value>
 module.exports = {
@@ -11,6 +12,9 @@ module.exports = {
         .setDescription('Edit the about field of an embed. Use /editembedmenu first. Allows you to type paragraphs.')
         .setDefaultMemberPermissions(0),
     async execute(interaction) {
+        if (!(await ensureAdminInteraction(interaction))) {
+            return;
+        }
         try {
             const numericID = interaction.user.id;
             let [player, userData] = await char.findPlayerData(numericID);

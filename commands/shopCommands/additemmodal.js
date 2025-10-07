@@ -1,3 +1,4 @@
+const { ensureAdminInteraction } = require('../../shared/interactionGuards');
 //ADMIN COMMAND
 const { SlashCommandBuilder, ActionRowBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
 //const shop = require('../../shop'); // Importing shop
@@ -8,6 +9,9 @@ module.exports = {
 		.setDescription('Add item to shop')
 		.setDefaultMemberPermissions(0),
 	async execute(interaction) {
+	    if (!(await ensureAdminInteraction(interaction))) {
+	        return;
+	    }
 		// Create the modal
 		const modal = new ModalBuilder()
 			.setCustomId('additemmodal')

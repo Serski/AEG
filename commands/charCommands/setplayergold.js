@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const char = require('../../char'); // Importing the database manager
+const { ensureAdminInteraction } = require('../../shared/interactionGuards');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -9,7 +10,10 @@ module.exports = {
         .addIntegerOption(option => option.setName('gold').setDescription('The amount of gold to set').setRequired(true))
         .setDefaultMemberPermissions(0),
     async execute(interaction) {
-            await interaction.deferReply({ flags: 64 });
+        if (!(await ensureAdminInteraction(interaction))) {
+            return;
+        }
+        await interaction.deferReply({ flags: 64 });
         const player = interaction.options.getUser('player').id;
         const gold = interaction.options.getInteger('gold');
         const response = await char.setPlayerGold(player, gold);
