@@ -22,7 +22,7 @@ class shop {
   static shopOptions = ['Price (#)', 'Need Role', 'Give Role', 'Take Role', 'Quantity (#)', 'Channels'];
   static usageOptions = [
       'Is Usable (Y/N)', 'Removed on Use (Y/N)', 'Can Use Multiple (Y/N)', 'Need Any Of Roles', 'Need All Of Roles', 'Need None Of Roles', 'Give Role', 'Take Role',
-      'Show Image', 'Show Message', 'Give/Take Money (#)', 'Cooldown in Hours (#)',
+      'Show Image', 'Show Message', 'Give/Take Money (#)', 'Cooldown in Hours (#)', 'Grant Extra Crafting Slots (#)',
       'Give Item', 'Give Item 2', 'Give Item 3', 'Give Item 4', 'Give Item 5',
       'Take Item', 'Take Item 2', 'Take Item 3', 'Take Item 4', 'Take Item 5',
       'Change HP (#)', 'Change STR (#)', 'Change DEX (#)', 'Change INT (#)', 'Change CHA (#)', 'Revive (Y/N)', 'Durability (#)'
