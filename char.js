@@ -8,6 +8,22 @@ const axios = require('axios');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, createWebhook } = require('discord.js');
 const shipUtils = require('./shipUtils');
 
+const BASE_CRAFT_SLOTS = 3;
+const MAX_CRAFT_SLOTS = 6;
+const EXTRA_CRAFT_SLOT_PREFIX = 'EXTRA_SLOT_';
+
+function getExtraCraftSlotCount(craftSlots = {}) {
+  return Object.keys(craftSlots).filter((key) => key.startsWith(EXTRA_CRAFT_SLOT_PREFIX)).length;
+}
+
+function getUnlockedCraftSlotCount(craftSlots = {}) {
+  return BASE_CRAFT_SLOTS + getExtraCraftSlotCount(craftSlots);
+}
+
+function getActiveCraftSlotCount(craftSlots = {}) {
+  return Object.keys(craftSlots).filter((key) => !key.startsWith(EXTRA_CRAFT_SLOT_PREFIX)).length;
+}
+
 class char {
   static incomeListCache = null;
   static charCache = charCache;
@@ -695,10 +711,40 @@ class char {
       }
       charData.balance += totalGold;
       //Add field for money loss/gain, with Gold emoji
-      returnEmbed.addFields({ 
-        name: '**Gold:**', 
+      returnEmbed.addFields({
+        name: '**Gold:**',
         value: clientManager.getEmoji("Gold") + " " + (totalGold < 0 ? totalGold : "+" + totalGold)
       })
+    }
+
+    if (!charData.cooldowns) {
+      charData.cooldowns = {};
+    }
+    if (!charData.cooldowns.craftSlots) {
+      charData.cooldowns.craftSlots = {};
+    }
+
+    const extraCraftSlotOption = itemData.usageOptions["Grant Extra Crafting Slots (#)"];
+    if (extraCraftSlotOption !== undefined) {
+      let slotsToGrant = parseInt(extraCraftSlotOption);
+      if (Number.isNaN(slotsToGrant) || slotsToGrant <= 0) {
+        slotsToGrant = 1;
+      }
+
+      slotsToGrant *= numToUse;
+
+      const craftSlots = charData.cooldowns.craftSlots;
+      let extraSlotCount = getExtraCraftSlotCount(craftSlots);
+      let unlockedSlots = BASE_CRAFT_SLOTS + extraSlotCount;
+      let slotsAdded = 0;
+
+      while (slotsAdded < slotsToGrant && unlockedSlots < MAX_CRAFT_SLOTS) {
+        extraSlotCount++;
+        const placeholderKey = `${EXTRA_CRAFT_SLOT_PREFIX}${extraSlotCount}`;
+        craftSlots[placeholderKey] = null;
+        unlockedSlots++;
+        slotsAdded++;
+      }
     }
 
     //Cycle through options that begin with "Change"
@@ -912,27 +958,35 @@ class char {
     }
 
     let repeatNum = 0;
-    if (charData[charID].cooldowns.craftSlots) {
-      if (Object.keys(charData[charID].cooldowns.craftSlots).length >= 3) {
-        let returnEmbed = await this.craftingCooldowns(charID);
+    if (!charData[charID].cooldowns.craftSlots) {
+      charData[charID].cooldowns.craftSlots = {};
+    }
+    const craftSlots = charData[charID].cooldowns.craftSlots;
+    const unlockedSlots = getUnlockedCraftSlotCount(craftSlots);
+    const activeSlots = getActiveCraftSlotCount(craftSlots);
+
+    if (activeSlots >= unlockedSlots) {
+      let returnEmbed = await this.craftingCooldowns(charID);
+      if (typeof returnEmbed !== 'string') {
         returnEmbed.setDescription(":warning: You have no open crafting slots! :warning:");
-        return returnEmbed;
       }
-      if (charData[charID].cooldowns.craftSlots[recipe]) {
+      return returnEmbed;
+    }
+
+    if (craftSlots[recipe]) {
         //Check if REPEAT_#_ exists
         repeatNum = 1;
-        while (charData[charID].cooldowns.craftSlots["REPEAT_" + repeatNum + "_" + recipe]) {
+        while (craftSlots["REPEAT_" + repeatNum + "_" + recipe]) {
           repeatNum++;
         }
-      }
     }
 
     // Add the recipe to the character's crafting slots
     let finishTime = Math.round(Date.now() / 1000) + recipeData.recipeOptions["Craft Time in Hours (#)"] * 3600;
     if (repeatNum > 0) {
-      charData[charID].cooldowns.craftSlots["REPEAT_" + repeatNum + "_" + recipe] = finishTime;
+      craftSlots["REPEAT_" + repeatNum + "_" + recipe] = finishTime;
     } else {
-      charData[charID].cooldowns.craftSlots[recipe] = finishTime;
+      craftSlots[recipe] = finishTime;
     }
 
     await updatePlayerUtil(charID, charData[charID]);
@@ -961,14 +1015,19 @@ class char {
     let returnEmbed = new EmbedBuilder();
     returnEmbed.setTitle("**:clipboard: Crafting Slots**");
 
+    const craftSlots = charData[charID].cooldowns.craftSlots;
+    const unlockedSlots = getUnlockedCraftSlotCount(craftSlots);
     let numSlots = 0;
-    for (let key in charData[charID].cooldowns.craftSlots) {
+    for (let key in craftSlots) {
+      if (key.startsWith(EXTRA_CRAFT_SLOT_PREFIX)) {
+        continue;
+      }
       //Key may start with: REPEAT_1_, REPEAT_2_, REPEAT_3_, etc. Remove this, i.e. REPEAT_1_Blah = Blah
       let oldKey = key;
-      let val = charData[charID].cooldowns.craftSlots[key];
-      //If more than 4 exist, delete the newest one and send an error message
-      if (Object.keys(charData[charID].cooldowns.craftSlots).length > 3) {
-        delete charData[charID].cooldowns.craftSlots[key];
+      let val = craftSlots[key];
+      const activeSlots = getActiveCraftSlotCount(craftSlots);
+      if (activeSlots > unlockedSlots) {
+        delete craftSlots[key];
         await updatePlayerUtil(charID, charData[charID]);
         return "ERROR: Too many crafting slots. Contact Alex immediately.";
       }
@@ -998,7 +1057,7 @@ class char {
       returnEmbed.addFields({ name: '**`' + numSlots + ': `' + icon + " " + key + ":**", value: 'Finishes: <t:' + val + ':R>' });
     }
 
-    while (numSlots < 3) {
+    while (numSlots < unlockedSlots) {
       numSlots++;
       returnEmbed.addFields({ name: '**`' + numSlots + ': `**', value: 'Empty' });
     }
