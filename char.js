@@ -883,17 +883,28 @@ class char {
     }
 
     // Check if the character has the required items
+    const ingredientsToDeduct = [];
     for (let i = 1; i <= 5; i++) {
-      let ingredient = recipeData.recipeOptions["Ingredient " + i];
-      if (ingredient) {
-        let ingredientName = ingredient.split(" ").slice(1).join(" ");
-        let ingredientQuantity = parseInt(ingredient.split(" ")[0]);
-        if (!charData[charID].inventory[ingredientName] || charData[charID].inventory[ingredientName] < ingredientQuantity) {
-          return "You do not have enough of the required items! You need " + ingredientQuantity + " " + ingredientName + " to craft this recipe.";
-        }
-        //Remove the ingredients from the character's inventory
-        charData[charID].inventory[ingredientName] -= ingredientQuantity;
+      const ingredient = recipeData.recipeOptions["Ingredient " + i];
+      if (!ingredient) {
+        continue;
       }
+
+      const ingredientName = ingredient.split(" ").slice(1).join(" ");
+      const ingredientQuantity = parseInt(ingredient.split(" ")[0]);
+      if (!charData[charID].inventory[ingredientName] || charData[charID].inventory[ingredientName] < ingredientQuantity) {
+        return "You do not have enough of the required items! You need " + ingredientQuantity + " " + ingredientName + " to craft this recipe.";
+      }
+
+      ingredientsToDeduct.push({
+        name: ingredientName,
+        quantity: ingredientQuantity,
+      });
+    }
+
+    // Remove the ingredients from the character's inventory after confirming availability
+    for (const { name, quantity } of ingredientsToDeduct) {
+      charData[charID].inventory[name] -= quantity;
     }
 
     if (process.env.DEBUG) console.log(recipeData);
