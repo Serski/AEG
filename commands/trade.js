@@ -66,10 +66,10 @@ function performTrade(charData, region, submitted, now, rand = Math.random) {
   const rules = TRADE_RULES[region];
   let earnings = 0;
   for (let i = 0; i < (submitted.Freighter || 0); i++) {
-    earnings += getRand(rules.earnings[0], rules.earnings[1], rand);
+    earnings += Math.floor(getRand(rules.earnings[0], rules.earnings[1], rand) * 1.5);
   }
   for (let i = 0; i < (submitted.Bridger || 0); i++) {
-    earnings += Math.floor(getRand(rules.earnings[0], rules.earnings[1], rand) * 1.5);
+    earnings += getRand(rules.earnings[0], rules.earnings[1], rand);
   }
 
   let moneyLost = 0;
