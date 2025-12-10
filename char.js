@@ -1549,14 +1549,29 @@ class char {
         }
         inventoryChanged = true;
       } else if (amount < 0) {
-        if (charData.inventory[item]) {
-          if (charData.inventory[item] + amount > 0) {
-            charData.inventory[item] += amount;
-          } else {
-            charData.inventory[item] = 0;
+        let toRemove = Math.abs(amount);
+
+        const removeFromCollection = (collection) => {
+          if (!collection || !collection[item] || toRemove <= 0) {
+            return false;
           }
-          inventoryChanged = true;
-        }
+
+          const removeCount = Math.min(collection[item], toRemove);
+          collection[item] -= removeCount;
+          toRemove -= removeCount;
+
+          if (collection[item] === 0) {
+            delete collection[item];
+          }
+
+          return removeCount > 0;
+        };
+
+        const removedFromInventory = removeFromCollection(charData.inventory);
+        const removedFromFleet = removeFromCollection(charData.fleet);
+        const removedFromBoundShips = removeFromCollection(charData.boundShips);
+
+        inventoryChanged = removedFromInventory || removedFromFleet || removedFromBoundShips;
       }
       if (inventoryChanged) {
         await dbm.saveFile(collectionName, String(player), charData);
