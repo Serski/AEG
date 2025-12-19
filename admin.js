@@ -590,7 +590,7 @@ When selected grants the:
     //Sort through user roles, see if they have any that match the shire roles. If they do, return an error message
     for (const role of user.roles.cache) {
       if (Object.values(tempShires).some(shire => shire.roleCode == role[1].id)) {
-        await interaction.reply({ content: "You are already a member of a shire! You cannot switch shires", ephemeral: true });
+        await interaction.reply({ content: "You are already a member of a shire! You cannot switch shires", flags: 64 });
         return;
       }
     }
@@ -603,7 +603,7 @@ When selected grants the:
     //playerKingdoms is an array of role IDs
     for (const role of user.roles.cache) {
       if (playerKingdoms.includes(role[1].id)) {
-        await interaction.reply({ content: "You are already a member of a player kingdom! You cannot switch to a bot kingdom", ephemeral: true });
+        await interaction.reply({ content: "You are already a member of a player kingdom! You cannot switch to a bot kingdom", flags: 64 });
         return;
       }
     }
@@ -643,7 +643,7 @@ When selected grants the:
 
     await interaction.reply({ 
       content: "You have selected " + shire.name + " as your shire",
-      ephemeral: true 
+      flags: 64 
     });
   }
 
@@ -659,7 +659,7 @@ When selected grants the:
     let char = await dbm.loadFile("characters", String(numericID));
     for (const role of user.roles.cache) {
       if (Object.values(tradeNodes).some(tradeNode => tradeNode.roleCode == role[1].id)) {
-        await interaction.reply({ content: "You are already a member of a trade node! You cannot switch trade nodes", ephemeral: true });
+        await interaction.reply({ content: "You are already a member of a trade node! You cannot switch trade nodes", flags: 64 });
         return;
       }
     }
@@ -683,7 +683,7 @@ When selected grants the:
 
     await interaction.reply({ 
       content: "You have selected " + tradeNode.name + " as your trade node", 
-      ephemeral: true 
+      flags: 64 
     });
   }
 
@@ -699,7 +699,7 @@ When selected grants the:
     let char = await dbm.loadFile("characters", String(numericID));
     for (const role of user.roles.cache) {
       if (Object.values(resources).some(resource => resource.roleCode == role[1].id)) {
-        await interaction.reply({ content: "You are already a producer of a resource! You cannot switch resources", ephemeral: true });
+        await interaction.reply({ content: "You are already a producer of a resource! You cannot switch resources", flags: 64 });
         return;
       }
     }
@@ -723,7 +723,7 @@ When selected grants the:
 
     await interaction.reply({ 
       content: "You have selected " + resource.emoji + resource.name, 
-      ephemeral: true 
+      flags: 64 
     });
   }
 
@@ -746,7 +746,7 @@ When selected grants the:
     let char = await dbm.loadFile("characters", String(numericID));
     for (const role of user.roles.cache) {
       if (role[1].name == "Trader" || role[1].name == "Farmer") {
-        await interaction.reply({ content: "You are already a member of a class! You cannot switch classes", ephemeral: true });
+        await interaction.reply({ content: "You are already a member of a class! You cannot switch classes", flags: 64 });
         return;
       }
     }
@@ -774,7 +774,7 @@ When selected grants the:
     
     await interaction.reply({
       content: "You have selected " + selectedClass + " as your class",
-      ephemeral: true
+      flags: 64
     });
   }
 
@@ -790,7 +790,7 @@ When selected grants the:
     let char = await dbm.loadFile("characters", String(numericID));
     for (const role of user.roles.cache) {
       if (Object.values(parties).some(party => party.name.toLowerCase() == role[1].name.toLowerCase())) {
-        await interaction.reply({ content: "You are already a member of a party! You cannot switch parties", ephemeral: true });
+        await interaction.reply({ content: "You are already a member of a party! You cannot switch parties", flags: 64 });
         return;
       }
     }
@@ -806,7 +806,7 @@ When selected grants the:
 
     await interaction.reply({ 
       content: "You have selected " + party.emoji + party.name + "\n\n" + party.motto, 
-      ephemeral: true 
+      flags: 64 
     });
 
     //Send welcome message to the party channel
