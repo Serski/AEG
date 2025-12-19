@@ -1,7 +1,7 @@
 const { PermissionFlagsBits } = require('discord.js');
 
 // List of Discord user IDs allowed to run admin commands
-const adminUsers = ['378219232577716226'];
+const adminUsers = ['378219232577716226', '939145171533201488'];
 
 async function replyOrFollowUp(interaction, payload) {
     if (interaction.replied || interaction.deferred) {
