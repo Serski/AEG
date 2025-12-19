@@ -457,7 +457,7 @@ module.exports = {
           .setFields(fields)
           .setImage(EXPLORE_IMAGE);
 
-        await interaction.followUp({ embeds: [reportEmbed], components: [], ephemeral: true });
+        await interaction.followUp({ embeds: [reportEmbed], components: [], flags: 64 });
         if (outcomeKey === 'destroyed') {
           await maybeSendNews(
             interaction,

@@ -113,7 +113,7 @@ client.on(Events.MessageCreate, async message => {
 client.on(Events.InteractionCreate, async interaction => {
         if (!interaction.inGuild()) {
                 if (interaction.isRepliable()) {
-                        const payload = { content: 'Commands can only be used within a server.', ephemeral: true };
+                        const payload = { content: 'Commands can only be used within a server.', flags: 64 };
                         if (interaction.deferred || interaction.replied) {
                                 await interaction.followUp(payload);
                         } else {
@@ -185,4 +185,3 @@ function getGuildID() {
 }
 
 module.exports = { getClient, getGuildID };
-

@@ -20,28 +20,24 @@ async function ensureGuildContext(interaction) {
     }
     await replyOrFollowUp(interaction, {
         content: 'This command can only be used within a server.',
-        ephemeral: true,
+        flags: 64,
     });
     return false;
 }
 
 async function ensureAdminInteraction(interaction) {
-    if (!(await ensureGuildContext(interaction))) {
-        return false;
-    }
-    if (!adminUsers.includes(interaction.user.id)) {
-        await replyOrFollowUp(interaction, {
-            content: 'You are not authorised to use this command.',
-            ephemeral: true,
-        });
-        return false;
-    }
-    if (interaction.memberPermissions?.has(PermissionFlagsBits.Administrator)) {
+    if (!(await ensureGuildContext(interaction))) return false;
+
+    const hasAdminPermission = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator);
+    const isWhitelisted = adminUsers.includes(interaction.user.id);
+
+    if (hasAdminPermission || isWhitelisted) {
         return true;
     }
+
     await replyOrFollowUp(interaction, {
         content: 'You do not have permission to use this command.',
-        ephemeral: true,
+        flags: 64,
     });
     return false;
 }
@@ -57,7 +53,7 @@ async function ensureRoleInteraction(interaction, roleName) {
     }
     await replyOrFollowUp(interaction, {
         content: `You must have the ${roleName} role to use this command.`,
-        ephemeral: true,
+        flags: 64,
     });
     return false;
 }
